@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     
     // Query ringan: cukup ping database untuk mencegah hibernasi
-    const { error: _error } = await supabase
+    await supabase
       .from('keep_alive_ping')
       .select('id')
       .limit(1)
