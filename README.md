@@ -323,7 +323,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [ ] Halaman artikel publik (render Markdown, SEO metadata)
 - [ ] Halaman beranda (list artikel yang dipublikasikan)
 - [ ] Navigasi dasar
-- [ ] Design system diterapkan (font + color palette)
+- [x] Design system diterapkan (font + color palette)
 
 ### Phase 2 — Pemilik bisa publish
 - [ ] Google OAuth via Supabase Auth (untuk pemilik)
@@ -428,6 +428,21 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 1 — buat tabel articles di Supabase + halaman publik + design system
+
+> [19-05-2026] SESI #2
+Branch: feature/phase-1-design-system
+Tujuan sesi: Phase 1 — Terapkan design system (font + color palette)
+Yang dikerjakan:
+  - Edit tailwind.config.ts: ganti token warna default, tambah primary-dark,
+    primary-light, accent-red, accent-blue, font-libre, font-helvetica
+  - Edit app/globals.css: hapus default Next.js, terapkan variabel warna Saintifiks,
+    set background #F5F4F0 dan color #0D0D0D di body
+  - Edit app/layout.tsx: hapus Geist fonts, load Libre Baskerville via Google Fonts,
+    update metadata title dan description, terapkan class bg-primary-light dan font-helvetica
+Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+Status akhir: selesai
+Next step: Phase 1 — Database schema tabel articles di Supabase + RLS policies
+---
 ---
 ```
 Format:
