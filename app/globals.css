@@ -2,26 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Saintifiks color variables */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary-dark: #0D0D0D;
+  --primary-light: #F5F4F0;
+  --accent-red: #C90203;
+  --accent-blue: #002EC7;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base body — 90% halaman hanya dua warna ini */
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  background-color: #F5F4F0;
+  color: #0D0D0D;
+  font-family: Helvetica, Arial, sans-serif;
 }

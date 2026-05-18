@@ -8,12 +8,22 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Saintifiks color palette — jangan tambah warna lain tanpa keputusan eksplisit
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        "primary-dark": "#0D0D0D",
+        "primary-light": "#F5F4F0",
+        "accent-red": "#C90203",
+        "accent-blue": "#002EC7",
+      },
+      // Font families — Libre Baskerville di-load via Google Fonts di layout.tsx
+      // Helvetica adalah system font, tidak perlu di-load
+      fontFamily: {
+        libre: ["var(--font-libre-baskerville)", "Georgia", "serif"],
+        helvetica: ["Helvetica", "Arial", "sans-serif"],
       },
     },
   },
   plugins: [],
 };
+
 export default config;
