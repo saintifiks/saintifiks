@@ -353,7 +353,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 ### Phase 1 — Bisa baca artikel
 - [x] Database schema dasar (tabel `articles`) + RLS policies
 - [ ] Halaman artikel publik (render Markdown, SEO metadata)
-- [ ] Halaman beranda (list artikel yang dipublikasikan)
+- [x] Halaman beranda (list artikel yang dipublikasikan)
 - [ ] Navigasi dasar
 - [x] Design system diterapkan (font + color palette)
 
@@ -379,7 +379,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 
 ## 10. MASALAH YANG DIKETAHUI
 
-> Belum ada masalah yang tercatat — proyek belum berjalan.
+> Belum ada masalah yang tercatat
 
 ```
 Format pengisian:
@@ -488,6 +488,21 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 1 — Halaman beranda (list artikel is_published = true)
+
+> [19-05-2026] SESI #4
+Branch: feature/phase-1-beranda
+Tujuan sesi: Phase 1 — Halaman beranda (list artikel is_published = true)
+Yang dikerjakan:
+  - Edit app/page.tsx: ganti template default Next.js dengan halaman beranda Saintifiks
+  - Server Component yang fetch dari tabel articles (is_published = true, order published_at DESC)
+  - Render daftar artikel: tanggal, judul (font-libre), excerpt jika ada
+  - Empty state: pesan "Belum ada artikel" jika database kosong
+  - Caching strategy: revalidate = 3600 (ISR, refresh setiap 1 jam)
+  - Merge feature/phase-1-beranda ke main
+Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+Status akhir: selesai
+Next step: Phase 1 — Halaman artikel individual (/artikel/[slug]) dengan render Markdown + SEO metadata
+---
 ---
 ---
 ---
