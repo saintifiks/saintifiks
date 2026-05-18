@@ -47,6 +47,7 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 **Implikasi teknis dari misi ini:**
 - Desain UI/UX harus memprioritaskan kemudahan membaca dan berpikir, bukan waktu yang dihabiskan di halaman.
 - Tidak ada elemen yang mendorong engagement artifisial (autoplay, infinite scroll tanpa kontrol, notifikasi agresif).
+- Sistem likes/interaksi ada untuk data analitis pemilik — bukan untuk ditampilkan secara menonjol ke pembaca sebagai sinyal sosial.
 - SEO dilakukan dengan benar untuk memastikan konten ditemukan, tapi tidak mengorbankan kedalaman konten demi keyword.
 
 ### Landasan Filosofis (penting untuk keputusan desain jangka panjang)
@@ -87,7 +88,6 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 - Tidak ada tracking perilaku yang dijual ke pihak ketiga.
 - Tidak ada iklan display dari jaringan iklan eksternal.
 - Tidak ada judul yang dioptimasi untuk klik bukan untuk akurasi (sistem tidak boleh mendorong ini).
-- Likes dan fitur interaksi lain (komentar, share, dll) boleh ditampilkan secara publik ke pembaca.
 
 ---
 
