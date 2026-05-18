@@ -311,12 +311,12 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Akun GitHub dibuat
 - [x] Repository `saintifiks` dibuat di GitHub
 - [x] CONTEXT.md (README.md ini) ada di repo
-- [ ] Node.js terinstall di komputer pemilik
-- [ ] Next.js scaffold di-init dan di-push ke GitHub
-- [ ] Vercel terhubung ke GitHub repo dan deploy pertama berhasil
-- [ ] Supabase project dibuat
-- [ ] Environment variables Supabase tersambung ke Vercel
-- [ ] **Cron job keep-alive Supabase diimplementasikan** ← WAJIB sebelum lanjut apapun
+- [x] Node.js terinstall di komputer pemilik
+- [x] Next.js scaffold di-init dan di-push ke GitHub
+- [x] Vercel terhubung ke GitHub repo dan deploy pertama berhasil
+- [x] Supabase project dibuat
+- [x] Environment variables Supabase tersambung ke Vercel
+- [x] **Cron job keep-alive Supabase diimplementasikan** ← WAJIB sebelum lanjut apapun
 
 ### Phase 1 — Bisa baca artikel
 - [ ] Database schema dasar (tabel `articles`) + RLS policies
@@ -411,8 +411,24 @@ Format pengisian:
 
 ## 12. LOG SESI
 
-> Belum ada sesi coding yang tercatat. Proyek baru punya GitHub repository.
-
+> [18-05-2026] SESI #1
+Branch: feature/phase-0-foundation
+Tujuan sesi: Setup Phase 0 Foundation — semua infrastruktur dasar proyek
+Yang dikerjakan:
+  - Install Node.js dan Git di komputer pemilik (Windows)
+  - Buat akun Supabase + project baru (region: Singapore)
+  - Scaffold Next.js 14 dengan App Router, TypeScript, Tailwind CSS v3, ESLint
+  - Buat lib/supabase/client.ts dan lib/supabase/server.ts
+  - Buat app/api/keep-alive/route.ts (endpoint cron job)
+  - Buat vercel.json (konfigurasi Vercel Cron: setiap 3 hari)
+  - Buat .env.local dengan 3 variabel Supabase + CRON_SECRET
+  - Buat akun Vercel + sambungkan ke GitHub repo
+  - Deploy pertama berhasil
+  - Merge feature/phase-0-foundation ke main
+Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+Status akhir: selesai
+Next step: Phase 1 — buat tabel articles di Supabase + halaman publik + design system
+---
 ```
 Format:
 [TANGGAL] SESI #N
