@@ -351,7 +351,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] **Cron job keep-alive Supabase diimplementasikan** ← WAJIB sebelum lanjut apapun
 
 ### Phase 1 — Bisa baca artikel
-- [ ] Database schema dasar (tabel `articles`) + RLS policies
+- [x] Database schema dasar (tabel `articles`) + RLS policies
 - [ ] Halaman artikel publik (render Markdown, SEO metadata)
 - [ ] Halaman beranda (list artikel yang dipublikasikan)
 - [ ] Navigasi dasar
@@ -474,6 +474,21 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 1 — Database schema tabel articles di Supabase + RLS policies
+
+> [19-05-2026] SESI #3
+Branch: feature/phase-1-db-schema
+Tujuan sesi: Phase 1 — Database schema tabel articles + RLS policies
+Yang dikerjakan:
+  - Membuat tabel articles di Supabase SQL Editor (10 kolom)
+  - Mengaktifkan RLS pada tabel articles
+  - Membuat 2 RLS policy: SELECT publik untuk is_published=true, ALL untuk authenticated
+  - Membuat trigger update_updated_at_column untuk kolom updated_at
+  - Update README.md Seksi 6: mengisi schema dari placeholder ke schema aktual
+  - Merge feature/phase-1-db-schema ke main
+Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+Status akhir: selesai
+Next step: Phase 1 — Halaman beranda (list artikel is_published = true)
+---
 ---
 ---
 ```
