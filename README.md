@@ -101,12 +101,11 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 | Hosting frontend | Vercel | Free tier cukup, deploy otomatis dari GitHub, CDN global |
 | Backend / Database | Supabase | PostgreSQL + Auth + Storage dalam satu platform, free tier, portable |
 | Version control | GitHub | Wajib — sebagai sumber kebenaran kode dan memori proyek |
-| Visualisasi data | [BELUM DIPUTUSKAN — Datawrapper embed vs Chart.js custom] | Keputusan ini harus dibuat sebelum development dimulai |
-| Styling | [BELUM DIPUTUSKAN — Tailwind CSS direkomendasikan] | |
+| Visualisasi data | Chart.js (custom blocks terintegrasi) | Dipilih untuk fleksibilitas penuh dan kontrol atas visualisasi data ekonomi yang kompleks |
+| Styling | Tailwind CSS | Utility-first, AI-friendly, konsisten dengan Next.js ecosystem |
 | Bahasa | TypeScript | Type safety mengurangi error saat vibe coding |
 
 ### Keputusan yang Masih Terbuka (harus diselesaikan sebelum coding dimulai)
-- [ ] **Chart/visualisasi:** Datawrapper embed (lebih mudah, lebih cepat, lebih profesional untuk analisis ekonomi) vs Chart.js custom blocks (lebih fleksibel, butuh lebih banyak kode). Jawaban ini memengaruhi schema database dan editor artikel.
 - [ ] **Sistem login pembaca:** Google OAuth (Supabase Auth provider) vs anonim dengan fingerprint. Jawaban ini memengaruhi schema tabel likes dan komentar.
 - [ ] **Editor artikel admin:** TipTap, Notion-like editor, atau Markdown + preview?
 
@@ -124,12 +123,14 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 ### Tabel yang Direncanakan
 ```
 articles          — konten artikel, metadata, status publikasi
-article_charts    — konfigurasi chart per artikel (jika Chart.js custom)
+article_charts    — konfigurasi Chart.js per artikel (type, data, options sebagai JSON)
 likes             — data interaksi likes pembaca
 comments          — komentar (jika fitur ini diimplementasikan)
 analytics_events  — event tracking internal (page view, scroll depth, dll)
 users             — akun pembaca (jika sistem login diimplementasikan)
 ```
+
+**Catatan chart:** Setiap artikel bisa memiliki satu atau lebih chart. Config Chart.js (type, data, options) disimpan sebagai JSON di tabel `article_charts`, di-render client-side via Chart.js saat halaman artikel dibuka. Chart bersifat interaktif (hover, tooltip, zoom jika diaktifkan).
 
 ### Aturan RLS (Row Level Security) — WAJIB
 - **Setiap tabel baru yang dibuat di Supabase WAJIB memiliki RLS policy.**
@@ -198,7 +199,8 @@ Error handling:  [BELUM DIISI]
 
 > Status: Tidak ada. Proyek belum mulai.
 
-- [ ] Setup repo GitHub
+- [x] Setup repo GitHub (sudah ada, README sudah ada)
+- [ ] CONTEXT.md di-commit ke repo GitHub
 - [ ] Next.js scaffold di Vercel
 - [ ] Supabase project dibuat
 - [ ] Cron job keep-alive Supabase
@@ -249,6 +251,16 @@ Format pengisian:
            CATATAN: UIthub (uithub.com) digunakan untuk memberi AI konteks kode di setiap sesi
 
 [TAMBAH KEPUTUSAN BARU DI SINI]
+
+[Pra-dev] KEPUTUSAN: Chart.js sebagai sistem visualisasi data
+           ALASAN: Fleksibilitas penuh untuk chart analisis ekonomi yang kompleks dan interaktif; kontrol penuh atas tampilan dan behavior; tidak bergantung pada layanan pihak ketiga
+           ALTERNATIF DITOLAK: Datawrapper embed (lebih mudah tapi terbatas customization, bergantung pada server Datawrapper)
+           CATATAN IMPLEMENTASI: Config chart (type, data, options) disimpan sebagai JSON di tabel article_charts di Supabase; di-render client-side; satu artikel bisa punya banyak chart
+
+[Pra-dev] KEPUTUSAN: Tailwind CSS sebagai styling
+           ALASAN: Utility-first, konsisten dengan ekosistem Next.js, sangat AI-friendly (AI memiliki training data yang kuat untuk Tailwind), tidak butuh file CSS terpisah
+           ALTERNATIF DITOLAK: CSS modules (lebih verbose), styled-components (overhead runtime)
+           CATATAN IMPLEMENTASI: Gunakan Tailwind v3 (bukan v4 yang masih baru); konfigurasi tema di tailwind.config.ts
 ```
 
 ---
@@ -275,7 +287,7 @@ Status akhir: [selesai / terhenti di / butuh dilanjutkan dari]
 
 | Resource | URL | Kegunaan |
 |----------|-----|---------|
-| UIthub | uithub.com/[username]/[repo] | Konversi repo ke teks untuk konteks AI |
+| GitHub | github.com/[ISI USERNAME]/[ISI NAMA REPO] | Version control — repo sudah ada, README sudah ada |
 | Supabase Docs | supabase.com/docs | Referensi teknis backend |
 | Next.js Docs | nextjs.org/docs | Referensi framework frontend |
 | Vercel Docs | vercel.com/docs | Referensi hosting dan cron job |
