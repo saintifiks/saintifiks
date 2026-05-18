@@ -88,7 +88,7 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 - Tidak ada tracking perilaku yang dijual ke pihak ketiga.
 - Tidak ada iklan display dari jaringan iklan eksternal.
 - Tidak ada judul yang dioptimasi untuk klik bukan untuk akurasi (sistem tidak boleh mendorong ini).
-- Tidak ada fitur yang menonjolkan jumlah likes secara publik sebagai sinyal validasi sosial (likes ada untuk data internal pemilik, bukan untuk ditampilkan besar-besar ke pembaca lain).
+- Likes dan fitur interaksi lain (komentar, share, dll) boleh ditampilkan secara publik ke pembaca.
 
 ---
 
@@ -103,10 +103,9 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 | Version control | GitHub | Wajib — sebagai sumber kebenaran kode dan memori proyek |
 | Visualisasi data | Chart.js (custom blocks terintegrasi) | Dipilih untuk fleksibilitas penuh dan kontrol atas visualisasi data ekonomi yang kompleks |
 | Styling | Tailwind CSS | Utility-first, AI-friendly, konsisten dengan Next.js ecosystem |
-| Bahasa | TypeScript | Type safety mengurangi error saat vibe coding |
+| Auth pembaca | Supabase Auth + Google OAuth | Login via Google, tidak perlu buat akun baru — Supabase menangani seluruh flow |
 
 ### Keputusan yang Masih Terbuka (harus diselesaikan sebelum coding dimulai)
-- [ ] **Sistem login pembaca:** Google OAuth (Supabase Auth provider) vs anonim dengan fingerprint. Jawaban ini memengaruhi schema tabel likes dan komentar.
 - [ ] **Editor artikel admin:** TipTap, Notion-like editor, atau Markdown + preview?
 
 ### Batasan Free Tier yang Harus Diperhatikan
@@ -250,6 +249,11 @@ Format pengisian:
            ALASAN: Free, standar industri, UIthub bisa membaca repo ini untuk konteks AI
            CATATAN: UIthub (uithub.com) digunakan untuk memberi AI konteks kode di setiap sesi
 
+[Pra-dev] KEPUTUSAN: Google OAuth via Supabase Auth sebagai sistem login pembaca
+           ALASAN: Pembaca tidak perlu buat akun baru, cukup akun Google yang sudah dimiliki; Supabase Auth menangani seluruh flow tanpa kode auth dari nol; konsisten dengan keputusan Supabase sebagai backend
+           ALTERNATIF DITOLAK: Fingerprint anonim (data kurang akurat, tidak bisa identifikasi user lintas device/browser), email-password (friction tinggi, butuh sistem password reset)
+           CATATAN IMPLEMENTASI: Setup di Google Cloud Console → buat OAuth 2.0 Client ID → paste ke Supabase Dashboard → Authentication → Providers → Google. Tabel `users` otomatis terisi oleh Supabase Auth saat user pertama kali login.
+
 [TAMBAH KEPUTUSAN BARU DI SINI]
 
 [Pra-dev] KEPUTUSAN: Chart.js sebagai sistem visualisasi data
@@ -287,7 +291,8 @@ Status akhir: [selesai / terhenti di / butuh dilanjutkan dari]
 
 | Resource | URL | Kegunaan |
 |----------|-----|---------|
-| GitHub | github.com/[ISI USERNAME]/[ISI NAMA REPO] | Version control — repo sudah ada, README sudah ada |
+| GitHub README | github.com/[ISI USERNAME]/[ISI NAMA REPO] | Isi CONTEXT.md ini ada di README repo — bukan file terpisah |
+| UIthub | uithub.com/[ISI USERNAME]/[ISI NAMA REPO] | Konversi repo ke teks untuk konteks AI per sesi |
 | Supabase Docs | supabase.com/docs | Referensi teknis backend |
 | Next.js Docs | nextjs.org/docs | Referensi framework frontend |
 | Vercel Docs | vercel.com/docs | Referensi hosting dan cron job |
@@ -304,4 +309,4 @@ Status akhir: [selesai / terhenti di / butuh dilanjutkan dari]
 
 ---
 
-*Dokumen ini hidup dan harus diperbarui setiap sesi coding. Versi yang tidak diperbarui adalah versi yang berbahaya.*
+*Dokumen ini hidup di README repo GitHub dan harus diperbarui setiap sesi coding. Versi yang tidak diperbarui adalah versi yang berbahaya.*
