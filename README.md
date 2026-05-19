@@ -274,7 +274,18 @@ CREATE TRIGGER articles_updated_at
 
 ## 7. STRUKTUR FILE
 
-> Status: BELUM ADA — akan diisi setelah Next.js di-scaffold.
+## KONTEKS PEMILIK (PENTING UNTUK AI)
+- OS: Windows, shell: PowerShell (bukan bash/zsh/cmd)
+- Prompt PowerShell: PS C:\Users\putra\Projects\saintifiks>
+- Level teknis: non-programmer — tidak memiliki latar belakang coding
+- Standar instruksi wajib:
+    · Setiap instruksi = satu langkah bernomor, satu tindakan per nomor
+    · Sebutkan nama tombol/menu persis seperti di layar
+    · Perintah terminal selalu dalam blok kode + satu kalimat penjelasan fungsi
+    · Setelah maksimal 5 langkah: minta konfirmasi sebelum lanjut
+    · Jika ada risiko kesalahan: sebutkan SEBELUM langkah dieksekusi
+    · Jangan gunakan && di perintah PowerShell — pisahkan jadi dua perintah
+    · Path yang mengandung [ dan ] wajib pakai flag -LiteralPath di PowerShell
 
 ```
 [AKAN DIISI — format yang direncanakan:]
@@ -379,7 +390,22 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 
 ## 10. MASALAH YANG DIKETAHUI
 
-> Belum ada masalah yang tercatat
+[19-05-2026] MASALAH: Tag <a hilang dari file TSX saat copy-paste dari chat Claude di browser
+             STATUS: resolved
+             WORKAROUND: -
+             RESOLVED: 19-05-2026 — gunakan artifact download (create_file + present_files),
+             bukan copy-paste dari chat
+
+[19-05-2026] MASALAH: PowerShell tidak mendukung operator && sebagai pemisah perintah
+             STATUS: resolved
+             WORKAROUND: Jalankan setiap perintah secara terpisah satu per satu
+             RESOLVED: workaround permanen — tidak perlu fix khusus
+
+[19-05-2026] MASALAH: Get-Content di PowerShell gagal untuk path yang mengandung [ dan ]
+             STATUS: resolved
+             WORKAROUND: Selalu gunakan flag -LiteralPath untuk path yang mengandung
+             karakter [ dan ], contoh: Get-Content -LiteralPath "app\artikel\[slug]\page.tsx"
+             RESOLVED: workaround permanen — tidak perlu fix khusus
 
 ```
 Format pengisian:
@@ -437,6 +463,15 @@ Format pengisian:
 [Pra-dev] KEPUTUSAN: Cron job keep-alive adalah implementasi hari pertama
            ALASAN: Supabase free tier hibernasi setelah 7 hari tidak aktif; kehilangan database adalah risiko eksistensial untuk proyek
            CATATAN IMPLEMENTASI: Vercel Cron Job yang query ringan ke endpoint /api/keep-alive setiap 3 hari
+[19-05-2026] KEPUTUSAN: File kode yang mengandung tag <a wajib dibuat via artifact download
+             ALASAN: Browser Claude merender tag <a sebagai HTML sungguhan saat copy-paste,
+             sehingga tag itu hilang dari kode sebelum sampai ke file. Ini menyebabkan
+             build Vercel gagal dengan error "Unexpected token" di JSX.
+             ATURAN: Setiap kali AI perlu memberikan file .tsx/.jsx yang mengandung tag <a,
+             wajib gunakan fitur create_file + present_files agar user bisa download langsung.
+             Jangan pernah instruksikan copy-paste kode JSX yang mengandung <a dari chat.
+             ALTERNATIF DITOLAK: Copy-paste dari chat (terbukti gagal), PowerShell Set-Content
+             here-string (terbukti juga memakan tag <a dalam kondisi tertentu)
 ```
 
 ---
@@ -460,6 +495,7 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 1 — buat tabel articles di Supabase + halaman publik + design system
+---
 
 > [19-05-2026] SESI #2
 Branch: feature/phase-1-design-system
@@ -474,6 +510,7 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 1 — Database schema tabel articles di Supabase + RLS policies
+---
 
 > [19-05-2026] SESI #3
 Branch: feature/phase-1-db-schema
@@ -488,6 +525,7 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 1 — Halaman beranda (list artikel is_published = true)
+---
 
 > [19-05-2026] SESI #4
 Branch: feature/phase-1-beranda
@@ -502,22 +540,82 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 1 — Halaman artikel individual (/artikel/[slug]) dengan render Markdown + SEO metadata
+---
 
 > [19-05-2026] SESI #5
-Branch: feature/phase-1-artikel-individual
+Branch utama: feature/phase-1-artikel-individual
+Branch fix: fix/artikel-page-content, fix/artikel-slug-halaman
 Tujuan sesi: Phase 1 — Halaman artikel individual (/artikel/[slug]) dengan render Markdown + SEO metadata
 Yang dikerjakan:
-  - Install library react-markdown
-  - Buat app/artikel/[slug]/page.tsx
-  - generateMetadata() untuk SEO (title, description, og:title, og:description)
-  - Fetch artikel dari Supabase berdasarkan slug (hanya is_published = true)
-  - Penanganan 404 via notFound() jika artikel tidak ditemukan atau belum dipublikasikan
-  - Render konten Markdown via ReactMarkdown dengan komponen custom sesuai design system
-  - Caching ISR revalidate = 3600 (konsisten dengan halaman beranda)
-  - Merge feature/phase-1-artikel-individual ke main
-Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+
+  [TAHAP 1 — feature/phase-1-artikel-individual]
+  - Analisis pre-flight: konfirmasi item Phase 1 yang belum selesai, impact analysis,
+    dependency check → ditemukan react-markdown belum terinstall
+  - Install library react-markdown via npm
+  - Buat folder app/artikel/ dan app/artikel/[slug]/
+  - Buat file app/artikel/[slug]/page.tsx berisi:
+      · generateMetadata() untuk SEO (title, description, og:title, og:description)
+      · Fetch artikel dari Supabase berdasarkan slug (hanya is_published = true)
+      · Penanganan 404 via notFound() jika artikel tidak ditemukan
+      · Render konten Markdown via ReactMarkdown dengan komponen custom sesuai design system
+      · Caching ISR revalidate = 3600
+  - File dibuat via PowerShell Set-Content (here-string) karena copy-paste dari chat
+    menyebabkan dua tag <a hilang (browser Claude merender <a sebagai HTML sungguhan)
+  - Verifikasi 3 baris pertama file tampak benar via Get-Content
+  - PR di-merge ke main SEBELUM masalah tag <a terdeteksi
+  - Vercel build GAGAL: "Unexpected token 'main'" di baris 77 page.tsx
+    (penyebab: dua tag <a yang hilang membuat parser JSX gagal memahami struktur JSX)
+
+  [TAHAP 2 — fix/artikel-page-content, percobaan 1]
+  - Buat branch fix/artikel-page-content dari main
+  - Diagnosis: tag <a hilang di dua lokasi — baris pembuka link "← Saintifiks"
+    dan baris pembuka tag <a di dalam komponen ReactMarkdown
+  - Percobaan perbaikan via VS Code: tambah <a secara manual di dua lokasi
+  - Garis merah error di VS Code hilang setelah perbaikan
+  - git add dan commit dijalankan, tapi perbaikan tidak masuk ke commit
+    (file belum tersimpan saat git add dijalankan)
+  - Vercel build MASIH GAGAL dengan error yang sama
+
+  [TAHAP 3 — fix/artikel-page-content, percobaan 2]
+  - Diagnosis ulang: isi file lokal dikonfirmasi lewat Get-Content — tag <a memang masih hilang
+  - Percobaan baru: copy-paste kode lengkap dari chat ke VS Code
+  - Tag <a tetap hilang saat copy-paste (browser memakan tag HTML)
+  - Instruksi manual: tambah <a di dua lokasi spesifik di VS Code
+  - User mengonfirmasi garis merah hilang
+  - git add, commit, push → Vercel build MASIH GAGAL
+    (kemungkinan: perubahan tidak tersimpan saat git add, atau commit salah file)
+
+  [INSIDEN — app/page.tsx tertimpa]
+  - Saat mencoba mengganti file via download dan drag ke folder,
+    user secara tidak sengaja menaruh file artikel ke folder app\ (beranda)
+    bukan ke app\artikel\[slug]\ (artikel individual)
+  - Akibat: app/page.tsx (beranda) tertimpa oleh konten halaman artikel individual
+  - Kedua file — app/page.tsx dan app/artikel/[slug]/page.tsx — sempat berisi
+    konten yang sama (halaman artikel)
+  - Solusi: AI menyiapkan dua file terpisah sebagai artifact download:
+      · page-beranda.tsx → dipindah ke app\, rename jadi page.tsx (beranda dipulihkan)
+      · page.tsx → dipindah ke app\artikel\[slug]\ (artikel individual diperbaiki)
+  - Kedua file diverifikasi via Get-Content, keduanya benar
+  - git add, commit, push → Vercel build MASIH GAGAL (tag <a tetap hilang di GitHub)
+
+  [TAHAP 4 — fix/artikel-slug-halaman (penyelesaian akhir)]
+  - git checkout main → git pull origin main (sinkronisasi dengan GitHub)
+  - Buat branch baru fix/artikel-slug-halaman dari main yang sudah diperbarui
+  - AI menyiapkan file page.tsx sebagai artifact download langsung dari sistem
+    (bukan copy-paste dari chat — metode ini yang aman karena tag <a tidak akan hilang)
+  - User download file, taruh di app\artikel\[slug]\, verifikasi Get-Content ✅
+  - git add, commit (99902ec), push origin fix/artikel-slug-halaman
+  - Vercel Preview build: READY ✅
+  - PR di-merge ke main (PR #8)
+  - Vercel Production build: READY ✅
+
+Keputusan baru:
+  - File kode yang mengandung tag <a TIDAK BOLEH dibuat via copy-paste dari chat Claude
+    di browser. Wajib gunakan artifact download (file yang dibuat langsung oleh AI
+    dan bisa didownload). Ini berlaku untuk semua sesi berikutnya.
 Status akhir: selesai
 Next step: Phase 1 — Navigasi dasar (Navbar dan Footer)
+---
 ---
 ---
 ---
