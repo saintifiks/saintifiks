@@ -10,6 +10,7 @@ import {
 } from '@/app/(admin)/dashboard/artikel/actions'
 import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
+import ImageUpload from '@/components/artikel/ImageUpload'
 
 function buatSlug(judul: string): string {
   return judul
@@ -32,14 +33,15 @@ export default function EditArtikelPage() {
   const [loading, setLoading] = useState(true)
   const [tidakDitemukan, setTidakDitemukan] = useState(false)
   const [isPublished, setIsPublished] = useState(false)
-  const [slugLive, setSlugLive] = useState('') 
+  const [slugLive, setSlugLive] = useState('')
 
   const [judul, setJudul] = useState('')
   const [slug, setSlug] = useState('')
   const [slugDiubahManual, setSlugDiubahManual] = useState(false)
   const [excerpt, setExcerpt] = useState('')
+  const [coverImageUrl, setCoverImageUrl] = useState<string>('')
   const [konten, setKonten] = useState('')
-  
+
   const [charts, setCharts] = useState<{ identifier: string; config: string }[]>([])
 
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +55,7 @@ export default function EditArtikelPage() {
       const { data, error } = await supabase
         .from('articles')
         .select(`
-          id, title, slug, content, excerpt, is_published, published_at,
+          id, title, slug, content, excerpt, cover_image_url, is_published, published_at,
           article_charts (chart_identifier, config)
         `)
         .eq('id', id)
@@ -69,17 +71,17 @@ export default function EditArtikelPage() {
       setSlug(data.slug)
       setSlugLive(data.slug)
       setExcerpt(data.excerpt ?? '')
+      setCoverImageUrl(data.cover_image_url ?? '')
       setKonten(data.content)
       setIsPublished(data.is_published)
-      
+
       if (data.article_charts) {
         setCharts(data.article_charts.map((c: { chart_identifier: string; config: unknown }) => ({
           identifier: c.chart_identifier,
-          // Parsing objek JSON kembali menjadi string untuk textarea
           config: typeof c.config === 'object' ? JSON.stringify(c.config, null, 2) : String(c.config)
         })))
       }
-      
+
       setLoading(false)
     }
 
@@ -122,13 +124,14 @@ export default function EditArtikelPage() {
         slug,
         content: konten,
         excerpt,
+        cover_image_url: coverImageUrl || null,
         charts
       })
       if (hasil && 'error' in hasil) {
         setError(hasil.error)
       } else {
         setPesanSukses('Perubahan berhasil disimpan.')
-        setSlugLive(slug) 
+        setSlugLive(slug)
       }
     })
   }
@@ -142,6 +145,7 @@ export default function EditArtikelPage() {
         slug,
         content: konten,
         excerpt,
+        cover_image_url: coverImageUrl || null,
         charts
       })
       if (hasilUpdate && 'error' in hasilUpdate) {
@@ -352,6 +356,13 @@ export default function EditArtikelPage() {
             />
           </div>
 
+          <div>
+            <ImageUpload 
+              currentImageUrl={coverImageUrl || null} 
+              onUpload={(url) => setCoverImageUrl(url)} 
+            />
+          </div>
+
         </div>
 
         <div className="border border-primary-dark/10">
@@ -364,7 +375,7 @@ export default function EditArtikelPage() {
                 placeholder="Isi artikel dalam format Markdown..."
                 className="w-full h-[55vh] font-mono text-sm text-primary-dark bg-primary-light p-6 focus:outline-none resize-none placeholder-primary-dark/20 leading-relaxed"
               />
-              
+
               {charts.length > 0 && (
                 <div className="border-t border-primary-dark/10 bg-primary-dark/[0.02] p-6">
                   <h3 className="font-helvetica text-xs font-bold text-primary-dark mb-4 uppercase tracking-widest">
@@ -398,6 +409,12 @@ export default function EditArtikelPage() {
                     <h1 className="font-libre text-4xl font-bold text-primary-dark mb-6 leading-tight">
                       {judul}
                     </h1>
+                  )}
+                  {coverImageUrl && (
+                    <div className="mb-8 w-full max-h-[500px] overflow-hidden bg-primary-dark/5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={coverImageUrl} alt="Cover Artikel" className="w-full h-full object-cover" />
+                    </div>
                   )}
                   <ArticleRenderer content={konten} charts={previewCharts} />
                 </article>

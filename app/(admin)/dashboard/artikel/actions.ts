@@ -24,6 +24,7 @@ export async function buatArtikelBaru(data: {
   slug: string
   content: string
   excerpt: string
+  cover_image_url: string | null
   charts: { identifier: string; config: string }[]
 }): Promise<HasilAksi> {
   if (!data.title.trim()) return { error: 'Judul artikel tidak boleh kosong.' }
@@ -40,6 +41,7 @@ export async function buatArtikelBaru(data: {
       slug: slugFinal,
       content: data.content,
       excerpt: data.excerpt.trim() || null,
+      cover_image_url: data.cover_image_url || null,
       is_published: false,
     })
     .select('id')
@@ -83,6 +85,7 @@ export async function updateArtikel(
     slug: string
     content: string
     excerpt: string
+    cover_image_url: string | null
     charts: { identifier: string; config: string }[]
   }
 ): Promise<HasilAksi> {
@@ -100,6 +103,7 @@ export async function updateArtikel(
       slug: slugFinal,
       content: data.content,
       excerpt: data.excerpt.trim() || null,
+      cover_image_url: data.cover_image_url || null,
     })
     .eq('id', id)
 
@@ -149,7 +153,7 @@ export async function terbitkanArtikel(id: string): Promise<HasilAksi> {
   if (error) {
     return { error: `Gagal menerbitkan artikel: ${error.message}` }
   }
-  
+
   redirect('/dashboard')
 }
 

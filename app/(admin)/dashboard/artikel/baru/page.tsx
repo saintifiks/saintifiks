@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { buatArtikelBaru } from '@/app/(admin)/dashboard/artikel/actions'
 import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
+import ImageUpload from '@/components/artikel/ImageUpload'
 
 function buatSlug(judul: string): string {
   return judul
@@ -24,23 +25,21 @@ export default function ArtikelBaruPage() {
   const [slug, setSlug] = useState('')
   const [slugDiubahManual, setSlugDiubahManual] = useState(false)
   const [excerpt, setExcerpt] = useState('')
+  const [coverImageUrl, setCoverImageUrl] = useState<string>('')
   const [konten, setKonten] = useState('')
-  
-  // State baru untuk menampung data chart dinamis
+
   const [charts, setCharts] = useState<{ identifier: string; config: string }[]>([])
 
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<'tulis' | 'preview'>('tulis')
   const [isPending, startTransition] = useTransition()
 
-  // Efek: Pantau teks editor, deteksi placeholder {{chart:...}} otomatis
   useEffect(() => {
     const matches = Array.from(konten.matchAll(/{{chart:([^}]+)}}/g))
     const foundIdentifiers = matches.map(m => m[1])
 
     setCharts(prev => {
       return foundIdentifiers.map(id => {
-        // Jika sudah ada isian untuk chart ini, pertahankan. Jika baru, buat kosong.
         const existing = prev.find(p => p.identifier === id)
         return existing ? existing : { identifier: id, config: '' }
       })
@@ -68,7 +67,8 @@ export default function ArtikelBaruPage() {
         slug,
         content: konten,
         excerpt,
-        charts, // Kirim data chart ke backend
+        cover_image_url: coverImageUrl || null,
+        charts,
       })
       if (hasil && 'error' in hasil) {
         setError(hasil.error)
@@ -76,7 +76,6 @@ export default function ArtikelBaruPage() {
     })
   }
 
-  // Konversi format chart untuk ArticleRenderer preview
   const previewCharts = charts.map(c => ({
     chart_identifier: c.identifier,
     config: c.config
@@ -187,6 +186,13 @@ export default function ArtikelBaruPage() {
               className="w-full font-helvetica text-sm text-primary-dark bg-transparent border-b border-primary-dark/15 pb-1 focus:outline-none focus:border-primary-dark transition-colors placeholder-primary-dark/20"
             />
           </div>
+
+          <div>
+            <ImageUpload 
+              currentImageUrl={coverImageUrl || null} 
+              onUpload={(url) => setCoverImageUrl(url)} 
+            />
+          </div>
         </div>
 
         <div className="border border-primary-dark/10">
@@ -198,8 +204,7 @@ export default function ArtikelBaruPage() {
                 placeholder={`Tulis isi artikel dalam format Markdown...\n\nUntuk memunculkan grafik, ketik: {{chart:nama-grafik}}`}
                 className="w-full h-[55vh] font-mono text-sm text-primary-dark bg-primary-light p-6 focus:outline-none resize-none placeholder-primary-dark/20 leading-relaxed"
               />
-              
-              {/* Area dinamis input JSON Chart */}
+
               {charts.length > 0 && (
                 <div className="border-t border-primary-dark/10 bg-primary-dark/[0.02] p-6">
                   <h3 className="font-helvetica text-xs font-bold text-primary-dark mb-4 uppercase tracking-widest">
@@ -234,7 +239,12 @@ export default function ArtikelBaruPage() {
                       {judul}
                     </h1>
                   )}
-                  {/* Preview menggunakan komponen yang sama persis dengan halaman publik */}
+                  {coverImageUrl && (
+                    <div className="mb-8 w-full max-h-[500px] overflow-hidden bg-primary-dark/5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={coverImageUrl} alt="Cover Artikel" className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   <ArticleRenderer content={konten} charts={previewCharts} />
                 </article>
               ) : (
