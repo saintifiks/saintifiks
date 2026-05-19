@@ -372,7 +372,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Google OAuth via Supabase Auth (untuk pemilik)
 - [x] Admin panel dasar (hanya bisa diakses pemilik)
 - [x] Form tulis/edit artikel (Markdown editor + preview)
-- [ ] Sistem chart (tabel `article_charts`, placeholder parser, Chart.js renderer)
+- [x] Sistem chart (tabel `article_charts`, placeholder parser, Chart.js renderer)
 - [ ] Upload gambar via Supabase Storage
 
 ### Phase 3 — Interaksi pembaca
@@ -676,7 +676,24 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 2 — Sistem chart (tabel article_charts, parser {{chart:chart-id}}, Chart.js renderer)
-e
+
+> [19-05-2026] SESI #10
+Branch: feature/phase-2-sistem-chart
+Tujuan sesi: Phase 2 — Sistem chart (tabel article_charts, parser {{chart:chart-id}}, Chart.js renderer)
+Yang dikerjakan:
+  - Eksekusi SQL di Supabase: buat tabel article_charts dan 2 RLS policy (SELECT untuk artikel publik, ALL untuk admin terautentikasi).
+  - Install dependensi via npm: chart.js dan react-chartjs-2.
+  - Buat components/artikel/ChartBlock.tsx: Client component untuk me-render kanvas Chart.js dengan *error boundary* fallback (kotak merah jika JSON invalid/kosong).
+  - Buat components/artikel/ArticleRenderer.tsx: Parser Markdown kustom untuk membelah string via regex {{chart:id}} dan me-rendernya menggunakan ChartBlock. Menggunakan React.createElement untuk mengamankan link, bypass bug browser memakan tag <a>.
+  - Edit app/artikel/[slug]/page.tsx: Modifikasi query Supabase untuk *relational join* dengan article_charts, mengganti ReactMarkdown bawaan dengan ArticleRenderer. Mengganti tag HTML <a> native dengan Next.js <Link> untuk mematikan risiko bug copy-paste.
+  - Edit app/(admin)/dashboard/artikel/actions.ts: Terapkan strategi idempotent update (hapus-seluruh-lalu-insert-baru) untuk relasi data chart demi menjaga konsistensi state database.
+  - Edit app/(admin)/dashboard/artikel/baru/page.tsx: Injeksi deteksi real-time regex {{chart:...}} dan UI textarea dinamis untuk input JSON.
+  - Edit app/(admin)/dashboard/artikel/[id]/edit/page.tsx: Injeksi logika *fetch* data JSON dari database saat *mount* dan UI dinamis input konfigurasi chart.
+  - Resolusi CI/CD Vercel: Perbaikan penolakan build akibat aturan *strict linting* (penghapusan *dead code* variabel exception), perbaikan *unescaped JSX entities* (&quot;), dan penyelesaian *explicit type casting* dari tipe 'unknown' ke 'string' pada TypeScript.
+Keputusan baru:
+  - Workaround bug copy-paste tag <a> diperluas: implementasi link dalam komponen custom Markdown wajib menggunakan React.createElement('a', ...) alih-alih JSX mentah untuk mengeliminasi celah kegagalan build.
+Status akhir: selesai
+Next step: Phase 2 — Upload gambar artikel via Supabase Storage
 ---
 ```
 Format:
