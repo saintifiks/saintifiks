@@ -370,7 +370,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 
 ### Phase 2 — Pemilik bisa publish
 - [x] Google OAuth via Supabase Auth (untuk pemilik)
-- [ ] Admin panel dasar (hanya bisa diakses pemilik)
+- [x] Admin panel dasar (hanya bisa diakses pemilik)
 - [ ] Form tulis/edit artikel (Markdown editor + preview)
 - [ ] Sistem chart (tabel `article_charts`, placeholder parser, Chart.js renderer)
 - [ ] Upload gambar via Supabase Storage
@@ -644,13 +644,22 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 2 — Admin panel dasar (dashboard artikel + form tulis artikel)
----
----
----
----
----
----
----
+
+> [19-05-2026] SESI #8
+Branch: feature/phase-2-admin-panel
+Tujuan sesi: Phase 2 — Admin panel dasar (dashboard artikel)
+Yang dikerjakan:
+  - Edit app/(admin)/dashboard/page.tsx: ganti placeholder dengan dashboard nyata
+  - Dashboard menampilkan: header admin (label + judul + email), tombol "+ Artikel Baru",
+    tombol "Keluar" (sign out via server action), tabel daftar semua artikel (termasuk draft)
+    dengan kolom judul / status / tanggal / link Edit, dan empty state jika belum ada artikel
+  - Strategi caching: force-dynamic (admin selalu butuh data terbaru)
+  - Sign out: server action inline dengan 'use server', redirect ke /login setelah logout
+  - Merge feature/phase-2-admin-panel ke main
+Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+Status akhir: selesai
+Next step: Phase 2 — Form tulis/edit artikel (Markdown editor + live preview + publish)
+
 ---
 ```
 Format:
