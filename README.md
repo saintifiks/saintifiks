@@ -378,7 +378,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 ### Phase 3 — Interaksi pembaca
 - [x] Google OAuth untuk pembaca (login untuk like)
 - [x] Sistem likes (tabel `likes`, API endpoint, LikeButton component)
-- [ ] Analytics internal (tabel `analytics_events`, event tracking)
+- [x] Analytics internal (tabel `analytics_events`, event tracking)
 
 ### Phase 4 — Kualitas & keamanan
 - [ ] Weekly backup database via GitHub Actions
@@ -720,6 +720,20 @@ Keputusan baru:
   - Komponen LikeButton secara asimetris tidak mengekspos agregasi metrik total "likes" secara publik sebagai wujud konformitas teknis pada prinsip pembatasan social proof bias (referensi: Habermas).
 Status akhir: selesai
 Next step: Phase 3 — Analytics internal (tabel analytics_events dan event tracking)
+---
+
+> [20-05-2026] SESI #13
+Branch: feature/phase-3-analytics
+Tujuan sesi: Phase 3 — Analytics internal (tabel analytics_events dan event tracking)
+Yang dikerjakan:
+  - Eksekusi SQL di Supabase: Pembuatan tabel analytics_events dengan RLS terisolasi (hanya INSERT).
+  - Buat app/api/analytics/route.ts: API endpoint non-blocking untuk menerima beacon payload.
+  - Buat components/analytics/AnalyticsTracker.tsx: Modul event tracking pasif untuk page_view dan scroll_depth berbasis W3C Beacon API pattern (keepalive: true).
+  - Edit app/layout.tsx: Injeksi komponen tracker di level root.
+  - Edit components/artikel/LikeButton.tsx: Injeksi pengiriman telemetry klik_like secara optimistik.
+Keputusan baru: Tidak ada. Eksekusi selaras dengan limitasi performa CRP dan larangan telemetry pihak ketiga.
+Status akhir: selesai
+Next step: Evaluasi akhir Phase 3 dan persiapan Phase 4 (Security & SEO).
 ---
 
 ```
