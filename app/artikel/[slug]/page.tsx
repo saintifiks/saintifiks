@@ -1,4 +1,4 @@
-﻿// Halaman artikel individual - menampilkan satu artikel berdasarkan slug-nya
+// Halaman artikel individual — menampilkan satu artikel berdasarkan slug-nya
 // Server Component: fetch data di server, SEO metadata di-generate otomatis
 
 import { createClient } from '@/lib/supabase/server'
@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import type { Metadata } from 'next'
 
+// ISR: halaman di-cache dan diperbarui otomatis setiap 1 jam
 export const revalidate = 3600
 
 type Article = {
@@ -34,11 +35,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .single()
 
   if (!article) {
-    return { title: 'Artikel tidak ditemukan - Saintifiks' }
+    return { title: 'Artikel tidak ditemukan — Saintifiks' }
   }
 
   return {
-    title: `${article.title} - Saintifiks`,
+    title: `${article.title} — Saintifiks`,
     description: article.excerpt ?? undefined,
     openGraph: {
       title: article.title,
@@ -79,11 +80,11 @@ export default async function ArtikelPage({ params }: Props) {
       <header className="border-b border-primary-dark/10 py-16 px-6">
         <div className="max-w-2xl mx-auto">
 
-          
+          <a
             href="/"
             className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest hover:text-primary-dark transition-colors duration-150"
           >
-            Kembali ke Saintifiks
+            ← Saintifiks
           </a>
 
           {artikel.published_at && (
@@ -156,7 +157,7 @@ export default async function ArtikelPage({ params }: Props) {
               </blockquote>
             ),
             a: ({ href, children }) => (
-              
+              <a
                 href={href}
                 className="text-accent-blue underline underline-offset-2 hover:opacity-70 transition-opacity duration-150"
                 target={href?.startsWith('http') ? '_blank' : undefined}
