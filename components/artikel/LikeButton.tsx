@@ -57,6 +57,20 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
     // Optimistic Update: Langsung ubah UI sebelum proses jaringan selesai
     const previousState = isLiked
     setIsLiked(!previousState)
+    // Rekam interaksi ke analitik secara asinkron
+    if (!previousState) {
+      fetch('/api/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'klik_like',
+          path: pathname,
+          session_id: 'interaction',
+          metadata: { article_id: articleId }
+        }),
+        keepalive: true
+      }).catch(() => {})
+    }
 
     if (!previousState) {
       // Eksekusi insert like baru ke database
