@@ -365,7 +365,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Database schema dasar (tabel `articles`) + RLS policies
 - [x] Halaman artikel publik (render Markdown, SEO metadata)
 - [x] Halaman beranda (list artikel yang dipublikasikan)
-- [ ] Navigasi dasar
+- [x] Navigasi dasar
 - [x] Design system diterapkan (font + color palette)
 
 ### Phase 2 — Pemilik bisa publish
@@ -615,6 +615,20 @@ Keputusan baru:
     dan bisa didownload). Ini berlaku untuk semua sesi berikutnya.
 Status akhir: selesai
 Next step: Phase 1 — Navigasi dasar (Navbar dan Footer)
+
+> [19-05-2026] SESI #6
+Branch: feature/phase-1-navigasi
+Tujuan sesi: Phase 1 — Navigasi dasar (Navbar dan Footer)
+Yang dikerjakan:
+  - Buat folder components/layout/
+  - Buat components/layout/Navbar.tsx: bar navigasi atas dengan nama brand "Saintifiks" sebagai link ke beranda
+  - Buat components/layout/Footer.tsx: bagian bawah halaman dengan teks copyright
+  - Edit app/layout.tsx: import dan render Navbar + Footer mengapit {children}
+  - Merge feature/phase-1-navigasi ke main
+Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+Status akhir: selesai
+Next step: Phase 2 — Google OAuth via Supabase Auth (login pemilik)
+---
 ---
 ---
 ---
