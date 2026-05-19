@@ -352,7 +352,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 
 ### Phase 1 — Bisa baca artikel
 - [x] Database schema dasar (tabel `articles`) + RLS policies
-- [ ] Halaman artikel publik (render Markdown, SEO metadata)
+- [x] Halaman artikel publik (render Markdown, SEO metadata)
 - [x] Halaman beranda (list artikel yang dipublikasikan)
 - [ ] Navigasi dasar
 - [x] Design system diterapkan (font + color palette)
@@ -502,6 +502,23 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 1 — Halaman artikel individual (/artikel/[slug]) dengan render Markdown + SEO metadata
+
+> [19-05-2026] SESI #5
+Branch: feature/phase-1-artikel-individual
+Tujuan sesi: Phase 1 — Halaman artikel individual (/artikel/[slug]) dengan render Markdown + SEO metadata
+Yang dikerjakan:
+  - Install library react-markdown
+  - Buat app/artikel/[slug]/page.tsx
+  - generateMetadata() untuk SEO (title, description, og:title, og:description)
+  - Fetch artikel dari Supabase berdasarkan slug (hanya is_published = true)
+  - Penanganan 404 via notFound() jika artikel tidak ditemukan atau belum dipublikasikan
+  - Render konten Markdown via ReactMarkdown dengan komponen custom sesuai design system
+  - Caching ISR revalidate = 3600 (konsisten dengan halaman beranda)
+  - Merge feature/phase-1-artikel-individual ke main
+Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+Status akhir: selesai
+Next step: Phase 1 — Navigasi dasar (Navbar dan Footer)
+---
 ---
 ---
 ---
