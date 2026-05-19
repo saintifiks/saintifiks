@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Libre_Baskerville } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 
 // Load Libre Baskerville dari Google Fonts
 // weight 400 = regular, 700 = bold; style italic tersedia untuk body artikel
@@ -27,7 +29,9 @@ export default function RootLayout({
     // variable font Libre Baskerville ditaruh di <html> agar bisa diakses seluruh halaman
     <html lang="id" className={libreBaskerville.variable}>
       <body className="bg-primary-light text-primary-dark font-helvetica antialiased">
+        <Navbar />
         {children}
+        <Footer />
       </body>
     </html>
   );
