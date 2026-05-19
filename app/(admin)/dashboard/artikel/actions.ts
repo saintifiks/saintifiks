@@ -68,7 +68,7 @@ export async function buatArtikelBaru(data: {
       if (chartError) {
         return { error: `Artikel tersimpan, tapi gagal menyimpan data chart: ${chartError.message}` }
       }
-    } catch (err) {
+    } catch {
       return { error: 'Gagal memproses JSON chart. Pastikan format konfigurasi valid.' }
     }
   }
@@ -128,7 +128,7 @@ export async function updateArtikel(
       if (chartError) {
         return { error: `Artikel terupdate, tapi gagal menyimpan pembaruan chart: ${chartError.message}` }
       }
-    } catch (err) {
+    } catch {
       return { error: 'Gagal memproses JSON chart. Pastikan format konfigurasi valid.' }
     }
   }

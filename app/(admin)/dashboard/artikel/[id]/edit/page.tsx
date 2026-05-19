@@ -73,10 +73,10 @@ export default function EditArtikelPage() {
       setIsPublished(data.is_published)
       
       if (data.article_charts) {
-        setCharts(data.article_charts.map((c: any) => ({
+        setCharts(data.article_charts.map((c: { chart_identifier: string; config: unknown }) => ({
           identifier: c.chart_identifier,
           // Parsing objek JSON kembali menjadi string untuk textarea
-          config: typeof c.config === 'object' ? JSON.stringify(c.config, null, 2) : c.config
+          config: typeof c.config === 'object' ? JSON.stringify(c.config, null, 2) : String(c.config)
         })))
       }
       
@@ -403,7 +403,7 @@ export default function EditArtikelPage() {
                 </article>
               ) : (
                 <p className="font-helvetica text-sm text-primary-dark/30">
-                  Belum ada konten untuk di-preview. Ketik dulu di tab "Tulis".
+                  Belum ada konten untuk di-preview. Ketik dulu di tab &quot;Tulis&quot;.
                 </p>
               )}
             </div>

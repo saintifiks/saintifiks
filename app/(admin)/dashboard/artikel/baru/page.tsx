@@ -239,7 +239,7 @@ export default function ArtikelBaruPage() {
                 </article>
               ) : (
                 <p className="font-helvetica text-sm text-primary-dark/30">
-                  Belum ada konten untuk di-preview. Ketik dulu di tab "Tulis".
+                  Belum ada konten untuk di-preview. Ketik dulu di tab &quot;Tulis&quot;.
                 </p>
               )}
             </div>
@@ -247,7 +247,7 @@ export default function ArtikelBaruPage() {
         </div>
 
         <p className="font-helvetica text-xs text-primary-dark/30 mt-4">
-          Setelah menyimpan draft, kamu akan kembali ke Dashboard. Klik "Edit" pada artikel untuk menerbitkannya.
+          Setelah menyimpan draft, kamu akan kembali ke Dashboard. Klik &quot;Edit&quot; pada artikel untuk menerbitkannya.
         </p>
 
       </div>

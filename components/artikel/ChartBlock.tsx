@@ -56,7 +56,7 @@ export default function ChartBlock({ identifier, configString }: ChartBlockProps
         </div>
       </div>
     )
-  } catch (error) {
+  } catch {
     return (
       <div className="my-8 p-6 border border-accent-red/20 bg-accent-red/5 rounded flex items-center justify-center">
         <p className="font-helvetica text-sm text-accent-red">
