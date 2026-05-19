@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     // Selalu kembalikan 200 OK agar tidak membebani log frontend pembaca
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('[Analytics] Terjadi kesalahan internal:', error)
     return NextResponse.json({ success: false }, { status: 500 })
   }
 }
