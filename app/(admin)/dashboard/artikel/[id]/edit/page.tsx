@@ -1,9 +1,5 @@
 'use client'
 
-// Halaman form edit artikel — hanya bisa diakses pemilik (dilindungi auth guard di layout.tsx)
-// Client Component karena butuh state form + fetch data artikel dari database saat halaman dibuka
-// Pola: fetch on mount via useEffect → pre-fill semua field → user edit → simpan/terbitkan
-
 import { useEffect, useState, useTransition } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -12,11 +8,9 @@ import {
   terbitkanArtikel,
   jadikanDraft,
 } from '@/app/(admin)/dashboard/artikel/actions'
-import ReactMarkdown from 'react-markdown'
 import Link from 'next/link'
+import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 
-// Auto-generate slug di sisi client
-// Fungsi ini identik dengan yang ada di baru/page.tsx dan actions.ts
 function buatSlug(judul: string): string {
   return judul
     .toLowerCase()
@@ -35,32 +29,33 @@ export default function EditArtikelPage() {
   const params = useParams()
   const id = params.id as string
 
-  // State data dari database
   const [loading, setLoading] = useState(true)
   const [tidakDitemukan, setTidakDitemukan] = useState(false)
   const [isPublished, setIsPublished] = useState(false)
-  const [slugLive, setSlugLive] = useState('') // slug artikel yang sudah live (untuk link pratinjau)
+  const [slugLive, setSlugLive] = useState('') 
 
-  // State form
   const [judul, setJudul] = useState('')
   const [slug, setSlug] = useState('')
   const [slugDiubahManual, setSlugDiubahManual] = useState(false)
   const [excerpt, setExcerpt] = useState('')
   const [konten, setKonten] = useState('')
+  
+  const [charts, setCharts] = useState<{ identifier: string; config: string }[]>([])
 
-  // State UI
   const [error, setError] = useState<string | null>(null)
   const [pesanSukses, setPesanSukses] = useState<string | null>(null)
   const [mode, setMode] = useState<'tulis' | 'preview'>('tulis')
   const [isPending, startTransition] = useTransition()
 
-  // Ambil data artikel dari Supabase saat halaman pertama kali dibuka
   useEffect(() => {
     async function ambilArtikel() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('articles')
-        .select('id, title, slug, content, excerpt, is_published, published_at')
+        .select(`
+          id, title, slug, content, excerpt, is_published, published_at,
+          article_charts (chart_identifier, config)
+        `)
         .eq('id', id)
         .single()
 
@@ -70,20 +65,41 @@ export default function EditArtikelPage() {
         return
       }
 
-      // Pre-fill semua field dengan data dari database
       setJudul(data.title)
       setSlug(data.slug)
       setSlugLive(data.slug)
       setExcerpt(data.excerpt ?? '')
       setKonten(data.content)
       setIsPublished(data.is_published)
+      
+      if (data.article_charts) {
+        setCharts(data.article_charts.map((c: any) => ({
+          identifier: c.chart_identifier,
+          // Parsing objek JSON kembali menjadi string untuk textarea
+          config: typeof c.config === 'object' ? JSON.stringify(c.config, null, 2) : c.config
+        })))
+      }
+      
       setLoading(false)
     }
 
     ambilArtikel()
   }, [id])
 
-  // Handler: judul berubah → auto-update slug jika belum diubah manual
+  useEffect(() => {
+    if (loading) return
+
+    const matches = Array.from(konten.matchAll(/{{chart:([^}]+)}}/g))
+    const foundIdentifiers = matches.map(m => m[1])
+
+    setCharts(prev => {
+      return foundIdentifiers.map(identifier => {
+        const existing = prev.find(p => p.identifier === identifier)
+        return existing ? existing : { identifier, config: '' }
+      })
+    })
+  }, [konten, loading])
+
   function handleJudulChange(e: React.ChangeEvent<HTMLInputElement>) {
     const nilaiJudul = e.target.value
     setJudul(nilaiJudul)
@@ -92,13 +108,11 @@ export default function EditArtikelPage() {
     }
   }
 
-  // Handler: slug diubah manual → tandai agar auto-generate berhenti
   function handleSlugChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSlug(e.target.value)
     setSlugDiubahManual(true)
   }
 
-  // Simpan perubahan — tidak mengubah status published/draft
   function handleSimpan() {
     setError(null)
     setPesanSukses(null)
@@ -108,34 +122,33 @@ export default function EditArtikelPage() {
         slug,
         content: konten,
         excerpt,
+        charts
       })
       if (hasil && 'error' in hasil) {
         setError(hasil.error)
       } else {
         setPesanSukses('Perubahan berhasil disimpan.')
-        setSlugLive(slug) // perbarui slug live setelah disimpan
+        setSlugLive(slug) 
       }
     })
   }
 
-  // Simpan lalu terbitkan — dua langkah berurutan
   function handleTerbitkan() {
     setError(null)
     setPesanSukses(null)
     startTransition(async () => {
-      // Langkah 1: simpan perubahan terbaru terlebih dahulu
       const hasilUpdate = await updateArtikel(id, {
         title: judul,
         slug,
         content: konten,
         excerpt,
+        charts
       })
       if (hasilUpdate && 'error' in hasilUpdate) {
         setError(hasilUpdate.error)
         return
       }
 
-      // Langkah 2: ubah status jadi published → Server Action redirect ke /dashboard
       const hasilTerbitkan = await terbitkanArtikel(id)
       if (hasilTerbitkan && 'error' in hasilTerbitkan) {
         setError(hasilTerbitkan.error)
@@ -143,7 +156,6 @@ export default function EditArtikelPage() {
     })
   }
 
-  // Tarik kembali artikel yang sudah live menjadi draft
   function handleJadikanDraft() {
     setError(null)
     setPesanSukses(null)
@@ -158,7 +170,11 @@ export default function EditArtikelPage() {
     })
   }
 
-  // ── Tampilan loading ──
+  const previewCharts = charts.map(c => ({
+    chart_identifier: c.identifier,
+    config: c.config
+  }))
+
   if (loading) {
     return (
       <main className="min-h-screen bg-primary-light flex items-center justify-center">
@@ -167,7 +183,6 @@ export default function EditArtikelPage() {
     )
   }
 
-  // ── Tampilan artikel tidak ditemukan ──
   if (tidakDitemukan) {
     return (
       <main className="min-h-screen bg-primary-light flex items-center justify-center">
@@ -186,12 +201,10 @@ export default function EditArtikelPage() {
     )
   }
 
-  // ── Tampilan utama form edit ──
   return (
     <main className="min-h-screen bg-primary-light">
       <div className="max-w-5xl mx-auto px-6 py-10">
 
-        {/* ── Header halaman ── */}
         <div className="flex items-start justify-between mb-8">
           <div>
             <Link
@@ -204,9 +217,8 @@ export default function EditArtikelPage() {
               <h1 className="font-libre text-2xl font-bold text-primary-dark">
                 Edit Artikel
               </h1>
-              {/* Badge status — menunjukkan apakah artikel sudah live atau masih draft */}
               <span className={`font-helvetica text-xs px-3 py-1 ${
-                isPublished
+                  isPublished
                   ? 'bg-primary-dark text-primary-light'
                   : 'bg-primary-dark/10 text-primary-dark/50'
               }`}>
@@ -215,10 +227,8 @@ export default function EditArtikelPage() {
             </div>
           </div>
 
-          {/* Tombol aksi — kanan atas */}
           <div className="flex items-center gap-4 mt-2">
 
-            {/* Toggle Tulis / Preview */}
             <div className="flex border border-primary-dark/20">
               <button
                 onClick={() => setMode('tulis')}
@@ -242,7 +252,6 @@ export default function EditArtikelPage() {
               </button>
             </div>
 
-            {/* Tombol Jadikan Draft — hanya muncul jika artikel sudah diterbitkan */}
             {isPublished && (
               <button
                 onClick={handleJadikanDraft}
@@ -253,7 +262,6 @@ export default function EditArtikelPage() {
               </button>
             )}
 
-            {/* Tombol Simpan Perubahan — selalu ada */}
             <button
               onClick={handleSimpan}
               disabled={isPending}
@@ -262,7 +270,6 @@ export default function EditArtikelPage() {
               {isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
 
-            {/* Tombol Terbitkan — hanya muncul jika masih draft */}
             {!isPublished && (
               <button
                 onClick={handleTerbitkan}
@@ -276,24 +283,20 @@ export default function EditArtikelPage() {
           </div>
         </div>
 
-        {/* ── Pesan error ── */}
         {error && (
           <div className="mb-6 p-4 border border-accent-red/40 bg-accent-red/5">
             <p className="font-helvetica text-sm text-accent-red">{error}</p>
           </div>
         )}
 
-        {/* ── Pesan sukses ── */}
         {pesanSukses && (
           <div className="mb-6 p-4 border border-primary-dark/15 bg-primary-dark/5">
             <p className="font-helvetica text-sm text-primary-dark/70">{pesanSukses}</p>
           </div>
         )}
 
-        {/* ── Metadata artikel ── */}
         <div className="space-y-6 mb-8 pb-8 border-b border-primary-dark/10">
 
-          {/* Judul */}
           <div>
             <label className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">
               Judul
@@ -307,7 +310,6 @@ export default function EditArtikelPage() {
             />
           </div>
 
-          {/* Slug */}
           <div>
             <label className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">
               Slug
@@ -334,7 +336,6 @@ export default function EditArtikelPage() {
             </div>
           </div>
 
-          {/* Excerpt / Ringkasan */}
           <div>
             <label className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">
               Ringkasan
@@ -353,22 +354,43 @@ export default function EditArtikelPage() {
 
         </div>
 
-        {/* ── Area konten: Tulis atau Preview ── */}
         <div className="border border-primary-dark/10">
 
           {mode === 'tulis' ? (
-
-            /* Mode Tulis: textarea untuk edit Markdown */
-            <textarea
-              value={konten}
-              onChange={(e) => setKonten(e.target.value)}
-              placeholder="Isi artikel dalam format Markdown..."
-              className="w-full h-[55vh] font-mono text-sm text-primary-dark bg-primary-light p-6 focus:outline-none resize-none placeholder-primary-dark/20 leading-relaxed"
-            />
-
+            <div>
+              <textarea
+                value={konten}
+                onChange={(e) => setKonten(e.target.value)}
+                placeholder="Isi artikel dalam format Markdown..."
+                className="w-full h-[55vh] font-mono text-sm text-primary-dark bg-primary-light p-6 focus:outline-none resize-none placeholder-primary-dark/20 leading-relaxed"
+              />
+              
+              {charts.length > 0 && (
+                <div className="border-t border-primary-dark/10 bg-primary-dark/[0.02] p-6">
+                  <h3 className="font-helvetica text-xs font-bold text-primary-dark mb-4 uppercase tracking-widest">
+                    Konfigurasi Chart ({charts.length} Terdeteksi)
+                  </h3>
+                  {charts.map((chart, index) => (
+                    <div key={chart.identifier} className="mb-5 last:mb-0">
+                      <label className="block font-helvetica text-sm text-primary-dark/80 mb-2">
+                        Paste JSON untuk: <strong className="text-accent-blue font-mono bg-accent-blue/5 px-1">{`{{chart:${chart.identifier}}}`}</strong>
+                      </label>
+                      <textarea
+                        value={chart.config}
+                        onChange={(e) => {
+                          const newCharts = [...charts]
+                          newCharts[index].config = e.target.value
+                          setCharts(newCharts)
+                        }}
+                        placeholder='{"type": "line", "data": {...}, "options": {...}}'
+                        className="w-full h-32 font-mono text-xs text-primary-dark bg-white p-3 border border-primary-dark/15 focus:outline-none focus:border-primary-dark transition-colors resize-y"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
-
-            /* Mode Preview: render Markdown identik dengan tampilan artikel live */
             <div className="min-h-[55vh] p-8 bg-primary-light">
               {konten ? (
                 <article>
@@ -377,81 +399,28 @@ export default function EditArtikelPage() {
                       {judul}
                     </h1>
                   )}
-                  <ReactMarkdown
-                    components={{
-                      h1: ({ children }) => (
-                        <h1 className="font-libre text-3xl font-bold text-primary-dark mt-10 mb-4 leading-tight">{children}</h1>
-                      ),
-                      h2: ({ children }) => (
-                        <h2 className="font-libre text-2xl font-bold text-primary-dark mt-8 mb-3 leading-tight">{children}</h2>
-                      ),
-                      h3: ({ children }) => (
-                        <h3 className="font-libre text-xl font-bold text-primary-dark mt-6 mb-2 leading-tight">{children}</h3>
-                      ),
-                      p: ({ children }) => (
-                        <p className="font-libre text-lg text-primary-dark leading-relaxed mb-5">{children}</p>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-bold text-primary-dark">{children}</strong>
-                      ),
-                      em: ({ children }) => (
-                        <em className="italic">{children}</em>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="font-libre text-lg text-primary-dark leading-relaxed mb-5 ml-6 list-disc">{children}</ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="font-libre text-lg text-primary-dark leading-relaxed mb-5 ml-6 list-decimal">{children}</ol>
-                      ),
-                      li: ({ children }) => (
-                        <li className="mb-1">{children}</li>
-                      ),
-                      blockquote: ({ children }) => (
-                        <blockquote className="border-l-2 border-primary-dark/20 pl-6 my-6 font-libre text-lg text-primary-dark/70 italic">{children}</blockquote>
-                      ),
-                      a: ({ href, children }) => (
-                        <a
-                          href={href}
-                          className="text-accent-blue underline underline-offset-2 hover:opacity-70 transition-opacity duration-150"
-                          target={href?.startsWith('http') ? '_blank' : undefined}
-                          rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                        >
-                          {children}
-                        </a>
-                      ),
-                      code: ({ children }) => (
-                        <code className="font-mono text-sm bg-primary-dark/5 text-primary-dark px-1.5 py-0.5 rounded">{children}</code>
-                      ),
-                      hr: () => (
-                        <hr className="border-primary-dark/10 my-10" />
-                      ),
-                    }}
-                  >
-                    {konten}
-                  </ReactMarkdown>
+                  <ArticleRenderer content={konten} charts={previewCharts} />
                 </article>
               ) : (
                 <p className="font-helvetica text-sm text-primary-dark/30">
-                  Belum ada konten untuk di-preview. Ketik dulu di tab &quot;Tulis&quot;.
+                  Belum ada konten untuk di-preview. Ketik dulu di tab "Tulis".
                 </p>
               )}
             </div>
-
           )}
         </div>
 
-        {/* Link ke artikel live — hanya muncul jika sudah diterbitkan */}
         {isPublished && (
           <p className="font-helvetica text-xs text-primary-dark/30 mt-4">
             Artikel ini live di:{' '}
-            <a
+            <Link
               href={`/artikel/${slugLive}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-accent-blue hover:opacity-70 transition-opacity duration-150"
             >
               /artikel/{slugLive} ↗
-            </a>
+            </Link>
           </p>
         )}
 
