@@ -19,8 +19,8 @@ jobs:
           # Mengambil kunci dari brankas GitHub
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          # Menyalin data; sslmode=require memastikan koneksi dienkripsi
-          pg_dump "$SUPABASE_DB_URL?sslmode=require" -F c -f database-backup.dump
+          # Menyalin data menggunakan URL pooler yang sudah benar
+          pg_dump "$SUPABASE_DB_URL" -F c -f database-backup.dump
 
       - name: Simpan File ke GitHub Artifacts
         uses: actions/upload-artifact@v4
