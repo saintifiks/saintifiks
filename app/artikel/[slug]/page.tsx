@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
+import LikeButton from '@/components/artikel/LikeButton'
 
 export const revalidate = 3600
 
@@ -59,7 +60,6 @@ export default async function ArtikelPage({ params }: Props) {
   const { slug } = await params
   const supabase = await createClient()
 
-  // Query dimodifikasi untuk menarik data JSON dari article_charts
   const { data: article, error } = await supabase
     .from('articles')
     .select(`
@@ -99,8 +99,8 @@ export default async function ArtikelPage({ params }: Props) {
 
           {artikel.published_at && (
             <time
-              dateTime={artikel.published_at}
-              className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mt-6"
+               dateTime={artikel.published_at}
+               className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mt-6"
             >
               {formatTanggal(artikel.published_at)}
             </time>
@@ -120,6 +120,14 @@ export default async function ArtikelPage({ params }: Props) {
 
       <article className="max-w-2xl mx-auto px-6 py-12">
         <ArticleRenderer content={artikel.content} charts={charts} />
+        
+        {/* INJEKSI LIKE BUTTON (PHASE 3) */}
+        <div className="mt-12 pt-8 border-t border-primary-dark/10 flex items-center justify-between">
+          <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">
+            Dukung Jurnalisme Independen
+          </p>
+          <LikeButton articleId={artikel.id} />
+        </div>
       </article>
     </main>
   )

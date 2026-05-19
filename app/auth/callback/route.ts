@@ -10,6 +10,9 @@ import type { NextRequest } from 'next/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  
+  // Tangkap parameter 'next' dari URL, jika tidak ada, gunakan default '/dashboard'
+  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
   const origin = requestUrl.origin
 
   if (code) {
@@ -24,9 +27,13 @@ export async function GET(request: NextRequest) {
             return cookieStore.getAll()
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch {
+              // Diabaikan jika dipanggil dari Server Component
+            }
           },
         },
       }
@@ -36,6 +43,6 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Setelah sesi berhasil dibuat, arahkan ke dashboard admin
-  return NextResponse.redirect(`${origin}/dashboard`)
+  // Setelah sesi berhasil dibuat, arahkan ke rute dinamis (artikel) atau default (/dashboard)
+  return NextResponse.redirect(`${origin}${next}`)
 }
