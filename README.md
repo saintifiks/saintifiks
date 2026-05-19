@@ -376,8 +376,8 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Upload gambar via Supabase Storage
 
 ### Phase 3 — Interaksi pembaca
-- [ ] Google OAuth untuk pembaca (login untuk like)
-- [ ] Sistem likes (tabel `likes`, API endpoint, LikeButton component)
+- [x] Google OAuth untuk pembaca (login untuk like)
+- [x] Sistem likes (tabel `likes`, API endpoint, LikeButton component)
 - [ ] Analytics internal (tabel `analytics_events`, event tracking)
 
 ### Phase 4 — Kualitas & keamanan
@@ -706,6 +706,21 @@ Yang dikerjakan:
 Keputusan baru: tidak ada.
 Status akhir: selesai.
 Next step: Phase 3 — Google OAuth untuk pembaca (login untuk interaksi).
+
+> [20-05-2026] SESI #12
+Branch: feature/phase-3-likes-oauth
+Tujuan sesi: Phase 3 — Implementasi Google OAuth untuk pembaca dan Sistem Likes
+Yang dikerjakan:
+  - Eksekusi SQL di Supabase: Pembuatan tabel `likes` dengan konfigurasi relasi ke `auth.users` dan `public.articles` (ON DELETE CASCADE) berserta constraint UNIQUE.
+  - Injeksi RLS Policies pada tabel `likes`: SELECT/DELETE murni untuk owner, INSERT terikat ke auth.uid().
+  - Modifikasi `app/auth/callback/route.ts`: Injeksi parameter tangkapan `next` dinamis pada URL callback agar OAuth redirect otomatis diarahkan kembali ke artikel pembaca.
+  - Pembuatan `components/artikel/LikeButton.tsx`: Komponen klien yang mengeksekusi mekanisme Optimistic Update secara asinkron tanpa memblokir thread UI.
+  - Modifikasi `app/artikel/[slug]/page.tsx`: Import dan integrasi penempatan LikeButton di penutup grid artikel.
+Keputusan baru:
+  - Komponen LikeButton secara asimetris tidak mengekspos agregasi metrik total "likes" secara publik sebagai wujud konformitas teknis pada prinsip pembatasan social proof bias (referensi: Habermas).
+Status akhir: selesai
+Next step: Phase 3 — Analytics internal (tabel analytics_events dan event tracking)
+---
 
 ```
 Format:
