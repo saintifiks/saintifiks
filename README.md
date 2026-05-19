@@ -373,7 +373,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Admin panel dasar (hanya bisa diakses pemilik)
 - [x] Form tulis/edit artikel (Markdown editor + preview)
 - [x] Sistem chart (tabel `article_charts`, placeholder parser, Chart.js renderer)
-- [ ] Upload gambar via Supabase Storage
+- [x] Upload gambar via Supabase Storage
 
 ### Phase 3 — Interaksi pembaca
 - [ ] Google OAuth untuk pembaca (login untuk like)
@@ -694,7 +694,19 @@ Keputusan baru:
   - Workaround bug copy-paste tag <a> diperluas: implementasi link dalam komponen custom Markdown wajib menggunakan React.createElement('a', ...) alih-alih JSX mentah untuk mengeliminasi celah kegagalan build.
 Status akhir: selesai
 Next step: Phase 2 — Upload gambar artikel via Supabase Storage
----
+
+> [20-05-2026] SESI #11
+Branch: feature/phase-2-sistem-chart
+Tujuan sesi: Phase 2 — Upload gambar artikel via Supabase Storage
+Yang dikerjakan:
+  - Setup bucket Storage 'artikel-gambar' di Supabase beserta 2 RLS policy.
+  - Pembuatan komponen components/artikel/ImageUpload.tsx.
+  - Modifikasi app/(admin)/dashboard/artikel/baru/page.tsx dan [id]/edit/page.tsx untuk injeksi komponen ImageUpload.
+  - Pembaruan app/(admin)/dashboard/artikel/actions.ts untuk menyimpan nilai cover_image_url ke database.
+Keputusan baru: tidak ada.
+Status akhir: selesai.
+Next step: Phase 3 — Google OAuth untuk pembaca (login untuk interaksi).
+
 ```
 Format:
 [TANGGAL] SESI #N
