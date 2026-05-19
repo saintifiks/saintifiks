@@ -369,7 +369,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Design system diterapkan (font + color palette)
 
 ### Phase 2 — Pemilik bisa publish
-- [ ] Google OAuth via Supabase Auth (untuk pemilik)
+- [x] Google OAuth via Supabase Auth (untuk pemilik)
 - [ ] Admin panel dasar (hanya bisa diakses pemilik)
 - [ ] Form tulis/edit artikel (Markdown editor + preview)
 - [ ] Sistem chart (tabel `article_charts`, placeholder parser, Chart.js renderer)
@@ -628,6 +628,23 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 2 — Google OAuth via Supabase Auth (login pemilik)
+
+> [19-05-2026] SESI #7
+Branch: feature/phase-2-google-oauth
+Tujuan sesi: Phase 2 — Google OAuth via Supabase Auth (login pemilik)
+Yang dikerjakan:
+  - Setup Google Cloud Console: OAuth 2.0 Client ID untuk web application
+  - Setup Supabase Dashboard: aktifkan Google provider + konfigurasi redirect URLs
+  - Buat app/auth/callback/route.ts (handler OAuth callback — tukar kode jadi sesi)
+  - Buat app/login/page.tsx (halaman login dengan tombol Masuk dengan Google)
+  - Buat app/(admin)/layout.tsx (auth guard untuk seluruh area admin)
+  - Buat app/(admin)/dashboard/page.tsx (placeholder konfirmasi login berhasil)
+  - Tambah NEXT_PUBLIC_SITE_URL dan ADMIN_EMAIL ke .env.local dan Vercel
+  - Merge feature/phase-2-google-oauth ke main
+Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+Status akhir: selesai
+Next step: Phase 2 — Admin panel dasar (dashboard artikel + form tulis artikel)
+---
 ---
 ---
 ---
