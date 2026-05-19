@@ -371,7 +371,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 ### Phase 2 — Pemilik bisa publish
 - [x] Google OAuth via Supabase Auth (untuk pemilik)
 - [x] Admin panel dasar (hanya bisa diakses pemilik)
-- [ ] Form tulis/edit artikel (Markdown editor + preview)
+- [x] Form tulis/edit artikel (Markdown editor + preview)
 - [ ] Sistem chart (tabel `article_charts`, placeholder parser, Chart.js renderer)
 - [ ] Upload gambar via Supabase Storage
 
@@ -660,6 +660,23 @@ Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seks
 Status akhir: selesai
 Next step: Phase 2 — Form tulis/edit artikel (Markdown editor + live preview + publish)
 
+> [19-05-2026] SESI #9
+Branch: feature/phase-2-form-artikel
+Tujuan sesi: Phase 2 — Form tulis/edit artikel (Markdown editor + live preview + publish)
+Yang dikerjakan:
+  - Buat app/(admin)/dashboard/artikel/actions.ts: Server Actions untuk
+    buatArtikel(), updateArtikel(), terbitkanArtikel(), jadikanDraft()
+  - Buat app/(admin)/dashboard/artikel/baru/page.tsx: form tulis artikel baru
+    dengan field judul/slug/excerpt, textarea Markdown, live preview ReactMarkdown,
+    tombol Simpan Draft dan Terbitkan
+  - Buat app/(admin)/dashboard/artikel/[id]/edit/page.tsx: form edit artikel
+    dengan pre-fill data dari database, badge status, tombol Simpan Perubahan /
+    Terbitkan / Jadikan Draft, live preview identik dengan halaman artikel publik
+  - Merge feature/phase-2-form-artikel ke main
+Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
+Status akhir: selesai
+Next step: Phase 2 — Sistem chart (tabel article_charts, parser {{chart:chart-id}}, Chart.js renderer)
+e
 ---
 ```
 Format:
