@@ -3,6 +3,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 
+// ISR: Next.js meng-cache halaman ini dan memperbarui otomatis setiap 1 jam
 export const revalidate = 3600
 
 type Article = {

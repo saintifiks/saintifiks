@@ -203,7 +203,7 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 
 ## 6. DATABASE SCHEMA
 
-> Status: BELUM DIBUAT. Akan diisi setelah Supabase project pertama dibuat.
+> Status: SUDAH DIBUAT — 2026-05-19, Sesi #3.
 
 ### Tabel yang Direncanakan
 
@@ -228,14 +228,46 @@ users             — akun pembaca (dikelola otomatis oleh Supabase Auth saat lo
 ### Schema Detail
 
 ```sql
--- [BELUM DIISI — akan diisi setelah database pertama dibuat di Supabase]
--- Format pengisian:
--- CREATE TABLE nama_tabel (
---   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
---   ...
--- );
--- ALTER TABLE nama_tabel ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY "..." ON nama_tabel FOR SELECT USING (...);
+-- ============================================================
+-- SAINTIFIKS — Tabel articles
+-- Dibuat: 2026-05-19 | Sesi #3
+-- ============================================================
+
+CREATE TABLE articles (
+  id              uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
+  title           text        NOT NULL,
+  slug            text        NOT NULL UNIQUE,
+  content         text        NOT NULL,
+  excerpt         text,
+  cover_image_url text,
+  is_published    boolean     NOT NULL DEFAULT false,
+  published_at    timestamptz,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at      timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Artikel publik bisa dibaca semua orang"
+ON articles FOR SELECT
+USING (is_published = true);
+
+CREATE POLICY "Hanya user terautentikasi yang bisa menulis"
+ON articles FOR ALL TO authenticated
+USING (true) WITH CHECK (true);
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER articles_updated_at
+  BEFORE UPDATE ON articles
+  FOR EACH ROW
+  EXECUTE PROCEDURE update_updated_at_column();
 ```
 
 ---
