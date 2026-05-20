@@ -353,7 +353,8 @@ CREATE TRIGGER articles_updated_at
 > Status: DITETAPKAN. Berlaku mulai scaffold pertama.
 
 ```
-Naming files:    kebab-case untuk file dan folder (artikel-renderer.tsx, keep-alive.ts)
+Naming files:    PascalCase untuk komponen React (ArticleRenderer.tsx, LikeButton.tsx)
+                 kebab-case untuk file non-komponen (keep-alive.ts, backup.yml)
 Naming vars:     camelCase untuk variabel dan fungsi (articleSlug, handleLike)
 Naming DB cols:  snake_case (article_id, created_at, is_published)
 Component style: PascalCase untuk nama komponen React (ArticleRenderer, LikeButton)
