@@ -381,7 +381,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Analytics internal (tabel `analytics_events`, event tracking)
 
 ### Phase 4 — Kualitas & keamanan
-- [ ] Weekly backup database via GitHub Actions
+- [x] Weekly backup database via GitHub Actions
 - [ ] SEO metadata lengkap (Open Graph, Twitter Card)
 - [ ] Mekanisme koreksi artikel (publik)
 - [ ] Performance audit
