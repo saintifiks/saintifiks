@@ -1,7 +1,7 @@
 'use client'
 
 // Komponen Navbar — navigasi utama situs Saintifiks
-// [PERUBAHAN SESI #16] — Improve Login UX: tambah prompt select_account + loading feedback
+// [PERUBAHAN SESI #16] — Improve Login UX: tambah prompt select_account via queryParams
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
@@ -32,7 +32,9 @@ export default function Navbar() {
       provider: 'google',
       options: {
         // Memaksa Google menampilkan pemilihan akun / konfirmasi
-        prompt: 'select_account',
+        queryParams: {
+          prompt: 'select_account'
+        },
         // Kembalikan ke halaman yang sedang dibuka setelah login
         redirectTo: `${window.location.origin}/auth/callback?next=${pathname}`,
       },
