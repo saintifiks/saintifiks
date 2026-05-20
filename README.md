@@ -481,6 +481,11 @@ Format pengisian:
              Setelah Keluar, pembaca diarahkan ke beranda (/). Tombol Masuk meneruskan
              URL halaman saat ini via parameter ?next= agar pembaca kembali ke artikel
              yang sedang dibaca setelah OAuth selesai.
+[20-05-2026] KEPUTUSAN: Menggunakan `queryParams: { prompt: 'select_account' }` pada signInWithOAuth
+             ALASAN: Meningkatkan transparansi dan kejelasan saat login Google, terutama ketika browser hanya punya satu akun. Memberi 
+             pengalaman yang lebih sesuai ekspektasi pengguna modern (account chooser).
+             ALTERNATIF DITOLAK: prompt langsung di options (TypeScript error) dan tidak menggunakan prompt sama sekali (UX kurang jelas)
+             CATATAN IMPLEMENTASI: Diterapkan di Navbar.tsx dan LikeButton.tsx untuk konsistensi seluruh flow login pembaca.
 ```
 
 ---
@@ -771,8 +776,16 @@ Yang dikerjakan:
 Keputusan baru:
   - Navbar diubah dari Server Component ke Client Component (lihat Seksi 11)
 Status akhir: selesai
-Next step: Sesi berikutnya — performance audit (Phase 4 item terakhir yang belum selesai)
 ---
+> [20-05-2026] SESI #16
+Branch: feature/improve-login-ux
+Tujuan sesi: Post-launch — Improve UX Login Google OAuth (account chooser + feedback visual)
+Yang dikerjakan:
+  - Edit components/layout/Navbar.tsx: tambah state isLoggingIn + queryParams prompt: 'select_account'
+  - Edit components/artikel/LikeButton.tsx: tambah state isLoggingIn + queryParams prompt: 'select_account' (konsistensi)
+  - Perbaikan TypeScript error terkait opsi OAuth (prompt dipindah ke queryParams)
+Keputusan baru: tidak ada
+Status akhir: selesai
 ```
 Format:
 [TANGGAL] SESI #N
