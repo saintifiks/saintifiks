@@ -11,6 +11,7 @@ import {
   fetchUsdIdr,
 } from './fetchers'
 import type { IndicesSnapshot } from './types'
+import { INDICES_DEFAULT_POLL_MS } from './types'
 
 export async function getIndicesSnapshot(): Promise<IndicesSnapshot> {
   const [
@@ -42,5 +43,10 @@ export async function getIndicesSnapshot(): Promise<IndicesSnapshot> {
     periodic: [inflation, bi7drr],
     annual: [rsf, cpi, democracy, hdi],
     fetchedAt: new Date().toISOString(),
+    pollIntervalMs: INDICES_DEFAULT_POLL_MS,
   }
+}
+
+export function flattenIndices(snapshot: IndicesSnapshot) {
+  return [...snapshot.daily, ...snapshot.periodic, ...snapshot.annual]
 }
