@@ -68,6 +68,7 @@ export default function IndexStripClient({
       if (document.visibilityState === 'visible') refresh()
     }
 
+    tick()
     const id = window.setInterval(tick, pollMs)
     return () => window.clearInterval(id)
   }, [pollMs, refresh])

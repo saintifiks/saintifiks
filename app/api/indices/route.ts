@@ -2,7 +2,10 @@ import { flattenIndices, getIndicesSnapshot } from '@/lib/indices/get-indices'
 import { INDICES_MIN_POLL_MS } from '@/lib/indices/types'
 import { NextResponse } from 'next/server'
 
-const SERVER_CACHE_MS = 30_000
+/** Selalu ambil data segar — jangan di-cache oleh Next/Vercel */
+export const dynamic = 'force-dynamic'
+
+const SERVER_CACHE_MS = 12_000
 
 let cache: {
   at: number
@@ -18,13 +21,11 @@ export async function GET() {
 
   if (cache && now - cache.at < SERVER_CACHE_MS) {
     return NextResponse.json(cache.body, {
-      headers: {
-        'Cache-Control': `private, max-age=${Math.floor(SERVER_CACHE_MS / 1000)}`,
-      },
+      headers: { 'Cache-Control': 'no-store' },
     })
   }
 
-  const snapshot = await getIndicesSnapshot()
+  const snapshot = await getIndicesSnapshot(true)
   const body = {
     items: flattenIndices(snapshot),
     fetchedAt: snapshot.fetchedAt,
@@ -34,8 +35,6 @@ export async function GET() {
   cache = { at: now, body }
 
   return NextResponse.json(body, {
-    headers: {
-      'Cache-Control': `private, max-age=${Math.floor(SERVER_CACHE_MS / 1000)}`,
-    },
+    headers: { 'Cache-Control': 'no-store' },
   })
 }

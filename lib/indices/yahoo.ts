@@ -1,7 +1,6 @@
+import { externalFetchInit, type FetchMode } from './http'
 import { baselineFromYahooSeries, computeTrend } from './trend'
 import type { TrendDirection, TrendWindow } from './trend'
-
-const USER_AGENT = 'Mozilla/5.0 (compatible; Saintifiks/1.0; +https://saintifiks.id)'
 
 export type YahooQuote = {
   price: number
@@ -21,15 +20,12 @@ type YahooChartResponse = {
 
 export async function fetchYahooQuote(
   symbol: string,
-  revalidate: number
+  mode: FetchMode = {}
 ): Promise<YahooQuote | null> {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=5m&range=5d`
 
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': USER_AGENT },
-      next: { revalidate },
-    })
+    const res = await fetch(url, externalFetchInit({ ...mode, revalidate: mode.revalidate ?? 30 }))
     if (!res.ok) return null
 
     const data = (await res.json()) as YahooChartResponse

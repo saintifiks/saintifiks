@@ -43,7 +43,7 @@ export default function TrendIcon({ trend, trendWindow }: TrendIconProps) {
   return (
     <span
       className={`inline-flex h-3 w-3 shrink-0 items-center justify-center ${
-        up ? 'text-primary-light/85' : 'text-accent-red'
+        up ? 'text-accent-green' : 'text-accent-red'
       }`}
       aria-label={label}
       title={label}

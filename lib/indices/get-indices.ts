@@ -13,7 +13,11 @@ import {
 import type { IndicesSnapshot } from './types'
 import { INDICES_DEFAULT_POLL_MS } from './types'
 
-export async function getIndicesSnapshot(): Promise<IndicesSnapshot> {
+export async function getIndicesSnapshot(
+  live = false
+): Promise<IndicesSnapshot> {
+  const market = { live } as const
+
   const [
     usdIdr,
     ihsg,
@@ -26,10 +30,10 @@ export async function getIndicesSnapshot(): Promise<IndicesSnapshot> {
     democracy,
     hdi,
   ] = await Promise.all([
-    fetchUsdIdr(),
-    fetchIhsg(),
-    fetchGoldIdrPerGram(),
-    fetchBrentOil(),
+    fetchUsdIdr(market),
+    fetchIhsg(market),
+    fetchGoldIdrPerGram(market),
+    fetchBrentOil(market),
     fetchInflation(),
     fetchBi7drr(),
     fetchPressFreedom(),
