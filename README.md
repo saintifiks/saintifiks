@@ -385,6 +385,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] SEO metadata lengkap (Open Graph, Twitter Card)
 - [x] Mekanisme koreksi artikel (publik)
 - [x] Performance audit
+- [x] Perbaikan UX Login Google OAuth (account chooser + loading feedback)
 
 ---
 
