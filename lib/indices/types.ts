@@ -24,4 +24,5 @@ export type IndicesSnapshot = {
 }
 
 export const INDICES_MIN_POLL_MS = 3_000
-export const INDICES_DEFAULT_POLL_MS = 30_000
+/** Polling client untuk pasar — 15 detik */
+export const INDICES_DEFAULT_POLL_MS = 15_000

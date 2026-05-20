@@ -1,4 +1,5 @@
 import { formatIdr, formatNumber, formatPercent } from './format'
+import { externalFetchInit, type FetchMode } from './http'
 import {
   computeTrend,
   frankfurterRateOnOrBefore,
@@ -8,9 +9,7 @@ import {
 import type { IndexItem, IndexStatus } from './types'
 import { fetchYahooQuote } from './yahoo'
 
-const USER_AGENT = 'Mozilla/5.0 (compatible; Saintifiks/1.0; +https://saintifiks.id)'
-
-const REVALIDATE_FAST = 30 // detik — pasar (Yahoo), mendekati batas 3s polling client
+const REVALIDATE_FAST = 30
 const REVALIDATE_FOREX = 300
 const REVALIDATE_MONTHLY = 86_400
 const REVALIDATE_ANNUAL = 2_592_000
@@ -35,17 +34,9 @@ function withTrend(
   return { ...base, trend, trendWindow }
 }
 
-async function fetchJson<T>(
-  url: string,
-  revalidate: number,
-  init?: RequestInit
-): Promise<T | null> {
+async function fetchJson<T>(url: string, mode: FetchMode): Promise<T | null> {
   try {
-    const res = await fetch(url, {
-      ...init,
-      headers: { 'User-Agent': USER_AGENT, ...init?.headers },
-      next: { revalidate },
-    })
+    const res = await fetch(url, externalFetchInit(mode))
     if (!res.ok) return null
     return (await res.json()) as T
   } catch (error) {
@@ -54,17 +45,9 @@ async function fetchJson<T>(
   }
 }
 
-async function fetchText(
-  url: string,
-  revalidate: number,
-  init?: RequestInit
-): Promise<string | null> {
+async function fetchText(url: string, mode: FetchMode): Promise<string | null> {
   try {
-    const res = await fetch(url, {
-      ...init,
-      headers: { 'User-Agent': USER_AGENT, ...init?.headers },
-      next: { revalidate },
-    })
+    const res = await fetch(url, externalFetchInit(mode))
     if (!res.ok) return null
     return await res.text()
   } catch (error) {
@@ -73,10 +56,13 @@ async function fetchText(
   }
 }
 
-async function frankfurterIdrOnDate(date: string): Promise<number | null> {
+async function frankfurterIdrOnDate(
+  date: string,
+  mode: FetchMode
+): Promise<number | null> {
   const data = await fetchJson<{ rates?: { IDR?: number } }>(
     `https://api.frankfurter.app/${date}?from=USD&to=IDR`,
-    REVALIDATE_FOREX
+    { ...mode, revalidate: REVALIDATE_FOREX }
   )
   const rate = data?.rates?.IDR
   return typeof rate === 'number' && Number.isFinite(rate) ? rate : null
@@ -85,12 +71,12 @@ async function frankfurterIdrOnDate(date: string): Promise<number | null> {
 /** Dua observasi terakhir Indonesia dari CSV Our World in Data */
 async function fetchOwidLastTwo(
   grapher: string,
-  revalidate: number
+  mode: FetchMode
 ): Promise<
   { current: { year: number; value: number }; previous: { year: number; value: number } } | null
 > {
   const url = `https://ourworldindata.org/grapher/${grapher}.csv?v=1&csvType=full&useColumnShortNames=true`
-  const text = await fetchText(url, revalidate)
+  const text = await fetchText(url, { ...mode, revalidate: REVALIDATE_ANNUAL })
   if (!text || text.startsWith('{')) return null
 
   const rows = text
@@ -109,12 +95,31 @@ async function fetchOwidLastTwo(
   return { current, previous }
 }
 
-// ——— Pasar (Yahoo intraday + Frankfurter) ———
+// ——— Pasar (Yahoo intraday; Frankfurter hanya fallback statis) ———
 
-export async function fetchUsdIdr(): Promise<IndexItem> {
+export async function fetchUsdIdr(mode: FetchMode = {}): Promise<IndexItem> {
+  const yahoo = await fetchYahooQuote('IDR=X', {
+    ...mode,
+    revalidate: REVALIDATE_FAST,
+  })
+
+  if (yahoo) {
+    return withTrend(
+      item({
+        id: 'usd-idr',
+        label: 'USD/IDR',
+        value: formatIdr(yahoo.price),
+        source: 'Yahoo Finance',
+        sourceUrl: 'https://finance.yahoo.com/quote/IDR%3DX',
+      }),
+      yahoo.trend,
+      yahoo.trendWindow ?? undefined
+    )
+  }
+
   const data = await fetchJson<{ date?: string; rates?: { IDR?: number } }>(
     'https://api.frankfurter.app/latest?from=USD&to=IDR',
-    REVALIDATE_FOREX
+    { ...mode, revalidate: REVALIDATE_FOREX }
   )
 
   const rate = data?.rates?.IDR
@@ -128,7 +133,7 @@ export async function fetchUsdIdr(): Promise<IndexItem> {
     })
   }
 
-  const prior = await frankfurterRateOnOrBefore(date, frankfurterIdrOnDate)
+  const prior = await frankfurterRateOnOrBefore(date, (d) => frankfurterIdrOnDate(d, mode))
   const trend = computeTrend(rate, prior?.rate ?? null)
 
   return withTrend(
@@ -136,7 +141,7 @@ export async function fetchUsdIdr(): Promise<IndexItem> {
       id: 'usd-idr',
       label: 'USD/IDR',
       value: formatIdr(rate),
-      detail: prior ? `vs ${prior.date}` : undefined,
+      detail: 'update harian (ECB)',
       source: 'Frankfurter (ECB)',
       sourceUrl: 'https://www.frankfurter.app/',
     }),
@@ -145,8 +150,8 @@ export async function fetchUsdIdr(): Promise<IndexItem> {
   )
 }
 
-export async function fetchIhsg(): Promise<IndexItem> {
-  const quote = await fetchYahooQuote('^JKSE', REVALIDATE_FAST)
+export async function fetchIhsg(mode: FetchMode = {}): Promise<IndexItem> {
+  const quote = await fetchYahooQuote('^JKSE', { ...mode, revalidate: REVALIDATE_FAST })
   if (!quote) {
     return unavailable({
       id: 'ihsg',
@@ -168,16 +173,18 @@ export async function fetchIhsg(): Promise<IndexItem> {
   )
 }
 
-export async function fetchGoldIdrPerGram(): Promise<IndexItem> {
-  const [gold, forex] = await Promise.all([
-    fetchYahooQuote('GC=F', REVALIDATE_FAST),
-    fetchJson<{ date?: string; rates?: { IDR?: number } }>(
+export async function fetchGoldIdrPerGram(mode: FetchMode = {}): Promise<IndexItem> {
+  const yahooMode = { ...mode, revalidate: REVALIDATE_FAST }
+  const [gold, forexQuote, forexFrankfurter] = await Promise.all([
+    fetchYahooQuote('GC=F', yahooMode),
+    fetchYahooQuote('IDR=X', yahooMode),
+    fetchJson<{ rates?: { IDR?: number } }>(
       'https://api.frankfurter.app/latest?from=USD&to=IDR',
-      REVALIDATE_FOREX
+      { ...mode, revalidate: REVALIDATE_FOREX }
     ),
   ])
 
-  const idrRate = forex?.rates?.IDR
+  const idrRate = forexQuote?.price ?? forexFrankfurter?.rates?.IDR
   if (!gold || idrRate == null) {
     return unavailable({
       id: 'gold',
@@ -203,8 +210,8 @@ export async function fetchGoldIdrPerGram(): Promise<IndexItem> {
   )
 }
 
-export async function fetchBrentOil(): Promise<IndexItem> {
-  const quote = await fetchYahooQuote('BZ=F', REVALIDATE_FAST)
+export async function fetchBrentOil(mode: FetchMode = {}): Promise<IndexItem> {
+  const quote = await fetchYahooQuote('BZ=F', { ...mode, revalidate: REVALIDATE_FAST })
   if (!quote) {
     return unavailable({
       id: 'brent',
@@ -237,7 +244,7 @@ async function fetchInflationBps(): Promise<IndexItem | null> {
   const url = `https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/5200/subcat/5/key/${key}`
   const data = await fetchJson<{
     data?: Array<{ val: string; title: string; th: string }>
-  }>(url, REVALIDATE_MONTHLY)
+  }>(url, { revalidate: REVALIDATE_MONTHLY })
 
   const latest = data?.data?.[0]
   const prev = data?.data?.[1]
@@ -270,7 +277,7 @@ export async function fetchInflation(): Promise<IndexItem> {
   type WbRow = { date?: string; value?: number }
   const data = await fetchJson<[unknown, WbRow[]]>(
     'https://api.worldbank.org/v2/country/IDN/indicator/FP.CPI.TOTL.ZG?format=json&mrv=2',
-    REVALIDATE_MONTHLY
+    { revalidate: REVALIDATE_MONTHLY }
   )
 
   const rows = data?.[1]
@@ -304,7 +311,7 @@ export async function fetchInflation(): Promise<IndexItem> {
 export async function fetchBi7drr(): Promise<IndexItem> {
   const html = await fetchText(
     'https://www.bi.go.id/id/statistik/indikator/bi-rate/Default.aspx',
-    REVALIDATE_MONTHLY
+    { revalidate: REVALIDATE_MONTHLY }
   )
 
   if (html) {
@@ -370,7 +377,7 @@ function annualItem(
 }
 
 export async function fetchPressFreedom(): Promise<IndexItem> {
-  const pair = await fetchOwidLastTwo('press-freedom-index-rsf', REVALIDATE_ANNUAL)
+  const pair = await fetchOwidLastTwo('press-freedom-index-rsf', { revalidate: REVALIDATE_ANNUAL })
   if (!pair) {
     return unavailable({
       id: 'rsf',
@@ -392,7 +399,7 @@ export async function fetchPressFreedom(): Promise<IndexItem> {
 }
 
 export async function fetchCorruptionPerception(): Promise<IndexItem> {
-  const pair = await fetchOwidLastTwo('ti-corruption-perception-index', REVALIDATE_ANNUAL)
+  const pair = await fetchOwidLastTwo('ti-corruption-perception-index', { revalidate: REVALIDATE_ANNUAL })
   if (!pair) {
     return unavailable({
       id: 'cpi',
@@ -414,7 +421,7 @@ export async function fetchCorruptionPerception(): Promise<IndexItem> {
 }
 
 export async function fetchDemocracyIndex(): Promise<IndexItem> {
-  const pair = await fetchOwidLastTwo('democracy-index-eiu', REVALIDATE_ANNUAL)
+  const pair = await fetchOwidLastTwo('democracy-index-eiu', { revalidate: REVALIDATE_ANNUAL })
   if (!pair) {
     return unavailable({
       id: 'democracy',
@@ -436,7 +443,7 @@ export async function fetchDemocracyIndex(): Promise<IndexItem> {
 }
 
 export async function fetchHdi(): Promise<IndexItem> {
-  const pair = await fetchOwidLastTwo('human-development-index', REVALIDATE_ANNUAL)
+  const pair = await fetchOwidLastTwo('human-development-index', { revalidate: REVALIDATE_ANNUAL })
   if (!pair) {
     return unavailable({
       id: 'hdi',

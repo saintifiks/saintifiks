@@ -14,6 +14,8 @@ const config: Config = {
         "primary-light": "#F5F4F0",
         "accent-red": "#C90203",
         "accent-blue": "#002EC7",
+        // Hijau elegan — indikator naik di strip indeks (keputusan eksplisit)
+        "accent-green": "#5C8F6E",
       },
       // Font families — Libre Baskerville di-load via Google Fonts di layout.tsx
       // Helvetica adalah system font, tidak perlu di-load
