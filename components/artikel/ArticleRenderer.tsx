@@ -2,11 +2,13 @@
 
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
+import Image from 'next/image'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
 import dynamic from 'next/dynamic'
+import remarkCallout from '@/lib/supabase/remark/remarkCallout'
 
 // ChartBlock dimuat hanya di sisi client (bukan server)
 // Chart.js membutuhkan Canvas API yang hanya tersedia di browser — bukan di server Next.js
@@ -20,6 +22,14 @@ const ChartBlock = dynamic(() => import('./ChartBlock'), {
 type ArticleRendererProps = {
   content: string
   charts: { chart_identifier: string; config: string }[]
+}
+
+// Konfigurasi visual untuk setiap tipe callout
+const CALLOUT_CONFIG: Record<string, { label: string; borderClass: string; bgClass: string; labelClass: string }> = {
+  note:      { label: 'Catatan',   borderClass: 'border-accent-blue',  bgClass: 'bg-accent-blue/5',  labelClass: 'text-accent-blue'  },
+  warning:   { label: 'Perhatian', borderClass: 'border-yellow-500',   bgClass: 'bg-yellow-50',      labelClass: 'text-yellow-700'   },
+  important: { label: 'Penting',   borderClass: 'border-accent-red',   bgClass: 'bg-accent-red/5',   labelClass: 'text-accent-red'   },
+  tip:       { label: 'Tips',      borderClass: 'border-green-600',    bgClass: 'bg-green-50',       labelClass: 'text-green-700'    },
 }
 
 export default function ArticleRenderer({ content, charts }: ArticleRendererProps) {
@@ -48,7 +58,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
         return (
           <ReactMarkdown
             key={index}
-            remarkPlugins={[remarkGfm, remarkMath]}
+            remarkPlugins={[remarkGfm, remarkMath, remarkCallout]}
             rehypePlugins={[rehypeKatex, rehypeHighlight]}
             components={{
               // Heading
@@ -75,12 +85,35 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
               th: ({ children }) => <th className="px-4 py-3 bg-primary-dark/5 text-left font-medium border-b border-primary-dark/10">{children}</th>,
               td: ({ children }) => <td className="px-4 py-3 border-b border-primary-dark/10">{children}</td>,
 
-              // Blockquote
-              blockquote: ({ children }) => (
-               <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg">
-                 {children}
-               </blockquote>
-              ),
+              // Blockquote — mendukung dua mode:
+              // 1. Callout box (> [!NOTE], > [!WARNING], dll.) → box berwarna
+              // 2. Blockquote biasa (> teks) → tampilan italic seperti sebelumnya
+              blockquote: ({ node, children }) => {
+                // Cek apakah blockquote ini adalah callout (ditandai oleh remarkCallout plugin)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const calloutType = (node as any)?.properties?.['data-callout-type'] as string | undefined
+                const config = calloutType ? CALLOUT_CONFIG[calloutType] : undefined
+
+                if (config) {
+                  return (
+                    <div className={`my-8 border-l-4 ${config.borderClass} ${config.bgClass} px-5 py-4 rounded-r`}>
+                      <p className={`font-helvetica font-bold text-xs uppercase tracking-widest mb-2 ${config.labelClass}`}>
+                        {config.label}
+                      </p>
+                      <div className="font-libre text-base text-primary-dark/90 [&>p]:mb-0 [&>p]:leading-relaxed">
+                        {children}
+                      </div>
+                    </div>
+                  )
+                }
+
+                // Blockquote biasa — tampilan tidak berubah
+                return (
+                  <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg">
+                    {children}
+                  </blockquote>
+                )
+              },
 
               // Code & Highlight
               code: ({ className, children, ...props }) => {
@@ -96,16 +129,32 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                 )
               },
 
-              // Image dengan caption & sumber
+              // Image — pendekatan hibrida:
+              // Gambar dari Supabase → <Image> Next.js (dioptimasi, lebih cepat)
+              // Gambar dari sumber lain → <img> biasa (aman, tidak error)
               img: ({ src, alt }) => {
                 const [caption, source] = (alt || '').split('|').map(s => s.trim())
+                const isSupabase = src?.includes('.supabase.co')
+
                 return (
                   <figure className="my-10">
-                    <img 
-                      src={src} 
-                      alt={caption || ''} 
-                      className="w-full rounded border border-primary-dark/10" 
-                    />
+                    {isSupabase ? (
+                      <Image
+                        src={src!}
+                        alt={caption || ''}
+                        width={800}
+                        height={500}
+                        className="w-full rounded border border-primary-dark/10"
+                        style={{ height: 'auto' }}
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={src}
+                        alt={caption || ''}
+                        className="w-full rounded border border-primary-dark/10"
+                      />
+                    )}
                     {caption && (
                       <figcaption className="text-center mt-3 text-sm text-primary-dark/60 font-helvetica">
                         {caption}

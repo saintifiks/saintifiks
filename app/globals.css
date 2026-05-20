@@ -16,3 +16,72 @@ body {
   color: #0D0D0D;
   font-family: Helvetica, Arial, sans-serif;
 }
+
+/* ============================================================
+   FOOTNOTE STYLING
+   remark-gfm menghasilkan struktur HTML berikut untuk footnote:
+   - Teks artikel: <sup><a data-footnote-ref>1</a></sup>
+   - Bagian bawah: <section class="footnotes"><ol><li>...</li></ol></section>
+   ============================================================ */
+
+/* Angka superscript di tengah artikel */
+.article-content sup a[data-footnote-ref] {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: #002EC7;
+  text-decoration: none;
+  vertical-align: super;
+  line-height: 0;
+  padding: 0 1px;
+  transition: opacity 0.15s;
+}
+
+.article-content sup a[data-footnote-ref]:hover {
+  opacity: 0.6;
+}
+
+/* Section footnote di bagian bawah artikel */
+.article-content .footnotes {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(13, 13, 13, 0.12);
+}
+
+/* Judul "Footnotes" disembunyikan secara visual (tapi tetap ada untuk screen reader) */
+.article-content .footnotes > h2 {
+  display: none;
+}
+
+/* Daftar footnote */
+.article-content .footnotes ol {
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.article-content .footnotes li {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: rgba(13, 13, 13, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.article-content .footnotes li p {
+  display: inline;
+  margin: 0;
+}
+
+/* Panah kembali ke teks (↩) */
+.article-content .footnotes .data-footnote-backref {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 0.8em;
+  color: #002EC7;
+  text-decoration: none;
+  margin-left: 0.25rem;
+  transition: opacity 0.15s;
+}
+
+.article-content .footnotes .data-footnote-backref:hover {
+  opacity: 0.6;
+}
