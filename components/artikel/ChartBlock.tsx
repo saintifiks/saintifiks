@@ -1,31 +1,18 @@
 'use client'
 
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
+// [PERBAIKAN SESI #18 — fix/chart-ssr]
+// Masalah: "bar" is not a registered controller
+// Penyebab: Chart.js v4 memisahkan Controller dan Element. Kode sebelumnya
+//           mendaftarkan BarElement tapi bukan BarController.
+// Solusi: Gunakan `registerables` yang mendaftarkan semua komponen sekaligus.
+//         Lebih robust untuk website jurnalisme yang akan pakai berbagai jenis chart.
+
+import { Chart as ChartJS, registerables } from 'chart.js'
 import { Chart } from 'react-chartjs-2'
 
-// Register elemen Chart.js yang diperlukan untuk rendering client-side
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-)
+// Daftarkan semua komponen Chart.js: semua controller (bar, line, pie, dll.),
+// semua elemen, semua scale, dan semua plugin (tooltip, legend, dll.)
+ChartJS.register(...registerables)
 
 type ChartBlockProps = {
   identifier: string
