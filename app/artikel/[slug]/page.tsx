@@ -26,9 +26,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
 
+  // Ambil juga cover_image_url dan slug untuk og:image dan og:url
   const { data: article } = await supabase
     .from('articles')
-    .select('title, excerpt')
+    .select('title, excerpt, cover_image_url, slug')
     .eq('slug', slug)
     .eq('is_published', true)
     .single()
@@ -44,6 +45,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: article.title,
       description: article.excerpt ?? undefined,
       siteName: 'Saintifiks',
+      // og:url — metadataBase di layout.tsx akan mengubah ini menjadi URL absolut
+      url: `/artikel/${article.slug}`,
+      // og:type "article" memberi tahu platform sosial bahwa ini adalah artikel berita/blog
+      type: 'article',
+      locale: 'id_ID',
+      // og:image hanya ditambahkan jika artikel memiliki gambar cover
+      // Jika tidak ada, platform sosial akan tetap menampilkan kartu teks
+      ...(article.cover_image_url && {
+        images: [
+          {
+            url: article.cover_image_url,
+            alt: article.title,
+          },
+        ],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.excerpt ?? undefined,
+      // Twitter image hanya ditambahkan jika artikel memiliki gambar cover
+      ...(article.cover_image_url && {
+        images: [article.cover_image_url],
+      }),
     },
   }
 }

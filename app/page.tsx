@@ -1,11 +1,33 @@
 // Halaman beranda — menampilkan daftar artikel yang sudah dipublikasikan
 // Server Component: data di-fetch di server, tidak membutuhkan JavaScript tambahan di browser
 
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 
 // ISR: Next.js meng-cache halaman ini dan memperbarui otomatis setiap 1 jam
 // Artikel baru yang di-publish akan muncul dalam maksimal 60 menit
 export const revalidate = 3600
+
+// Metadata statis untuk halaman beranda
+// Halaman artikel individual punya metadata dinamis sendiri di masing-masing page.tsx
+export const metadata: Metadata = {
+  title: 'Saintifiks',
+  description: 'Media independen untuk pembaca yang peduli kualitas informasi publik.',
+  openGraph: {
+    title: 'Saintifiks',
+    description: 'Media independen untuk pembaca yang peduli kualitas informasi publik.',
+    // og:url — metadataBase di layout.tsx akan mengubah "/" menjadi URL absolut
+    url: '/',
+    type: 'website',
+    locale: 'id_ID',
+    siteName: 'Saintifiks',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Saintifiks',
+    description: 'Media independen untuk pembaca yang peduli kualitas informasi publik.',
+  },
+}
 
 // Tipe data untuk satu artikel yang diambil dari database
 type Article = {
