@@ -76,9 +76,9 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
               ),
 
               // Code & Highlight
-              code: ({ inline, className, children, ...props }) => {
+              code: ({ className, children, ...props }) => {
                 const match = /language-(\w+)/.exec(className || '')
-                return !inline && match ? (
+                return match ? (
                   <code className={className} {...props}>
                     {children}
                   </code>
