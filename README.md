@@ -463,12 +463,22 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
              WORKAROUND: warning tidak memblokir build, halaman tetap berfungsi normal
              RESOLVED: -
 
+[20-05-2026] MASALAH: <img> di ArticleRenderer.tsx menghasilkan ESLint warning
+                      (next/no-img-element) — seharusnya pakai <Image> dari next/image
+             STATUS: resolved
+             WORKAROUND: -
+             RESOLVED: 20-05-2026 | Sesi #19 — implementasi pendekatan hibrida:
+                       gambar Supabase pakai <Image>, gambar eksternal pakai <img>
+                       dengan eslint-disable inline. ESLint warning dihilangkan.
+
 [20-05-2026] MASALAH: Callout box (> [!NOTE]) belum berfungsi — logika string matching
                       tidak kompatibel dengan react-markdown v10 (children adalah React node,
                       bukan string); regex flag /s membutuhkan ES2018 yang tidak dikonfigurasi
-             STATUS: open — didefer ke sesi terpisah
-             WORKAROUND: blockquote standar tetap tampil, hanya tidak ada styling khusus callout
-             RESOLVED: -
+             STATUS: resolved
+             WORKAROUND: -
+             RESOLVED: 20-05-2026 | Sesi #19 — implementasi custom remark plugin
+                       (lib/remark/remarkCallout.ts) yang memproses AST sebelum render.
+                       Mendukung [!NOTE], [!WARNING], [!IMPORTANT], [!TIP].
 
 ```
 Format pengisian:
@@ -579,6 +589,32 @@ Format pengisian:
            error & kurang future-proof).
            CATATAN IMPLEMENTASI: Dynamic import dilakukan di ArticleRenderer.tsx. Registrasi dilakukan di dalam ChartBlock.tsx itu 
            sendiri agar component self-contained.
+[20-05-2026] KEPUTUSAN: Next.js <Image> hanya untuk gambar Supabase (pendekatan hibrida)
+             ALASAN: <Image> hanya bisa mengoptimasi gambar dari domain yang terdaftar.
+                     Mendaftarkan semua domain eksternal (BPS, Wikipedia, dll.) tidak praktis.
+                     Pendekatan hibrida: cek URL — jika .supabase.co → <Image>, jika tidak → <img>.
+                     Ini memaksimalkan optimasi tanpa risiko error di artikel lama.
+             ALTERNATIF DITOLAK: Daftarkan semua domain (tidak skalabel);
+                                 tetap pakai <img> semua (membuang manfaat Next.js Image)
+             CATATAN IMPLEMENTASI: Logika pengecekan di components/artikel/ArticleRenderer.tsx.
+                                   Domain Supabase dikonfigurasi di next.config.mjs.
+
+[20-05-2026] KEPUTUSAN: Callout box menggunakan custom remark plugin (bukan remark-directive)
+             ALASAN: Seksi 11 sebelumnya menyebut dua opsi: remark-directive atau custom plugin.
+                     Custom plugin dipilih karena: (1) tidak menambah dependency baru,
+                     (2) sintaks > [!NOTE] lebih natural daripada ::note[teks],
+                     (3) cukup ~50 baris kode, maintainable sendiri.
+             ALTERNATIF DITOLAK: remark-directive (menambah dependency, sintaks berbeda)
+             CATATAN IMPLEMENTASI: lib/remark/remarkCallout.ts — plugin standalone tanpa
+                                   dependency eksternal. Mendukung NOTE, WARNING, IMPORTANT, TIP.
+
+[20-05-2026] KEPUTUSAN: Footnote CSS menggunakan selector CSS biasa (bukan Tailwind utility)
+             ALASAN: remark-gfm menghasilkan class HTML spesifik (data-footnote-ref,
+                     .footnotes, .data-footnote-backref) yang tidak bisa ditarget
+                     via Tailwind utility class di JSX — harus pakai CSS global.
+             ALTERNATIF DITOLAK: Tailwind arbitrary selector (verbose, sulit dibaca)
+             CATATAN IMPLEMENTASI: Semua CSS footnote ada di app/globals.css
+                                   di bawah comment FOOTNOTE STYLING.
 ```
 
 ---
@@ -921,7 +957,27 @@ Keputusan baru:
 Status akhir: selesai
 Next step: Sesi #19 — Implementasi <Image> Next.js di ArticleRenderer (Item 2)
 ---
-
+[20-05-2026] SESI #19
+Branch: feature/post-launch-konten-improvements
+Tujuan sesi: Post-launch — Footnote CSS, Next.js Image, Callout Box
+Yang dikerjakan:
+  - Edit app/globals.css: tambah CSS footnote (superscript + section .footnotes)
+  - Edit next.config.mjs: tambah pathname spesifik Supabase, hapus swcMinify deprecated
+  - Edit components/artikel/ArticleRenderer.tsx: implementasi pendekatan hibrida
+    <Image> (Supabase) vs <img> (eksternal); tambah eslint-disable inline
+  - Buat lib/remark/remarkCallout.ts: custom remark plugin untuk callout box,
+    mendukung [!NOTE], [!WARNING], [!IMPORTANT], [!TIP], tanpa dependency baru
+  - Edit components/artikel/ArticleRenderer.tsx: tambah remarkCallout ke remarkPlugins,
+    upgrade blockquote component untuk deteksi dan render callout box berwarna
+  - Merge feature/post-launch-konten-improvements ke main
+Keputusan baru:
+  - Next.js Image hybrid approach (lihat Seksi 11)
+  - Custom remark plugin untuk callout (lihat Seksi 11)
+  - Footnote menggunakan CSS global (lihat Seksi 11)
+Issues resolved: ESLint warning next/no-img-element, Callout box open issue
+Status akhir: selesai
+Next step: -
+---
 ```
 Format:
 [TANGGAL] SESI #N
