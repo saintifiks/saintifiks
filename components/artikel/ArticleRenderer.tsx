@@ -37,7 +37,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
   const parts = content.split(/({{chart:[^}]+}})/g)
 
   return (
-    <div className="article-content prose prose-lg max-w-none font-libre text-primary-dark">
+    <div className="article-content prose prose-lg max-w-none font-libre text-primary-dark dark:text-primary-light">
       {parts.map((part, index) => {
         const chartMatch = part.match(/^{{chart:([^}]+)}}$/)
         
@@ -62,9 +62,9 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
             rehypePlugins={[rehypeKatex, rehypeHighlight]}
             components={{
               // Heading
-              h1: ({ children }) => <h1 className="font-libre text-3xl font-bold text-primary-dark mt-12 mb-6 leading-tight">{children}</h1>,
-              h2: ({ children }) => <h2 className="font-libre text-2xl font-bold text-primary-dark mt-10 mb-4 leading-tight">{children}</h2>,
-              h3: ({ children }) => <h3 className="font-libre text-xl font-bold text-primary-dark mt-8 mb-3 leading-tight">{children}</h3>,
+              h1: ({ children }) => <h1 className="font-libre text-3xl font-bold text-primary-dark mt-12 mb-6 leading-tight dark:text-primary-light">{children}</h1>,
+              h2: ({ children }) => <h2 className="font-libre text-2xl font-bold text-primary-dark mt-10 mb-4 leading-tight dark:text-primary-light">{children}</h2>,
+              h3: ({ children }) => <h3 className="font-libre text-xl font-bold text-primary-dark mt-8 mb-3 leading-tight dark:text-primary-light">{children}</h3>,
 
               // Paragraph & Text
               p: ({ children }) => <p className="font-libre text-lg leading-relaxed mb-6">{children}</p>,
@@ -78,12 +78,12 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
 
               // Table
               table: ({ children }) => (
-                <div className="my-8 overflow-x-auto border border-primary-dark/10 rounded">
-                  <table className="min-w-full divide-y divide-primary-dark/10">{children}</table>
+                <div className="my-8 overflow-x-auto border border-primary-dark/10 rounded dark:border-primary-light/10">
+                  <table className="min-w-full divide-y divide-primary-dark/10 dark:divide-primary-light/10">{children}</table>
                 </div>
               ),
-              th: ({ children }) => <th className="px-4 py-3 bg-primary-dark/5 text-left font-medium border-b border-primary-dark/10">{children}</th>,
-              td: ({ children }) => <td className="px-4 py-3 border-b border-primary-dark/10">{children}</td>,
+              th: ({ children }) => <th className="px-4 py-3 bg-primary-dark/5 text-left font-medium border-b border-primary-dark/10 dark:bg-primary-light/10 dark:border-primary-light/10 dark:text-primary-dark">{children}</th>,
+              td: ({ children }) => <td className="px-4 py-3 border-b border-primary-dark/10 dark:border-primary-light/10">{children}</td>,
 
               // Blockquote — mendukung dua mode:
               // 1. Callout box (> [!NOTE], > [!WARNING], dll.) → box berwarna
@@ -109,7 +109,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
 
                 // Blockquote biasa — tampilan tidak berubah
                 return (
-                  <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg">
+                  <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg dark:border-primary-light/30 dark:text-primary-light/80">
                     {children}
                   </blockquote>
                 )
@@ -123,7 +123,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                     {children}
                   </code>
                 ) : (
-                  <code className="font-mono text-sm bg-primary-dark/5 px-1.5 py-0.5 rounded" {...props}>
+                  <code className="font-mono text-sm bg-primary-dark/5 px-1.5 py-0.5 rounded dark:bg-primary-light/10" {...props}>
                     {children}
                   </code>
                 )
@@ -144,7 +144,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                         alt={caption || ''}
                         width={800}
                         height={500}
-                        className="w-full rounded border border-primary-dark/10"
+                        className="w-full rounded border border-primary-dark/10 dark:border-primary-light/10 dark:bg-primary-dark"
                         style={{ height: 'auto' }}
                       />
                     ) : (
@@ -156,7 +156,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                       />
                     )}
                     {caption && (
-                      <figcaption className="text-center mt-3 text-sm text-primary-dark/60 font-helvetica">
+                      <figcaption className="text-center mt-3 text-sm text-primary-dark/60 font-helvetica dark:text-primary-light/60">
                         {caption}
                         {source && <span className="block text-xs mt-1">Sumber: {source}</span>}
                       </figcaption>
@@ -173,7 +173,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                 rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
               }, children),
 
-              hr: () => <hr className="border-primary-dark/10 my-12" />
+              hr: () => <hr className="border-primary-dark/10 my-12 dark:border-primary-light/10" />
             }}
           >
             {part}

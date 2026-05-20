@@ -19,20 +19,20 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-primary-light flex items-center justify-center px-6">
+    <main className="min-h-screen bg-primary-light text-primary-dark flex items-center justify-center px-6 dark:bg-primary-dark dark:text-primary-light">
       <div className="w-full max-w-sm">
 
         <div className="mb-10">
           <Link
             href="/"
-            className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest hover:text-primary-dark transition-colors duration-150"
+            className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest hover:text-primary-dark transition-colors duration-150 dark:text-primary-light/40 dark:hover:text-primary-light"
           >
             ← Saintifiks
           </Link>
-          <h1 className="font-libre text-3xl font-bold text-primary-dark mt-6">
+          <h1 className="font-libre text-3xl font-bold text-primary-dark mt-6 dark:text-primary-light">
             Admin
           </h1>
-          <p className="font-helvetica text-sm text-primary-dark/60 mt-2">
+          <p className="font-helvetica text-sm text-primary-dark/60 mt-2 dark:text-primary-light/60">
             Masuk untuk mengelola artikel Saintifiks.
           </p>
         </div>

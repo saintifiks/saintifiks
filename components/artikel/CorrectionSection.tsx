@@ -52,12 +52,12 @@ export default function CorrectionSection({ articleId, corrections }: Correction
   }
 
   return (
-    <div className="mt-16 pt-8 border-t border-primary-dark/10">
+    <div className="mt-16 pt-8 border-t border-primary-dark/10 dark:border-primary-light/10">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="font-libre text-2xl font-bold text-primary-dark">Koreksi & Klarifikasi</h3>
+        <h3 className="font-libre text-2xl font-bold text-primary-dark dark:text-primary-light">Koreksi & Klarifikasi</h3>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="font-helvetica text-sm px-5 py-2 border border-primary-dark/40 hover:bg-primary-dark hover:text-primary-light transition-colors"
+          className="font-helvetica text-sm px-5 py-2 border border-primary-dark/40 hover:bg-primary-dark hover:text-primary-light transition-colors dark:border-primary-light/40"
         >
           {isOpen ? 'Tutup Form' : 'Usulkan Koreksi'}
         </button>
@@ -68,15 +68,12 @@ export default function CorrectionSection({ articleId, corrections }: Correction
         <div className="space-y-8 mb-10">
           {corrections.map((corr) => (
             <div key={corr.id} className="border-l-4 border-accent-blue pl-6 py-1">
-              <p className="font-helvetica text-xs text-primary-dark/40 mb-2">KOREKSI</p>
-              
-              <div className="mb-4">
-                <p className="text-primary-dark/60 line-through text-sm">{corr.original_text}</p>
+                <p className="font-helvetica text-xs text-primary-dark/40 mb-2 dark:text-primary-light/40">KOREKSI</p>
                 <p className="text-primary-dark font-medium mt-1">{corr.corrected_text}</p>
               </div>
               
               {corr.explanation && (
-                <p className="font-helvetica text-sm text-primary-dark/70 italic border-l-2 border-primary-dark/20 pl-4">
+                <p className="font-helvetica text-sm text-primary-dark/70 italic border-l-2 border-primary-dark/20 pl-4 dark:text-primary-light/70 dark:border-primary-light/20">
                   {corr.explanation}
                 </p>
               )}
@@ -87,7 +84,7 @@ export default function CorrectionSection({ articleId, corrections }: Correction
 
       {/* Form usulan koreksi */}
       {isOpen && (
-        <form onSubmit={handleSubmit} className="border border-primary-dark/10 p-6 bg-primary-light">
+        <form onSubmit={handleSubmit} className="border border-primary-dark/10 p-6 bg-primary-light dark:border-primary-light/10 dark:bg-primary-dark">
           <div className="space-y-5">
             <div>
               <label className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">
@@ -139,8 +136,8 @@ export default function CorrectionSection({ articleId, corrections }: Correction
       )}
 
       {message && (
-        <div className={`mt-4 p-4 border ${message.type === 'success' ? 'border-primary-dark/20 bg-primary-dark/5' : 'border-accent-red/30 bg-accent-red/5'}`}>
-          <p className={`font-helvetica text-sm ${message.type === 'success' ? 'text-primary-dark' : 'text-accent-red'}`}>
+        <div className={`mt-4 p-4 border ${message.type === 'success' ? 'border-primary-dark/20 bg-primary-dark/5 dark:bg-primary-light/5' : 'border-accent-red/30 bg-accent-red/5'}`}>
+          <p className={`font-helvetica text-sm ${message.type === 'success' ? 'text-primary-dark dark:text-primary-light' : 'text-accent-red'}`}>
             {message.text}
           </p>
         </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 import 'katex/dist/katex.min.css'
@@ -49,7 +50,20 @@ export default function RootLayout({
     // lang="id" karena seluruh konten dalam Bahasa Indonesia
     // variable font Libre Baskerville ditaruh di <html> agar bisa diakses seluruh halaman
     <html lang="id" className={libreBaskerville.variable}>
-      <body className="bg-primary-light text-primary-dark font-helvetica antialiased">
+      <body className="bg-primary-light text-primary-dark font-helvetica antialiased dark:bg-primary-dark dark:text-primary-light">
+        <Script id="theme-mode" strategy="beforeInteractive">
+          {`(function() {
+            try {
+              var hour = new Date().getHours();
+              var html = document.documentElement;
+              if (hour >= 18 || hour < 6) {
+                html.classList.add('dark');
+              } else {
+                html.classList.remove('dark');
+              }
+            } catch (error) {}
+          })();`}
+        </Script>
         <AnalyticsTracker />
         <Navbar />
         {children}

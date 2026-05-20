@@ -102,8 +102,8 @@ export default function ImageUpload({ currentImageUrl, onUpload }: ImageUploadPr
 
       {previewUrl ? (
         // Kondisi: sudah ada gambar — tampilkan preview + tombol ganti/hapus
-        <div className="border border-primary-dark/15">
-          <div className="relative w-full h-48 bg-primary-dark/5 overflow-hidden">
+        <div className="border border-primary-dark/15 dark:border-primary-light/10">
+          <div className="relative w-full h-48 bg-primary-dark/5 overflow-hidden dark:bg-primary-light/5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={previewUrl}
@@ -111,15 +111,15 @@ export default function ImageUpload({ currentImageUrl, onUpload }: ImageUploadPr
               className="w-full h-full object-cover"
             />
             {isUploading && (
-              <div className="absolute inset-0 bg-primary-light/80 flex items-center justify-center">
-                <p className="font-helvetica text-xs text-primary-dark/60">
+              <div className="absolute inset-0 bg-primary-light/80 flex items-center justify-center dark:bg-primary-dark/80">
+                <p className="font-helvetica text-xs text-primary-dark/60 dark:text-primary-light/60">
                   Mengupload...
                 </p>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-4 px-4 py-3 border-t border-primary-dark/10">
+          <div className="flex items-center gap-4 px-4 py-3 border-t border-primary-dark/10 dark:border-primary-light/10">
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
@@ -145,7 +145,7 @@ export default function ImageUpload({ currentImageUrl, onUpload }: ImageUploadPr
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={isUploading}
-          className="w-full border border-dashed border-primary-dark/20 py-10 px-6 text-center hover:border-primary-dark/40 hover:bg-primary-dark/[0.02] transition-all duration-150 disabled:opacity-40"
+          className="w-full border border-dashed border-primary-dark/20 py-10 px-6 text-center hover:border-primary-dark/40 hover:bg-primary-dark/[0.02] transition-all duration-150 disabled:opacity-40 dark:border-primary-light/20 dark:hover:bg-primary-light/[0.08]"
         >
           <p className="font-helvetica text-sm text-primary-dark/40">
             {isUploading ? 'Mengupload...' : 'Klik untuk pilih gambar cover'}
