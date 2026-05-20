@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.3 | Status: Live — website dapat diakses publik | Terakhir diperbarui: 2026-05-20
+> Versi: 0.4 | Status: Live — website dapat diakses publik | Terakhir diperbarui: 2026-05-20
 
 ---
 
@@ -288,44 +288,61 @@ CREATE TRIGGER articles_updated_at
     · Path yang mengandung [ dan ] wajib pakai flag -LiteralPath di PowerShell
 
 ```
-[AKAN DIISI — format yang direncanakan:]
 /
 ├── app/
-│   ├── (public)/
-│   │   ├── page.tsx                  — Halaman beranda
-│   │   ├── artikel/
-│   │   │   └── [slug]/
-│   │   │       └── page.tsx          — Halaman artikel individual
-│   │   └── layout.tsx                — Layout publik
-│   ├── (admin)/
-│   │   ├── dashboard/
-│   │   │   └── page.tsx              — Panel admin (hanya untuk pemilik)
-│   │   ├── artikel/
-│   │   │   ├── baru/page.tsx         — Form tulis artikel baru
-│   │   │   └── [id]/edit/page.tsx    — Edit artikel
-│   │   └── layout.tsx                — Layout admin (dengan auth guard)
-│   └── api/
-│       ├── likes/route.ts            — API endpoint untuk like/unlike
-│       └── keep-alive/route.ts       — Endpoint untuk cron job Supabase
-├── components/
-│   ├── ui/                           — Komponen UI generik (Button, Input, dll)
+│   ├── favicon.ico
+│   ├── fonts/ (GeistVF.woff, GeistMonoVF.woff)
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── page.tsx                          ← Halaman beranda
 │   ├── artikel/
-│   │   ├── ArticleRenderer.tsx       — Parser Markdown + chart placeholder
-│   │   ├── ChartBlock.tsx            — Komponen Chart.js renderer
-│   │   └── LikeButton.tsx            — Tombol like dengan optimistic update
-│   └── layout/
-│       ├── Navbar.tsx
-│       └── Footer.tsx
+│   │   └── [slug]/
+│   │       └── page.tsx                  ← Halaman artikel publik
+│   ├── (admin)/
+│   │   ├── layout.tsx                    ← Auth guard admin
+│   │   └── dashboard/
+│   │       ├── page.tsx                  ← Dashboard utama
+│   │       ├── artikel/
+│   │       │   ├── baru/page.tsx
+│   │       │   └── [id]/edit/page.tsx
+│   │       └── koreksi/
+│   │           └── actions.ts
+│   ├── auth/
+│   │   └── callback/
+│   │       └── route.ts
+│   ├── login/
+│   │   └── page.tsx
+│   └── api/
+│       ├── analytics/
+│       │   └── route.ts
+│       └── keep-alive/
+│           └── route.ts
+│
+├── components/
+│   ├── layout/
+│   │   ├── Navbar.tsx
+│   │   └── Footer.tsx
+│   ├── artikel/
+│   │   ├── ArticleRenderer.tsx
+│   │   ├── ChartBlock.tsx
+│   │   ├── LikeButton.tsx
+│   │   ├── CorrectionSection.tsx
+│   │   └── ImageUpload.tsx
+│   └── analytics/
+│       └── AnalyticsTracker.tsx
+│
 ├── lib/
-│   ├── supabase/
-│   │   ├── client.ts                 — Supabase browser client (anon key)
-│   │   └── server.ts                 — Supabase server client (untuk server components)
-│   └── utils/
-│       └── markdown.ts               — Parser Markdown + chart placeholder resolver
-├── public/                           — Aset statis (favicon, dll)
-├── tailwind.config.ts                — Konfigurasi Tailwind + design tokens
-├── next.config.ts                    — Konfigurasi Next.js
-└── README.md                         — Dokumen ini (CONTEXT.md)
+│   └── supabase/
+│       ├── client.ts
+│       └── server.ts
+│
+├── .github/workflows/backup.yml
+├── next.config.mjs
+├── tailwind.config.ts
+├── tsconfig.json
+├── package.json
+├── vercel.json
+└── README.md
 ```
 
 ---
