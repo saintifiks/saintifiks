@@ -127,9 +127,17 @@ export default async function ArtikelPage({ params }: Props) {
   // Hanya tampilkan koreksi yang sudah disetujui admin (status = 'approved').
   // Ini memastikan koreksi pending/rejected tidak bocor ke halaman publik,
   // terlepas dari kondisi RLS policy di Supabase.
+  // Map eksplisit digunakan (bukan destructuring) agar ESLint tidak komplain
+  // tentang variabel 'status' yang tidak diteruskan ke komponen.
   const corrections = (artikel.article_corrections || [])
     .filter((c) => c.status === 'approved')
-    .map(({ status: _status, ...rest }) => rest)
+    .map((c) => ({
+      id: c.id,
+      original_text: c.original_text,
+      corrected_text: c.corrected_text,
+      explanation: c.explanation,
+      created_at: c.created_at,
+    }))
 
   return (
     <main className="min-h-screen bg-primary-light">
