@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.4 | Status: Live — website dapat diakses publik | Terakhir diperbarui: 2026-05-20
+> Versi: 0.5 | Status: Live | Terakhir diperbarui: 2026-05-20
 
 ---
 
@@ -123,6 +123,7 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 | Auth pembaca | Supabase Auth + Google OAuth | Login via Google; tidak perlu buat akun baru; Supabase menangani seluruh flow |
 | Editor artikel admin | Markdown teks biasa | Resolved — lihat Seksi 11 untuk alasan lengkap |
 | Konten format | Markdown dengan chart placeholder | `{{chart:chart-id}}` — Next.js parsing dan render keduanya |
+| Markdown renderer | react-markdown + remark-gfm + remark-math + rehype-katex + rehype-highlight | Tabel GFM, formula LaTeX, syntax highlighting — ekosistem standar, client-side |
 
 ### Batasan Free Tier yang Harus Diperhatikan
 
@@ -425,6 +426,19 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
              karakter [ dan ], contoh: Get-Content -LiteralPath "app\artikel\[slug]\page.tsx"
              RESOLVED: workaround permanen — tidak perlu fix khusus
 
+[20-05-2026] MASALAH: <img> di ArticleRenderer.tsx menghasilkan ESLint warning
+                      (next/no-img-element) — seharusnya pakai <Image> dari next/image
+             STATUS: open
+             WORKAROUND: warning tidak memblokir build, halaman tetap berfungsi normal
+             RESOLVED: -
+
+[20-05-2026] MASALAH: Callout box (> [!NOTE]) belum berfungsi — logika string matching
+                      tidak kompatibel dengan react-markdown v10 (children adalah React node,
+                      bukan string); regex flag /s membutuhkan ES2018 yang tidak dikonfigurasi
+             STATUS: open — didefer ke sesi terpisah
+             WORKAROUND: blockquote standar tetap tampil, hanya tidak ada styling khusus callout
+             RESOLVED: -
+
 ```
 Format pengisian:
 [TANGGAL] MASALAH: [deskripsi]
@@ -504,6 +518,28 @@ Format pengisian:
              pengalaman yang lebih sesuai ekspektasi pengguna modern (account chooser).
              ALTERNATIF DITOLAK: prompt langsung di options (TypeScript error) dan tidak menggunakan prompt sama sekali (UX kurang jelas)
              CATATAN IMPLEMENTASI: Diterapkan di Navbar.tsx dan LikeButton.tsx untuk konsistensi seluruh flow login pembaca.
+[20-05-2026] KEPUTUSAN: Advanced Markdown Renderer menggunakan remark-gfm + remark-math
+                        + rehype-katex + rehype-highlight
+             ALASAN: Library ini adalah ekosistem standar untuk fitur tabel GFM, formula
+                     LaTeX, dan syntax highlighting di atas react-markdown; ringan dan
+                     tidak bergantung layanan pihak ketiga; bundle naik ~130KB (KaTeX ~100KB,
+                     highlight.js ~30KB) — masih dalam batas aman free tier Vercel
+             ALTERNATIF DITOLAK: Prism.js (lebih besar), MathJax (lebih berat dari KaTeX)
+             CATATAN IMPLEMENTASI: CSS KaTeX dan highlight.js diimport di app/layout.tsx
+                                   setelah globals.css
+
+[20-05-2026] KEPUTUSAN: Callout box didefer — tidak diimplementasikan di Sesi #17
+             ALASAN: Dua masalah teknis fundamental: (1) react-markdown v10 tidak lagi
+                     mengekspos children sebagai string di custom components — String(children)
+                     menghasilkan "[object Object]"; (2) regex flag /s membutuhkan target
+                     ES2018 di tsconfig yang tidak dikonfigurasi di proyek ini.
+                     Implementasi yang benar membutuhkan remark plugin khusus yang memproses
+                     AST sebelum rendering — scope berbeda, harus sesi terpisah.
+             ALTERNATIF DITOLAK: String matching di blockquote component (terbukti tidak
+                                 bisa bekerja dengan react-markdown v10)
+             CATATAN IMPLEMENTASI: Saat callout diimplementasikan, gunakan remark-directive
+                                   atau buat custom remark plugin yang transform node
+                                   blockquote dengan teks [!NOTE] di AST sebelum render
 ```
 
 ---
@@ -804,6 +840,30 @@ Yang dikerjakan:
   - Perbaikan TypeScript error terkait opsi OAuth (prompt dipindah ke queryParams)
 Keputusan baru: tidak ada
 Status akhir: selesai
+---
+> [20-05-2026] SESI #17
+Branch: feature/advanced-markdown-renderer
+Tujuan sesi: Post-launch — Upgrade ArticleRenderer.tsx dengan dukungan Markdown lanjutan
+Yang dikerjakan:
+  - Install 4 library baru via npm: remark-gfm, remark-math, rehype-katex, rehype-highlight
+  - Upgrade components/artikel/ArticleRenderer.tsx: tambah plugin remark/rehype,
+    tambah custom components untuk table (th, td), blockquote, pre, img dengan
+    caption + sumber, dan syntax highlighting code block
+  - Edit app/layout.tsx: tambah import CSS katex/dist/katex.min.css dan
+    highlight.js/styles/github.css (setelah globals.css, sebelum component imports)
+  - Resolusi 4 build error bertahap di Vercel:
+      · package.json dan package-lock.json tidak ikut di-commit (library tidak ditemukan)
+      · prop 'node' di blockquote dan code dideclare tapi tidak dipakai (ESLint no-unused-vars)
+      · logika callout menggunakan regex flag /s (butuh ES2018, tsconfig tidak mendukung) —
+        diganti dengan blockquote standar; callout didefer ke sesi terpisah
+      · prop 'inline' di code component tidak ada di react-markdown v10 API (TypeScript error)
+  - Merge feature/advanced-markdown-renderer ke main
+Keputusan baru:
+  - Fitur callout box (> [!NOTE]) didefer — tidak bisa diimplementasikan dengan pendekatan
+    string matching di react-markdown v10; butuh remark plugin terpisah (lihat Seksi 11)
+Status akhir: selesai (tanpa callout)
+Next step: Implementasi callout box via remark plugin (sesi terpisah jika dibutuhkan)
+---
 ```
 Format:
 [TANGGAL] SESI #N
