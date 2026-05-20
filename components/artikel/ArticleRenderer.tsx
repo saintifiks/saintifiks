@@ -1,6 +1,14 @@
+'use client'
+
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import rehypeHighlight from 'rehype-highlight'
 import ChartBlock from './ChartBlock'
+
+// Import CSS akan dilakukan di layout.tsx
 
 type ArticleRendererProps = {
   content: string
@@ -8,18 +16,16 @@ type ArticleRendererProps = {
 }
 
 export default function ArticleRenderer({ content, charts }: ArticleRendererProps) {
-  // Pisahkan string markdown berdasarkan pola {{chart:identifier}}
+  // Parsing chart placeholder {{chart:identifier}} tetap dipertahankan
   const parts = content.split(/({{chart:[^}]+}})/g)
 
   return (
-    <div className="article-content">
+    <div className="article-content prose prose-lg max-w-none font-libre text-primary-dark">
       {parts.map((part, index) => {
-        // Cek apakah blok ini adalah placeholder chart
         const chartMatch = part.match(/^{{chart:([^}]+)}}$/)
         
         if (chartMatch) {
           const identifier = chartMatch[1]
-          // Cari data chart yang sesuai dari database
           const chartData = charts.find((c) => c.chart_identifier === identifier)
           
           return (
@@ -31,30 +37,87 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
           )
         }
 
-        // Jika bukan placeholder chart, render sebagai Markdown biasa
+        // Render Markdown dengan plugin lanjutan
         return (
           <ReactMarkdown
             key={index}
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex, rehypeHighlight]}
             components={{
-              h1: ({ children }) => <h1 className="font-libre text-3xl font-bold text-primary-dark mt-10 mb-4 leading-tight">{children}</h1>,
-              h2: ({ children }) => <h2 className="font-libre text-2xl font-bold text-primary-dark mt-8 mb-3 leading-tight">{children}</h2>,
-              h3: ({ children }) => <h3 className="font-libre text-xl font-bold text-primary-dark mt-6 mb-2 leading-tight">{children}</h3>,
-              p: ({ children }) => <p className="font-libre text-lg text-primary-dark leading-relaxed mb-5">{children}</p>,
-              strong: ({ children }) => <strong className="font-bold text-primary-dark">{children}</strong>,
+              // Heading
+              h1: ({ children }) => <h1 className="font-libre text-3xl font-bold text-primary-dark mt-12 mb-6 leading-tight">{children}</h1>,
+              h2: ({ children }) => <h2 className="font-libre text-2xl font-bold text-primary-dark mt-10 mb-4 leading-tight">{children}</h2>,
+              h3: ({ children }) => <h3 className="font-libre text-xl font-bold text-primary-dark mt-8 mb-3 leading-tight">{children}</h3>,
+
+              // Paragraph & Text
+              p: ({ children }) => <p className="font-libre text-lg leading-relaxed mb-6">{children}</p>,
+              strong: ({ children }) => <strong className="font-bold">{children}</strong>,
               em: ({ children }) => <em className="italic">{children}</em>,
-              ul: ({ children }) => <ul className="font-libre text-lg text-primary-dark leading-relaxed mb-5 ml-6 list-disc">{children}</ul>,
-              ol: ({ children }) => <ol className="font-libre text-lg text-primary-dark leading-relaxed mb-5 ml-6 list-decimal">{children}</ol>,
+
+              // List
+              ul: ({ children }) => <ul className="font-libre text-lg mb-6 ml-6 list-disc space-y-2">{children}</ul>,
+              ol: ({ children }) => <ol className="font-libre text-lg mb-6 ml-6 list-decimal space-y-2">{children}</ol>,
               li: ({ children }) => <li className="mb-1">{children}</li>,
-              blockquote: ({ children }) => <blockquote className="border-l-2 border-primary-dark/20 pl-6 my-6 font-libre text-lg text-primary-dark/70 italic">{children}</blockquote>,
-              // Implementasi ini menghindari bug parsing tag "a" saat copy-paste dari antarmuka chat [cite: 731, 735]
+
+              // Table
+              table: ({ children }) => (
+                <div className="my-8 overflow-x-auto border border-primary-dark/10 rounded">
+                  <table className="min-w-full divide-y divide-primary-dark/10">{children}</table>
+                </div>
+              ),
+              th: ({ children }) => <th className="px-4 py-3 bg-primary-dark/5 text-left font-medium border-b border-primary-dark/10">{children}</th>,
+              td: ({ children }) => <td className="px-4 py-3 border-b border-primary-dark/10">{children}</td>,
+
+              // Blockquote & Callout
+              blockquote: ({ children }) => (
+               <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg">
+                 {children}
+               </blockquote>
+              ),
+
+              // Code & Highlight
+              code: ({ className, children, ...props }) => {
+                const match = /language-(\w+)/.exec(className || '')
+                return match ? (
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
+                ) : (
+                  <code className="font-mono text-sm bg-primary-dark/5 px-1.5 py-0.5 rounded" {...props}>
+                    {children}
+                  </code>
+                )
+              },
+
+              // Image dengan caption & sumber
+              img: ({ src, alt }) => {
+                const [caption, source] = (alt || '').split('|').map(s => s.trim())
+                return (
+                  <figure className="my-10">
+                    <img 
+                      src={src} 
+                      alt={caption || ''} 
+                      className="w-full rounded border border-primary-dark/10" 
+                    />
+                    {caption && (
+                      <figcaption className="text-center mt-3 text-sm text-primary-dark/60 font-helvetica">
+                        {caption}
+                        {source && <span className="block text-xs mt-1">Sumber: {source}</span>}
+                      </figcaption>
+                    )}
+                  </figure>
+                )
+              },
+
+              // Link
               a: ({ href, children }) => React.createElement('a', {
                 href,
                 className: "text-accent-blue underline underline-offset-2 hover:opacity-70 transition-opacity duration-150",
                 target: href?.startsWith('http') ? '_blank' : undefined,
                 rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
               }, children),
-              code: ({ children }) => <code className="font-mono text-sm bg-primary-dark/5 text-primary-dark px-1.5 py-0.5 rounded">{children}</code>,
-              hr: () => <hr className="border-primary-dark/10 my-10" />
+
+              hr: () => <hr className="border-primary-dark/10 my-12" />
             }}
           >
             {part}

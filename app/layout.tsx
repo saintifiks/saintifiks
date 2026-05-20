@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Libre_Baskerville } from "next/font/google";
 import "./globals.css";
+import 'katex/dist/katex.min.css'
+import 'highlight.js/styles/github.css'
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
