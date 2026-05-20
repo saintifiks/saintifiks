@@ -69,7 +69,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
               td: ({ children }) => <td className="px-4 py-3 border-b border-primary-dark/10">{children}</td>,
 
               // Blockquote & Callout
-              blockquote: ({ children, node }) => {
+              blockquote: ({ children }) => {
                 const text = String(children).trim()
                 const calloutMatch = text.match(/^\[!(\w+)\](.*)/s)
                 
@@ -105,7 +105,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
               },
 
               // Code & Highlight
-              code: ({ node, inline, className, children, ...props }) => {
+              code: ({ inline, className, children, ...props }) => {
                 const match = /language-(\w+)/.exec(className || '')
                 return !inline && match ? (
                   <code className={className} {...props}>
