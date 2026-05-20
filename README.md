@@ -180,6 +180,36 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 - Admin panel harus memiliki field terpisah untuk: (a) konten Markdown, (b) Chart.js config JSON per chart, (c) metadata artikel.
 - Parser artikel di Next.js harus bisa mendeteksi `{{chart:chart-id}}`, mengambil config dari database `article_charts`, dan me-render Chart.js component di posisi tersebut.
 - Preview harus akurat — apa yang terlihat di preview harus identik dengan apa yang live.
+  ---
+
+## 5.2.1 SINTAKS MARKDOWN YANG DIDUKUNG
+
+### Tabel
+| Kolom 1 | Kolom 2 |
+|---------|---------|
+| Data    | Data    |
+
+### Formula matematika
+Inline: $E = mc^2$
+Display (baris sendiri): $$\sum_{i=1}^{n} x_i$$
+
+### Syntax highlighting kode
+```python
+def hello():
+    print("hello")
+```
+
+### Gambar dengan caption dan sumber
+![Deskripsi gambar | Sumber: BPS](https://url-gambar.com)
+Format: [deskripsi | sumber] — pisahkan dengan tanda |
+Jika tidak perlu sumber: ![Deskripsi gambar](https://url-gambar.com)
+
+### Blockquote biasa
+> Kutipan atau catatan penting di sini
+
+### Catatan
+- Callout box (> [!NOTE]) belum didukung — lihat Seksi 10 untuk status
+- Footnotes belum didukung di versi ini
 
 ---
 
