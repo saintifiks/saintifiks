@@ -4,6 +4,8 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
+import 'katex/dist/katex.min.css'
+import 'highlight.js/styles/github.css'
 
 // Load Libre Baskerville dari Google Fonts
 // weight 400 = regular, 700 = bold; style italic tersedia untuk body artikel
