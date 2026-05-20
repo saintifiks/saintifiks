@@ -571,6 +571,14 @@ Format pengisian:
              CATATAN IMPLEMENTASI: Saat callout diimplementasikan, gunakan remark-directive
                                    atau buat custom remark plugin yang transform node
                                    blockquote dengan teks [!NOTE] di AST sebelum render
+[20-05-2026] KEPUTUSAN: ChartBlock menggunakan dynamic import + registerables
+           ALASAN: Chart.js v4 + react-chartjs-2 tidak bisa di-SSR karena bergantung pada Canvas API browser. Dynamic import dengan 
+           {ssr: false } mencegah crash di server. registerables digunakan agar semua tipe chart (bar, line, dll) otomatis terdaftar
+           tanpa harus mendaftarkan satu per satu.
+           ALTERNATIF DITOLAK: Import biasa (menyebabkan Application Error), mendaftarkan controller & element satu per satu (rawan 
+           error & kurang future-proof).
+           CATATAN IMPLEMENTASI: Dynamic import dilakukan di ArticleRenderer.tsx. Registrasi dilakukan di dalam ChartBlock.tsx itu 
+           sendiri agar component self-contained.
 ```
 
 ---
@@ -895,6 +903,25 @@ Keputusan baru:
 Status akhir: selesai (tanpa callout)
 Next step: Implementasi callout box via remark plugin (sesi terpisah jika dibutuhkan)
 ---
+> [20-05-2026] SESI #18
+Branch: fix/chart-ssr
+Tujuan sesi: Menyelesaikan bug Chart.js di Preview & artikel publik + cleanup minor (Item 3, 4, 5 dari Post-Launch)
+
+Yang dikerjakan:
+  - components/artikel/ArticleRenderer.tsx → ubah import ChartBlock menjadi dynamic import dengan { ssr: false }
+  - components/artikel/ChartBlock.tsx → ganti registrasi manual BarElement dll menjadi ChartJS.register(...registerables)
+  - app/globals.css → tambah styling footnote (superscript + section footnote)
+  - app/fonts/ → hapus GeistVF.woff dan GeistMonoVF.woff (unused)
+  - README.md → update log sesi dan keputusan arsitektur
+
+Keputusan baru:
+  - Chart.js wajib di-load client-side only via dynamic import ssr:false
+  - Semua registerables Chart.js didaftarkan di dalam ChartBlock agar component reusable & robust
+
+Status akhir: selesai
+Next step: Sesi #19 — Implementasi <Image> Next.js di ArticleRenderer (Item 2)
+---
+
 ```
 Format:
 [TANGGAL] SESI #N
