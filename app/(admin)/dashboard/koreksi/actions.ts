@@ -1,9 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-
-type HasilAksi = { error: string } | { sukses: true }
 
 // Submit koreksi baru dari pembaca
 export async function submitCorrection(data: {

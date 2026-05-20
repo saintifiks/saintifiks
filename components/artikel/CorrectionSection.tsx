@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { submitCorrection } from '@/app/(admin)/dashboard/koreksi/actions'
 
 type Correction = {
