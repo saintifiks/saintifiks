@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.2 | Status: Pra-development — hanya GitHub repo yang ada | Terakhir diperbarui: 2025-05-18
+> Versi: 0.3 | Status: Live — website dapat diakses publik | Terakhir diperbarui: 2026-05-20
 
 ---
 
@@ -45,7 +45,7 @@ Pemilik proyek **bukan programmer** dan tidak memiliki latar belakang teknis. Se
 **Tipe:** Media independen berbasis web
 **Bahasa konten:** Indonesia
 **Audiens:** Pembaca dewasa Indonesia yang peduli pada kualitas informasi publik
-**Status saat ini:** Pra-development — hanya GitHub repository yang sudah ada. Belum ada kode, belum ada Vercel, belum ada Supabase.
+**Status saat ini:** Live — website dapat diakses publik di https://saintifiks.vercel.app
 
 **Apa ini bukan:**
 - Ini bukan blog personal biasa.
@@ -383,8 +383,8 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 ### Phase 4 — Kualitas & keamanan
 - [x] Weekly backup database via GitHub Actions
 - [x] SEO metadata lengkap (Open Graph, Twitter Card)
-- [ ] Mekanisme koreksi artikel (publik)
-- [ ] Performance audit
+- [x] Mekanisme koreksi artikel (publik)
+- [x] Performance audit
 
 ---
 
@@ -472,6 +472,15 @@ Format pengisian:
              Jangan pernah instruksikan copy-paste kode JSX yang mengandung <a dari chat.
              ALTERNATIF DITOLAK: Copy-paste dari chat (terbukti gagal), PowerShell Set-Content
              here-string (terbukti juga memakan tag <a dalam kondisi tertentu)
+[20-05-2026] KEPUTUSAN: Navbar diubah dari Server Component menjadi Client Component
+             ALASAN: Perlu mengecek status sesi login pembaca secara real-time untuk
+             menampilkan tombol Masuk/Keluar yang sesuai. Server Component tidak bisa
+             melakukan ini tanpa membebani caching layout root.
+             CATATAN IMPLEMENTASI: Tombol Masuk/Keluar disembunyikan di halaman admin
+             (/dashboard, /login) karena admin punya tombol Keluar sendiri di dashboard.
+             Setelah Keluar, pembaca diarahkan ke beranda (/). Tombol Masuk meneruskan
+             URL halaman saat ini via parameter ?next= agar pembaca kembali ke artikel
+             yang sedang dibaca setelah OAuth selesai.
 ```
 
 ---
@@ -496,7 +505,6 @@ Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seks
 Status akhir: selesai
 Next step: Phase 1 — buat tabel articles di Supabase + halaman publik + design system
 ---
-
 > [19-05-2026] SESI #2
 Branch: feature/phase-1-design-system
 Tujuan sesi: Phase 1 — Terapkan design system (font + color palette)
@@ -511,7 +519,6 @@ Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seks
 Status akhir: selesai
 Next step: Phase 1 — Database schema tabel articles di Supabase + RLS policies
 ---
-
 > [19-05-2026] SESI #3
 Branch: feature/phase-1-db-schema
 Tujuan sesi: Phase 1 — Database schema tabel articles + RLS policies
@@ -526,7 +533,6 @@ Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seks
 Status akhir: selesai
 Next step: Phase 1 — Halaman beranda (list artikel is_published = true)
 ---
-
 > [19-05-2026] SESI #4
 Branch: feature/phase-1-beranda
 Tujuan sesi: Phase 1 — Halaman beranda (list artikel is_published = true)
@@ -541,7 +547,6 @@ Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seks
 Status akhir: selesai
 Next step: Phase 1 — Halaman artikel individual (/artikel/[slug]) dengan render Markdown + SEO metadata
 ---
-
 > [19-05-2026] SESI #5
 Branch utama: feature/phase-1-artikel-individual
 Branch fix: fix/artikel-page-content, fix/artikel-slug-halaman
@@ -615,7 +620,7 @@ Keputusan baru:
     dan bisa didownload). Ini berlaku untuk semua sesi berikutnya.
 Status akhir: selesai
 Next step: Phase 1 — Navigasi dasar (Navbar dan Footer)
-
+---
 > [19-05-2026] SESI #6
 Branch: feature/phase-1-navigasi
 Tujuan sesi: Phase 1 — Navigasi dasar (Navbar dan Footer)
@@ -628,7 +633,7 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 2 — Google OAuth via Supabase Auth (login pemilik)
-
+---
 > [19-05-2026] SESI #7
 Branch: feature/phase-2-google-oauth
 Tujuan sesi: Phase 2 — Google OAuth via Supabase Auth (login pemilik)
@@ -644,7 +649,7 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 2 — Admin panel dasar (dashboard artikel + form tulis artikel)
-
+---
 > [19-05-2026] SESI #8
 Branch: feature/phase-2-admin-panel
 Tujuan sesi: Phase 2 — Admin panel dasar (dashboard artikel)
@@ -659,7 +664,7 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 2 — Form tulis/edit artikel (Markdown editor + live preview + publish)
-
+---
 > [19-05-2026] SESI #9
 Branch: feature/phase-2-form-artikel
 Tujuan sesi: Phase 2 — Form tulis/edit artikel (Markdown editor + live preview + publish)
@@ -676,7 +681,7 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (semua mengikuti keputusan yang sudah tercatat di Seksi 11)
 Status akhir: selesai
 Next step: Phase 2 — Sistem chart (tabel article_charts, parser {{chart:chart-id}}, Chart.js renderer)
-
+---
 > [19-05-2026] SESI #10
 Branch: feature/phase-2-sistem-chart
 Tujuan sesi: Phase 2 — Sistem chart (tabel article_charts, parser {{chart:chart-id}}, Chart.js renderer)
@@ -694,7 +699,7 @@ Keputusan baru:
   - Workaround bug copy-paste tag <a> diperluas: implementasi link dalam komponen custom Markdown wajib menggunakan React.createElement('a', ...) alih-alih JSX mentah untuk mengeliminasi celah kegagalan build.
 Status akhir: selesai
 Next step: Phase 2 — Upload gambar artikel via Supabase Storage
-
+---
 > [20-05-2026] SESI #11
 Branch: feature/phase-2-sistem-chart
 Tujuan sesi: Phase 2 — Upload gambar artikel via Supabase Storage
@@ -706,7 +711,7 @@ Yang dikerjakan:
 Keputusan baru: tidak ada.
 Status akhir: selesai.
 Next step: Phase 3 — Google OAuth untuk pembaca (login untuk interaksi).
-
+---
 > [20-05-2026] SESI #12
 Branch: feature/phase-3-likes-oauth
 Tujuan sesi: Phase 3 — Implementasi Google OAuth untuk pembaca dan Sistem Likes
@@ -721,7 +726,6 @@ Keputusan baru:
 Status akhir: selesai
 Next step: Phase 3 — Analytics internal (tabel analytics_events dan event tracking)
 ---
-
 > [20-05-2026] SESI #13
 Branch: feature/phase-3-analytics
 Tujuan sesi: Phase 3 — Analytics internal (tabel analytics_events dan event tracking)
@@ -735,8 +739,7 @@ Keputusan baru: Tidak ada. Eksekusi selaras dengan limitasi performa CRP dan lar
 Status akhir: selesai
 Next step: Evaluasi akhir Phase 3 dan persiapan Phase 4 (Security & SEO).
 ---
-
-[20-05-2026] SESI #14
+> [20-05-2026] SESI #14
 Branch: feature/phase-4-seo
 Tujuan sesi: Phase 4 — SEO metadata lengkap (Open Graph + Twitter Card)
 Yang dikerjakan:
@@ -750,6 +753,25 @@ Yang dikerjakan:
 Keputusan baru: tidak ada (SEO menggunakan data yang sudah ada, tidak ada schema baru)
 Status akhir: selesai
 Next step: Phase 4 — Mekanisme koreksi artikel (publik)
+---
+> [20-05-2026] SESI #15
+Branch: fix/artikel-404-dan-login-pembaca
+Tujuan sesi: Post-launch — perbaikan bug 404 halaman artikel + akses login untuk pembaca
+Yang dikerjakan:
+  - Edit app/artikel/[slug]/page.tsx: hapus !inner dari join article_corrections
+    (INNER JOIN menyebabkan query mengembalikan null untuk artikel tanpa koreksi → 404);
+    tambah kolom status ke query; filter corrections hanya status='approved' di JavaScript
+    sebelum dikirim ke komponen CorrectionSection
+  - Edit components/layout/Navbar.tsx: ubah dari Server Component menjadi Client Component;
+    tambah tombol Masuk (trigger Google OAuth, redirect kembali ke halaman saat ini) dan
+    tombol Keluar (sign out + redirect ke beranda); tombol disembunyikan di halaman admin
+  - Insiden build: ESLint menolak variabel _status (unused var) di page.tsx — diperbaiki
+    dengan mengganti destructuring spread menjadi explicit mapping objek
+  - Merge fix/artikel-404-dan-login-pembaca ke main
+Keputusan baru:
+  - Navbar diubah dari Server Component ke Client Component (lihat Seksi 11)
+Status akhir: selesai
+Next step: Sesi berikutnya — performance audit (Phase 4 item terakhir yang belum selesai)
 ---
 ```
 Format:
