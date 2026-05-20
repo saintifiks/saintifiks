@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.5 | Status: Live | Terakhir diperbarui: 2026-05-20
+> Versi: 0.6 | Status: Live | Terakhir diperbarui: 2026-05-21
 
 ---
 
@@ -155,10 +155,11 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 |-------|-----|-------|
 | `primary-dark` | `#0D0D0D` | Warna utama — teks, background dark mode, elemen struktural |
 | `primary-light` | `#F5F4F0` | Warna utama — background halaman, surface terang |
-| `accent-red` | `#C90203` | Aksen — digunakan sangat sedikit dan dengan intensi (error state, highlight kritis, elemen brand tertentu) |
+| `accent-red` | `#C90203` | Aksen — digunakan sangat sedikit (indikator turun di strip indeks, error state, highlight kritis) |
 | `accent-blue` | `#002EC7` | Aksen — digunakan sangat sedikit (link aktif, CTA spesifik, elemen interaktif tertentu) |
+| `accent-green` | `#5C8F6E` | Aksen — digunakan sangat sedikit (indikator naik di strip indeks beranda; hijau sage elegan, keputusan eksplisit 2026-05-21) |
 
-**Prinsip penggunaan warna:** 90% halaman adalah `#0D0D0D` dan `#F5F4F0`. Dua warna aksen muncul hanya untuk elemen yang benar-benar membutuhkan perhatian. Jangan menggunakan aksen untuk dekorasi.
+**Prinsip penggunaan warna:** 90% halaman adalah `#0D0D0D` dan `#F5F4F0`. Warna aksen muncul hanya untuk elemen yang benar-benar membutuhkan perhatian. Jangan menggunakan aksen untuk dekorasi.
 
 ---
 
@@ -207,13 +208,70 @@ Jika tidak perlu sumber: ![Deskripsi gambar](https://url-gambar.com)
 ### Blockquote biasa
 > Kutipan atau catatan penting di sini
 
-### Catatan
-- Callout box (> [!NOTE]) belum didukung — lihat Seksi 10 untuk status
-- Footnotes belum didukung di versi ini
+### Callout box
+> [!NOTE]
+> Teks catatan di sini
+
+Mendukung: `NOTE`, `WARNING`, `IMPORTANT`, `TIP` — via custom remark plugin (`lib/supabase/remark/remarkCallout.ts`).
+
+### Footnotes
+Didukung via remark-gfm — styling di `app/globals.css` (FOOTNOTE STYLING).
 
 ---
 
-## 5.3 GIT BRANCHING PROTOCOL
+## 5.3 WIDGET INDEKS BERANDA
+
+> Status: LIVE sejak 2026-05-21 | Hanya di halaman beranda (`app/page.tsx`)
+
+### Tujuan
+Memberi konteks faktual ekonomi & tata kelola bagi pembaca — selaras Prinsip Editorial #5 dan #7. Bukan untuk engagement artifisial: tanpa autoplay, tanpa animasi berkedip, tanpa infinite scroll.
+
+### Tampilan
+- **Strip tipis** (~36px) di paling atas konten beranda (di bawah Navbar), full width, latar `primary-dark`
+- Satu baris horizontal; geser manual di mobile/desktop; **scrollbar disembunyikan** (class `.index-ticker-scroll`)
+- Setiap item: label + ikon tren (naik/turun/stabil) + nilai
+- Ikon: naik = `accent-green`, turun = `accent-red`, stabil = abu tipis
+
+### Indeks yang ditampilkan
+
+| Indeks | Sumber data | Perbandingan tren | Perilaku update |
+|--------|-------------|-------------------|-----------------|
+| USD/IDR | Yahoo Finance (`IDR=X`); fallback Frankfurter (harian) | 5m → 1j → 1h (Yahoo) atau 1 hari (ECB) | Live saat pasar bergerak |
+| IHSG | Yahoo Finance (`^JKSE`) | 5m → 1j → 1h | Live saat bursa buka |
+| Emas (IDR/gram) | Yahoo `GC=F` + kurs IDR | Mengikuti emas USD | Live |
+| Minyak Brent | Yahoo `BZ=F` | 5m → 1j → 1h | Live |
+| Inflasi | BPS API (jika `BPS_API_KEY` ada) atau World Bank | 1 bulan / 1 tahun | Bulanan/tahunan |
+| BI7DRR | Scrape halaman BI | Stabil (riwayat otomatis tidak tersedia) | Saat BI umumkan |
+| Kebebasan Pers, CPI, Demokrasi, IPM | Our World in Data → sumber asli (RSF, TI, EIU, UNDP) | 1 tahun | Tahunan |
+
+### Arsitektur teknis
+- **Render awal:** Server Component `IndexStrip` → snapshot pertama dari `getIndicesSnapshot()`
+- **Pembaruan:** Client Component `IndexStripClient` polling `/api/indices` setiap **15 detik** (minimum 3 detik), hanya saat tab browser aktif
+- **API route:** `app/api/indices/route.ts` — `force-dynamic`, `Cache-Control: no-store`, cache server in-memory **12 detik** untuk membatasi panggilan API eksternal
+- **Mode live:** `getIndicesSnapshot(true)` memakai `cache: 'no-store'` ke Yahoo; mode SSR awal boleh di-cache Next.js (revalidate per fetcher)
+- **Halaman beranda ISR:** `revalidate = 3600` — daftar artikel bisa tertinggal hingga 1 jam; **strip indeks tidak bergantung pada reload halaman** karena client polling
+
+### File terkait
+```
+components/widgets/IndexStrip.tsx      ← Server wrapper
+components/widgets/IndexStripClient.tsx ← Polling + render strip
+components/widgets/TrendIcon.tsx       ← Ikon panah
+lib/indices/fetchers.ts                ← Ambil & format data
+lib/indices/yahoo.ts                   ← Intraday Yahoo + tren
+lib/indices/trend.ts                   ← Logika naik/turun
+lib/indices/http.ts                    ← Helper fetch live vs cached
+lib/indices/get-indices.ts             ← Orchestrator snapshot
+app/api/indices/route.ts               ← Endpoint polling client
+```
+
+### Environment variable opsional
+| Variabel | Wajib? | Fungsi |
+|----------|--------|--------|
+| `BPS_API_KEY` | Tidak | Inflasi bulanan YoY dari BPS (daftar di https://webapi.bps.go.id). Tanpa ini: fallback World Bank (tahunan). |
+
+---
+
+## 5.4 GIT BRANCHING PROTOCOL
 
 > Aturan ini ada untuk melindungi pemilik dari kehancuran kode yang tidak bisa di-undo.
 
@@ -225,7 +283,7 @@ Jika tidak perlu sumber: ![Deskripsi gambar](https://url-gambar.com)
 
 ---
 
-## 5.4 BACKUP & DATA SAFETY
+## 5.5 BACKUP & DATA SAFETY
 
 - **Weekly database export** via GitHub Actions (pg_dump ke Supabase, disimpan sebagai artifact) — harus diimplementasikan sebelum konten pertama di-publish.
 - **Supabase free tier tidak memiliki Point-in-Time Recovery.** Backup manual adalah satu-satunya safety net.
@@ -346,6 +404,8 @@ CREATE TRIGGER articles_updated_at
 │   └── api/
 │       ├── analytics/
 │       │   └── route.ts
+│       ├── indices/
+│       │   └── route.ts                  ← Polling data strip indeks (force-dynamic)
 │       └── keep-alive/
 │           └── route.ts
 │
@@ -353,6 +413,10 @@ CREATE TRIGGER articles_updated_at
 │   ├── layout/
 │   │   ├── Navbar.tsx
 │   │   └── Footer.tsx
+│   ├── widgets/
+│   │   ├── IndexStrip.tsx                ← Server wrapper strip indeks beranda
+│   │   ├── IndexStripClient.tsx          ← Client polling + render
+│   │   └── TrendIcon.tsx                 ← Ikon naik/turun
 │   ├── artikel/
 │   │   ├── ArticleRenderer.tsx
 │   │   ├── ChartBlock.tsx
@@ -363,9 +427,19 @@ CREATE TRIGGER articles_updated_at
 │       └── AnalyticsTracker.tsx
 │
 ├── lib/
+│   ├── indices/
+│   │   ├── fetchers.ts                   ← Fetch semua indeks + tren
+│   │   ├── get-indices.ts
+│   │   ├── http.ts
+│   │   ├── format.ts
+│   │   ├── trend.ts
+│   │   ├── types.ts
+│   │   └── yahoo.ts
 │   └── supabase/
 │       ├── client.ts
-│       └── server.ts
+│       ├── server.ts
+│       └── remark/
+│           └── remarkCallout.ts
 │
 ├── .github/workflows/backup.yml
 ├── next.config.mjs
@@ -397,7 +471,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 
 ## 9. CHECKLIST IMPLEMENTASI
 
-> Status saat ini: hanya GitHub repository yang ada. Belum ada apapun yang di-setup.
+> Status saat ini: Phase 0–4 selesai. Post-launch improvements berkelanjutan.
 
 ### Phase 0 — Foundation (Harus selesai sebelum apapun)
 - [x] Akun GitHub dibuat
@@ -435,6 +509,13 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Mekanisme koreksi artikel (publik)
 - [x] Performance audit
 - [x] Perbaikan UX Login Google OAuth (account chooser + loading feedback)
+
+### Post-launch — Beranda & konteks data
+- [x] Widget indeks beranda (fetch otomatis, tanpa hardcode)
+- [x] Strip tipis horizontal di atas beranda (gaya ticker editorial)
+- [x] Ikon tren naik (hijau) / turun (merah) per rentang data tersedia
+- [x] Pembaruan pasar live via `/api/indices` + polling client 15 detik
+- [x] Scroll horizontal tanpa scrollbar terlihat
 
 ---
 
@@ -615,6 +696,23 @@ Format pengisian:
              ALTERNATIF DITOLAK: Tailwind arbitrary selector (verbose, sulit dibaca)
              CATATAN IMPLEMENTASI: Semua CSS footnote ada di app/globals.css
                                    di bawah comment FOOTNOTE STYLING.
+
+[21-05-2026] KEPUTUSAN: Widget indeks beranda — hybrid Server + Client polling
+             ALASAN: Memenuhi Prinsip #5/#7 (konteks faktual, sumber terlacak) tanpa
+                     melanggar Zona Merah (bukan autoplay, bukan engagement bait).
+                     SSR untuk first paint cepat; Client polling ringan hanya di strip.
+             ALTERNATIF DITOLAK: Client-only (flash kosong), polling tiap 3 detik ke
+                                 API eksternal tanpa cache server (membebani Yahoo),
+                                 hardcode tahunan (terlalu manual)
+             CATATAN IMPLEMENTASI: Lihat Seksi 5.3. Polling 15 detik, tab harus visible.
+                                   USD/IDR dan pasar via Yahoo intraday; Frankfurter
+                                   hanya fallback. ISR beranda (1 jam) tidak menggantikan
+                                   polling strip.
+
+[21-05-2026] KEPUTUSAN: accent-green (#5C8F6E) ditambahkan ke palette
+             ALASAN: Ikon naik di strip indeks butuh warna semantik yang elegan dan
+                     selaras dengan primary-dark/light; merah sudah dipakai untuk turun.
+             CATATAN: Hanya untuk indikator naik di strip — bukan dekorasi umum.
 ```
 
 ---
@@ -977,6 +1075,37 @@ Keputusan baru:
 Issues resolved: ESLint warning next/no-img-element, Callout box open issue
 Status akhir: selesai
 Next step: -
+---
+> [21-05-2026] SESI #20–#23 (rangkaian)
+Branch: feature/homepage-index-widget → feature/homepage-index-ticker-strip →
+        feature/homepage-index-trend-arrows → feature/homepage-index-live-refresh
+Tujuan sesi: Widget indeks di beranda — data otomatis, strip tipis, tren naik/turun, pembaruan live
+Yang dikerjakan:
+  - Buat lib/indices/* (fetchers, yahoo, trend, format, types, get-indices, http)
+  - Buat components/widgets/IndexStrip.tsx, IndexStripClient.tsx, TrendIcon.tsx
+  - Buat app/api/indices/route.ts (force-dynamic, cache server 12 detik)
+  - Edit app/page.tsx: sisipkan strip di paling atas beranda
+  - Edit app/globals.css: scrollbar tersembunyi (.index-ticker-scroll)
+  - Edit tailwind.config.ts + globals.css: token accent-green (#5C8F6E)
+  - Iterasi desain: grid 3 grup → strip horizontal tipis (WSJ-inspired, disesuaikan Saintifiks)
+  - Iterasi data: Frankfurter (harian) → Yahoo IDR=X untuk USD/IDR live; perbaikan polling
+    (fetch saat mount + 15 detik, bukan hanya interval 30 detik)
+  - Merge PR #33–#36 ke main
+Keputusan baru:
+  - Widget indeks hybrid SSR + client polling (Seksi 5.3, Seksi 11)
+  - accent-green untuk ikon naik (Seksi 11)
+  - Dokumentasi lengkap di Seksi 5.3 dan pembaruan struktur file Seksi 7
+Status akhir: selesai
+Next step: Opsional — set BPS_API_KEY di Vercel untuk inflasi bulanan BPS
+---
+> [21-05-2026] SESI #24
+Branch: main (push langsung atas permintaan eksplisit pemilik)
+Tujuan sesi: Perbarui README.md (CONTEXT) mencerminkan seluruh pekerjaan widget indeks
+Yang dikerjakan:
+  - Update README.md versi 0.6: palette, Seksi 5.3, struktur file, checklist, log sesi, Seksi 11
+  - Perbaiki dokumentasi callout/footnote yang sudah outdated
+Keputusan baru: tidak ada
+Status akhir: selesai
 ---
 ```
 Format:
