@@ -69,40 +69,11 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
               td: ({ children }) => <td className="px-4 py-3 border-b border-primary-dark/10">{children}</td>,
 
               // Blockquote & Callout
-              blockquote: ({ children }) => {
-                const text = String(children).trim()
-                const calloutMatch = text.match(/^\[!(\w+)\](.*)/s)
-                
-                if (calloutMatch) {
-                  const type = calloutMatch[1].toUpperCase()
-                  const content = calloutMatch[2].trim()
-                  let bgColor = 'bg-primary-dark/5 border-primary-dark/20'
-                  let icon = '📝'
-
-                  if (type === 'WARNING' || type === 'CAUTION') {
-                    bgColor = 'bg-accent-red/5 border-accent-red/30'
-                    icon = '⚠️'
-                  } else if (type === 'IMPORTANT' || type === 'NOTE') {
-                    bgColor = 'bg-accent-blue/5 border-accent-blue/30'
-                    icon = 'ℹ️'
-                  }
-
-                  return (
-                    <div className={`my-8 p-6 border-l-4 rounded-r ${bgColor}`}>
-                      <div className="flex items-start gap-3">
-                        <span className="text-xl mt-0.5">{icon}</span>
-                        <div className="font-libre text-lg leading-relaxed">{content}</div>
-                      </div>
-                    </div>
-                  )
-                }
-
-                return (
-                  <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg">
-                    {children}
-                  </blockquote>
-                )
-              },
+              blockquote: ({ children }) => (
+               <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg">
+                 {children}
+               </blockquote>
+              ),
 
               // Code & Highlight
               code: ({ inline, className, children, ...props }) => {
