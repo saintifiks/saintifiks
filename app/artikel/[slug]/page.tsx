@@ -8,6 +8,8 @@ import CorrectionSection from '@/components/artikel/CorrectionSection'
 
 export const revalidate = 3600
 
+// [PERBAIKAN SESI #15]
+// Tipe article_corrections diperbarui: tambah kolom 'status' untuk filter approved
 type Article = {
   id: string
   title: string
@@ -23,6 +25,7 @@ type Article = {
     corrected_text: string
     explanation: string | null
     created_at: string
+    status: string
   }[]
 }
 
@@ -94,17 +97,24 @@ export default async function ArtikelPage({ params }: Props) {
         chart_identifier,
         config
       ),
-      article_corrections!inner (
+      article_corrections (
         id,
         original_text,
         corrected_text,
         explanation,
-        created_at
+        created_at,
+        status
       )
     `)
     .eq('slug', slug)
     .eq('is_published', true)
     .single()
+
+  // [PERBAIKAN SESI #15]
+  // Sebelumnya: article_corrections!inner — INNER JOIN yang menyebabkan query
+  // mengembalikan null jika artikel belum punya koreksi → notFound() → 404.
+  // Sekarang: article_corrections biasa (LEFT JOIN) — artikel selalu dikembalikan
+  // terlepas dari ada tidaknya koreksi.
 
   if (error || !article) {
     notFound()
@@ -112,7 +122,22 @@ export default async function ArtikelPage({ params }: Props) {
 
   const artikel = article as Article
   const charts = artikel.article_charts || []
-  const corrections = artikel.article_corrections || []
+
+  // [PERBAIKAN SESI #15]
+  // Hanya tampilkan koreksi yang sudah disetujui admin (status = 'approved').
+  // Ini memastikan koreksi pending/rejected tidak bocor ke halaman publik,
+  // terlepas dari kondisi RLS policy di Supabase.
+  // Map eksplisit digunakan (bukan destructuring) agar ESLint tidak komplain
+  // tentang variabel 'status' yang tidak diteruskan ke komponen.
+  const corrections = (artikel.article_corrections || [])
+    .filter((c) => c.status === 'approved')
+    .map((c) => ({
+      id: c.id,
+      original_text: c.original_text,
+      corrected_text: c.corrected_text,
+      explanation: c.explanation,
+      created_at: c.created_at,
+    }))
 
   return (
     <main className="min-h-screen bg-primary-light">
