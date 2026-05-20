@@ -16,8 +16,26 @@ const libreBaskerville = Libre_Baskerville({
 });
 
 export const metadata: Metadata = {
+  // metadataBase: fondasi agar og:image URL menjadi absolut
+  // Twitter/X, WhatsApp, dan Facebook menolak URL relatif untuk gambar preview artikel
+  // Di production: menggunakan nilai NEXT_PUBLIC_SITE_URL dari environment variable
+  // Di local development: fallback ke localhost
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  ),
   title: "Saintifiks",
   description: "Media independen untuk pembaca yang peduli kualitas informasi publik.",
+  // Default OG site-wide — halaman individual akan override ini
+  openGraph: {
+    siteName: "Saintifiks",
+    locale: "id_ID",
+    type: "website",
+  },
+  // Default Twitter Card site-wide — "summary_large_image" menampilkan gambar besar
+  // saat artikel dibagikan di Twitter/X
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({
