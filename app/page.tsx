@@ -13,10 +13,10 @@ export const revalidate = 3600
 // Halaman artikel individual punya metadata dinamis sendiri di masing-masing page.tsx
 export const metadata: Metadata = {
   title: 'Saintifiks',
-  description: 'Media independen untuk pembaca yang peduli kualitas informasi publik.',
+  description: 'Mereka punya narasi, kami punya angka.',
   openGraph: {
     title: 'Saintifiks',
-    description: 'Media independen untuk pembaca yang peduli kualitas informasi publik.',
+    description: 'Mereka punya narasi, kami punya angka.',
     // og:url — metadataBase di layout.tsx akan mengubah "/" menjadi URL absolut
     url: '/',
     type: 'website',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Saintifiks',
-    description: 'Media independen untuk pembaca yang peduli kualitas informasi publik.',
+    description: 'Mereka punya narasi, kami punya angka.',
   },
 }
 
@@ -72,14 +72,21 @@ export default async function BerandaPage() {
       {/* Bar indikator — strip tipis di paling atas konten beranda */}
       <IndexStrip />
 
-      {/* Header beranda — nama brand dan deskripsi singkat */}
+      {/* Header beranda — logo, nama brand, dan tagline */}
       <header className="border-b border-primary-dark/10 py-16 px-6">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="font-libre text-4xl font-bold text-primary-dark tracking-tight">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="mx-auto mb-8 h-24 w-24 sm:h-28 sm:w-28">
+            <img
+              src="/logo/symbol-lighttheme.svg"
+              alt="Logo Saintifiks"
+              className="h-full w-full object-contain"
+            />
+          </div>
+          <h1 className="font-libre text-5xl font-bold text-primary-dark tracking-tight sm:text-6xl">
             Saintifiks
           </h1>
-          <p className="font-helvetica text-primary-dark/60 mt-3 text-base leading-relaxed">
-            Media independen untuk pembaca yang peduli kualitas informasi publik.
+          <p className="font-helvetica mx-auto mt-4 max-w-xl text-primary-dark/70 text-lg leading-relaxed sm:text-xl">
+            Mereka punya narasi, kami punya angka.
           </p>
         </div>
       </header>
