@@ -2,6 +2,7 @@
 // Server Component: data di-fetch di server, tidak membutuhkan JavaScript tambahan di browser
 
 import type { Metadata } from 'next'
+import IndexStrip from '@/components/widgets/IndexStrip'
 import { createClient } from '@/lib/supabase/server'
 
 // ISR: Next.js meng-cache halaman ini dan memperbarui otomatis setiap 1 jam
@@ -79,6 +80,8 @@ export default async function BerandaPage() {
           </p>
         </div>
       </header>
+
+      <IndexStrip />
 
       {/* Daftar artikel */}
       <section className="max-w-2xl mx-auto px-6 py-12">
