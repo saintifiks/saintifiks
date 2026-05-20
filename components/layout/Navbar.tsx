@@ -66,13 +66,13 @@ export default function Navbar() {
     pathname.startsWith('/dashboard') || pathname === '/login'
 
   return (
-    <nav className="border-b border-primary-dark/10 bg-primary-light">
+    <nav className="border-b border-primary-dark/10 bg-primary-light dark:border-primary-light/10 dark:bg-primary-dark">
       <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
 
         {/* Brand — nama situs, link ke beranda */}
         <a
           href="/"
-          className="font-libre text-lg font-bold text-primary-dark hover:opacity-60 transition-opacity duration-150"
+          className="font-libre text-lg font-bold text-primary-dark hover:opacity-60 transition-opacity duration-150 dark:text-primary-light"
         >
           Saintifiks
         </a>
@@ -85,7 +85,7 @@ export default function Navbar() {
               aria-label="Keluar"
               className="transition-colors duration-150 hover:opacity-80"
             >
-              <span className="inline-flex h-9 w-9 items-center justify-center border border-primary-dark/10 bg-white text-primary-dark transition-all duration-150 rotate-45 dark:border-primary-light/10 dark:bg-primary-dark dark:text-primary-light">
+              <span className="inline-flex h-9 w-9 items-center justify-center border border-primary-dark/10 bg-white text-primary-dark transition-all duration-150 rotate-45 dark:border-primary-light/10 dark:bg-primary-light dark:text-primary-dark">
                 <span className="font-libre text-xl font-bold -rotate-45 leading-none">
                   {userInitial || 'U'}
                 </span>
@@ -95,7 +95,7 @@ export default function Navbar() {
             <button
               onClick={handleMasuk}
               disabled={isLoggingIn}
-              className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 disabled:opacity-50 flex items-center gap-1.5"
+              className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 disabled:opacity-50 flex items-center gap-1.5 dark:text-primary-light/40 dark:hover:text-primary-light"
             >
               {isLoggingIn ? (
                 <>Membuka Google...</>

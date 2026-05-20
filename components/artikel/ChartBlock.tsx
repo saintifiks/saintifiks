@@ -38,7 +38,7 @@ export default function ChartBlock({ identifier, configString }: ChartBlockProps
 
     return (
       <div className="my-10">
-        <div className="w-full h-auto bg-white p-4 border border-primary-dark/10 shadow-sm">
+        <div className="w-full h-auto bg-white p-4 border border-primary-dark/10 shadow-sm dark:bg-primary-dark dark:border-primary-light/10">
           <Chart type={chartType} data={config.data} options={config.options} />
         </div>
       </div>

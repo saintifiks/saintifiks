@@ -140,12 +140,12 @@ export default async function ArtikelPage({ params }: Props) {
     }))
 
   return (
-    <main className="min-h-screen bg-primary-light">
-      <header className="border-b border-primary-dark/10 py-16 px-6">
+    <main className="min-h-screen bg-primary-light text-primary-dark dark:bg-primary-dark dark:text-primary-light">
+      <header className="border-b border-primary-dark/10 py-16 px-6 dark:border-primary-light/10">
         <div className="max-w-2xl mx-auto">
           <Link
             href="/"
-            className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest hover:text-primary-dark transition-colors duration-150"
+            className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest hover:text-primary-dark transition-colors duration-150 dark:text-primary-light/40 dark:hover:text-primary-light"
           >
             &#8592; Saintifiks
           </Link>
@@ -153,18 +153,18 @@ export default async function ArtikelPage({ params }: Props) {
           {artikel.published_at && (
             <time
               dateTime={artikel.published_at}
-              className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mt-6"
+              className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mt-6 dark:text-primary-light/40"
             >
               {formatTanggal(artikel.published_at)}
             </time>
           )}
 
-          <h1 className="font-libre text-4xl font-bold text-primary-dark mt-3 leading-tight">
+          <h1 className="font-libre text-4xl font-bold text-primary-dark mt-3 leading-tight dark:text-primary-light">
             {artikel.title}
           </h1>
 
           {artikel.excerpt && (
-            <p className="font-helvetica text-base text-primary-dark/60 mt-4 leading-relaxed">
+            <p className="font-helvetica text-base text-primary-dark/60 mt-4 leading-relaxed dark:text-primary-light/60">
               {artikel.excerpt}
             </p>
           )}

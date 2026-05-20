@@ -67,25 +67,30 @@ export default async function BerandaPage() {
   const daftarArtikel: Article[] = articles ?? []
 
   return (
-    <main className="min-h-screen bg-primary-light">
+    <main className="min-h-screen bg-primary-light text-primary-dark dark:bg-primary-dark dark:text-primary-light">
 
       {/* Bar indikator — strip tipis di paling atas konten beranda */}
       <IndexStrip />
 
       {/* Header beranda — logo, nama brand, dan tagline */}
-      <header className="border-b border-primary-dark/10 py-16 px-6">
+      <header className="border-b border-primary-dark/10 py-16 px-6 dark:border-primary-light/10">
         <div className="max-w-2xl mx-auto text-center">
           <div className="mx-auto mb-8 h-24 w-24 sm:h-28 sm:w-28">
             <img
               src="/logo/symbol-lighttheme.svg"
               alt="Logo Saintifiks"
-              className="h-full w-full object-contain"
+              className="h-full w-full object-contain dark:hidden"
+            />
+            <img
+              src="/logo/symbol-darktheme.svg"
+              alt="Logo Saintifiks"
+              className="hidden h-full w-full object-contain dark:block"
             />
           </div>
-          <h1 className="font-libre text-5xl font-bold text-primary-dark tracking-tight sm:text-6xl">
+          <h1 className="font-libre text-5xl font-bold text-primary-dark tracking-tight sm:text-6xl dark:text-primary-light">
             Saintifiks
           </h1>
-          <p className="font-helvetica mx-auto mt-4 max-w-xl text-primary-dark/70 text-lg leading-relaxed sm:text-xl">
+          <p className="font-helvetica mx-auto mt-4 max-w-xl text-primary-dark/70 text-lg leading-relaxed sm:text-xl dark:text-primary-light/70">
             Mereka punya narasi, kami punya angka.
           </p>
         </div>
@@ -123,13 +128,13 @@ export default async function BerandaPage() {
                   )}
 
                   {/* Judul artikel */}
-                  <h2 className="font-libre text-2xl font-bold text-primary-dark mt-2 group-hover:opacity-60 transition-opacity duration-150">
+                  <h2 className="font-libre text-2xl font-bold text-primary-dark mt-2 group-hover:opacity-60 transition-opacity duration-150 dark:text-primary-light">
                     {artikel.title}
                   </h2>
 
                   {/* Excerpt / ringkasan — hanya tampil jika ada */}
                   {artikel.excerpt && (
-                    <p className="font-helvetica text-base text-primary-dark/70 mt-2 leading-relaxed">
+                    <p className="font-helvetica text-base text-primary-dark/70 mt-2 leading-relaxed dark:text-primary-light/70">
                       {artikel.excerpt}
                     </p>
                   )}

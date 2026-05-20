@@ -12,6 +12,10 @@
 }
 
 /* Base body — 90% halaman hanya dua warna ini */
+html {
+  color-scheme: light dark;
+}
+
 body {
   background-color: #F5F4F0;
   color: #0D0D0D;
