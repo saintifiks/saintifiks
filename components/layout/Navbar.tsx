@@ -1,8 +1,7 @@
 'use client'
 
 // Komponen Navbar — navigasi utama situs Saintifiks
-// [DIUBAH SESI #15] Client Component: sebelumnya Server Component (konten statis).
-// Diubah karena perlu mengecek status login pembaca untuk menampilkan tombol Masuk/Keluar.
+// [PERUBAHAN SESI #16] — Improve Login UX: tambah prompt select_account + loading feedback
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
@@ -11,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
   const pathname = usePathname()
   const supabase = createClient()
 
@@ -24,14 +24,21 @@ export default function Navbar() {
     cekSesi()
   }, [supabase])
 
-  // Masuk: trigger Google OAuth, setelah selesai kembali ke halaman yang sedang dibuka
+  // Masuk: trigger Google OAuth dengan account chooser yang lebih jelas
   async function handleMasuk() {
+    setIsLoggingIn(true)
+    
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
+        // Memaksa Google menampilkan pemilihan akun / konfirmasi
+        prompt: 'select_account',
+        // Kembalikan ke halaman yang sedang dibuka setelah login
         redirectTo: `${window.location.origin}/auth/callback?next=${pathname}`,
       },
     })
+    
+    // Note: setIsLoggingIn(false) tidak diperlukan karena halaman akan redirect
   }
 
   // Keluar: akhiri sesi, arahkan ke beranda
@@ -41,7 +48,6 @@ export default function Navbar() {
   }
 
   // Sembunyikan tombol Masuk/Keluar di halaman admin dan halaman login.
-  // Admin punya tombol Keluar sendiri di dashboard — duplikasi tidak diperlukan.
   const isHalamanAdmin =
     pathname.startsWith('/dashboard') || pathname === '/login'
 
@@ -69,9 +75,14 @@ export default function Navbar() {
           ) : (
             <button
               onClick={handleMasuk}
-              className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150"
+              disabled={isLoggingIn}
+              className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 disabled:opacity-50 flex items-center gap-1.5"
             >
-              Masuk
+              {isLoggingIn ? (
+                <>Membuka Google...</>
+              ) : (
+                <>Masuk</>
+              )}
             </button>
           )
         )}
