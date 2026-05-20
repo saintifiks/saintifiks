@@ -38,7 +38,7 @@ export default function CorrectionSection({ articleId, corrections }: Correction
       explanation: explanation
     })
 
-    if ('error' in result) {
+    if ('error' in result && result.error) {
       setMessage({ type: 'error', text: result.error })
     } else {
       setMessage({ type: 'success', text: 'Koreksi berhasil dikirim. Terima kasih!' })
