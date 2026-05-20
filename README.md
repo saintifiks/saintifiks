@@ -382,7 +382,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 
 ### Phase 4 — Kualitas & keamanan
 - [x] Weekly backup database via GitHub Actions
-- [ ] SEO metadata lengkap (Open Graph, Twitter Card)
+- [x] SEO metadata lengkap (Open Graph, Twitter Card)
 - [ ] Mekanisme koreksi artikel (publik)
 - [ ] Performance audit
 
@@ -736,6 +736,21 @@ Status akhir: selesai
 Next step: Evaluasi akhir Phase 3 dan persiapan Phase 4 (Security & SEO).
 ---
 
+[20-05-2026] SESI #14
+Branch: feature/phase-4-seo
+Tujuan sesi: Phase 4 — SEO metadata lengkap (Open Graph + Twitter Card)
+Yang dikerjakan:
+  - Edit app/layout.tsx: tambah metadataBase, default openGraph (siteName, locale, type),
+    default twitter card (summary_large_image)
+  - Edit app/artikel/[slug]/page.tsx: lengkapi generateMetadata() — tambah og:image,
+    og:url, og:type "article", og:locale, twitter:title, twitter:description,
+    twitter:image; perbaiki query Supabase untuk ambil cover_image_url dan slug
+  - Edit app/page.tsx: tambah metadata statis untuk halaman beranda
+  - Merge feature/phase-4-seo ke main
+Keputusan baru: tidak ada (SEO menggunakan data yang sudah ada, tidak ada schema baru)
+Status akhir: selesai
+Next step: Phase 4 — Mekanisme koreksi artikel (publik)
+---
 ```
 Format:
 [TANGGAL] SESI #N
