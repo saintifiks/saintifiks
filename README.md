@@ -120,7 +120,7 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 | Version control | GitHub | Standar industri; UIthub bisa membaca repo ini untuk konteks AI per sesi |
 | Visualisasi data | Chart.js (custom blocks terintegrasi) | Fleksibilitas penuh, kontrol atas visualisasi data ekonomi kompleks, tidak bergantung layanan pihak ketiga |
 | Styling | Tailwind CSS v3 | Utility-first, AI-friendly, konsisten dengan ekosistem Next.js |
-| Auth pembaca | Supabase Auth + Google OAuth | Login via Google; tidak perlu buat akun baru; Supabase menangani seluruh flow |
+| Auth pembaca | Supabase Auth + Google OAuth | Login via Google; tidak perlu buat akun baru; Supabase menangani seluruh flow; saat pengguna login, tombol keluar digantikan ikon belah ketupat dengan huruf inisial nama |
 | Editor artikel admin | Markdown teks biasa | Resolved — lihat Seksi 11 untuk alasan lengkap |
 | Konten format | Markdown dengan chart placeholder | `{{chart:chart-id}}` — Next.js parsing dan render keduanya |
 | Markdown renderer | react-markdown + remark-gfm + remark-math + rehype-katex + rehype-highlight | Tabel GFM, formula LaTeX, syntax highlighting — ekosistem standar, client-side |
