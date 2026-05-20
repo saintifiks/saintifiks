@@ -67,11 +67,12 @@ export default function CorrectionSection({ articleId, corrections }: Correction
       {corrections.length > 0 && (
         <div className="space-y-8 mb-10">
           {corrections.map((corr) => (
-            <div key={corr.id} className="border-l-4 border-accent-blue pl-6 py-1">
+            <div key={corr.id} className="space-y-4 border-l-4 border-accent-blue pl-6 py-4">
+              <div>
                 <p className="font-helvetica text-xs text-primary-dark/40 mb-2 dark:text-primary-light/40">KOREKSI</p>
-                <p className="text-primary-dark font-medium mt-1">{corr.corrected_text}</p>
+                <p className="text-primary-dark font-medium mt-1 dark:text-primary-light">{corr.corrected_text}</p>
               </div>
-              
+
               {corr.explanation && (
                 <p className="font-helvetica text-sm text-primary-dark/70 italic border-l-2 border-primary-dark/20 pl-4 dark:text-primary-light/70 dark:border-primary-light/20">
                   {corr.explanation}
