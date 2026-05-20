@@ -1,7 +1,7 @@
 'use client'
 
 // Komponen LikeButton — tombol suka artikel dengan optimistic update
-// [PERUBAHAN SESI #16] — Improve Login UX: tambah prompt select_account + loading feedback
+// [PERUBAHAN SESI #16] — Improve Login UX: tambah prompt select_account via queryParams
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -45,7 +45,6 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
   }, [articleId, supabase])
 
   async function handleLikeClick() {
-    // Jika user belum login → trigger OAuth dengan account chooser
     if (!userId) {
       setIsLoggingIn(true)
       
@@ -53,17 +52,18 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Memaksa Google menampilkan pemilihan akun / konfirmasi
-          prompt: 'select_account',
+          // Memaksa Google menampilkan pemilihan akun (account chooser)
+          queryParams: {
+            prompt: 'select_account'
+          },
           redirectTo: `${origin}/auth/callback?next=${pathname}`,
         },
       })
       
-      // Note: setIsLoggingIn(false) tidak diperlukan karena akan redirect
       return
     }
 
-    // Jika sudah login → proses like/unlike (tetap sama)
+    // Proses like/unlike (tetap sama seperti sebelumnya)
     const previousState = isLiked
     setIsLiked(!previousState)
 
