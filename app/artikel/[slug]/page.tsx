@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 import LikeButton from '@/components/artikel/LikeButton'
+import CorrectionSection from '@/components/artikel/CorrectionSection'
 
 export const revalidate = 3600
 
@@ -16,6 +17,13 @@ type Article = {
   cover_image_url: string | null
   published_at: string | null
   article_charts: { chart_identifier: string; config: string }[]
+  article_corrections: {
+    id: string
+    original_text: string
+    corrected_text: string
+    explanation: string | null
+    created_at: string
+  }[]
 }
 
 type Props = {
@@ -26,7 +34,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
 
-  // Ambil juga cover_image_url dan slug untuk og:image dan og:url
   const { data: article } = await supabase
     .from('articles')
     .select('title, excerpt, cover_image_url, slug')
@@ -45,30 +52,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: article.title,
       description: article.excerpt ?? undefined,
       siteName: 'Saintifiks',
-      // og:url — metadataBase di layout.tsx akan mengubah ini menjadi URL absolut
       url: `/artikel/${article.slug}`,
-      // og:type "article" memberi tahu platform sosial bahwa ini adalah artikel berita/blog
       type: 'article',
       locale: 'id_ID',
-      // og:image hanya ditambahkan jika artikel memiliki gambar cover
-      // Jika tidak ada, platform sosial akan tetap menampilkan kartu teks
       ...(article.cover_image_url && {
-        images: [
-          {
-            url: article.cover_image_url,
-            alt: article.title,
-          },
-        ],
+        images: [{ url: article.cover_image_url, alt: article.title }],
       }),
     },
     twitter: {
       card: 'summary_large_image',
       title: article.title,
       description: article.excerpt ?? undefined,
-      // Twitter image hanya ditambahkan jika artikel memiliki gambar cover
-      ...(article.cover_image_url && {
-        images: [article.cover_image_url],
-      }),
+      ...(article.cover_image_url && { images: [article.cover_image_url] }),
     },
   }
 }
@@ -98,6 +93,13 @@ export default async function ArtikelPage({ params }: Props) {
       article_charts (
         chart_identifier,
         config
+      ),
+      article_corrections!inner (
+        id,
+        original_text,
+        corrected_text,
+        explanation,
+        created_at
       )
     `)
     .eq('slug', slug)
@@ -110,6 +112,7 @@ export default async function ArtikelPage({ params }: Props) {
 
   const artikel = article as Article
   const charts = artikel.article_charts || []
+  const corrections = artikel.article_corrections || []
 
   return (
     <main className="min-h-screen bg-primary-light">
@@ -124,8 +127,8 @@ export default async function ArtikelPage({ params }: Props) {
 
           {artikel.published_at && (
             <time
-               dateTime={artikel.published_at}
-               className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mt-6"
+              dateTime={artikel.published_at}
+              className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mt-6"
             >
               {formatTanggal(artikel.published_at)}
             </time>
@@ -146,13 +149,19 @@ export default async function ArtikelPage({ params }: Props) {
       <article className="max-w-2xl mx-auto px-6 py-12">
         <ArticleRenderer content={artikel.content} charts={charts} />
         
-        {/* INJEKSI LIKE BUTTON (PHASE 3) */}
+        {/* Like Button */}
         <div className="mt-12 pt-8 border-t border-primary-dark/10 flex items-center justify-between">
           <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">
             Dukung Jurnalisme Independen
           </p>
           <LikeButton articleId={artikel.id} />
         </div>
+
+        {/* Koreksi Section */}
+        <CorrectionSection 
+          articleId={artikel.id} 
+          corrections={corrections} 
+        />
       </article>
     </main>
   )

@@ -1,6 +1,5 @@
 // Halaman dashboard admin — panel utama untuk pemilik Saintifiks
 // Server Component: data di-fetch di server, fresh setiap kali halaman dibuka
-// Server Action: sign out ditangani lewat form action (tidak butuh client component terpisah)
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -36,7 +35,6 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
 
   // Fetch SEMUA artikel termasuk draft — admin perlu lihat semuanya
-  // Berbeda dengan halaman publik yang hanya fetch is_published = true
   const { data: articles, error } = await supabase
     .from('articles')
     .select('id, title, slug, is_published, published_at, created_at')
@@ -49,7 +47,6 @@ export default async function DashboardPage() {
   const daftarArtikel: Article[] = articles ?? []
 
   // Server Action: menangani proses logout
-  // 'use server' menandai bahwa fungsi ini dijalankan di server, bukan di browser
   async function handleSignOut() {
     'use server'
     const supabase = await createClient()
@@ -75,13 +72,20 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          {/* Tombol: Artikel Baru + Keluar */}
+          {/* Tombol: Artikel Baru + Review Koreksi + Keluar */}
           <div className="flex items-center gap-6 mt-2">
             <Link
               href="/dashboard/artikel/baru"
               className="font-helvetica text-sm bg-primary-dark text-primary-light px-5 py-2.5 hover:opacity-80 transition-opacity duration-150"
             >
               + Artikel Baru
+            </Link>
+
+            <Link
+              href="/dashboard/koreksi"
+              className="font-helvetica text-sm border border-primary-dark/40 px-5 py-2.5 hover:bg-primary-dark hover:text-primary-light transition-all duration-150"
+            >
+              Review Koreksi
             </Link>
 
             <form action={handleSignOut}>
@@ -150,7 +154,7 @@ export default async function DashboardPage() {
                       : formatTanggal(artikel.created_at)}
                   </span>
 
-                  {/* Link edit — halaman editnya akan dibangun di sesi berikutnya */}
+                  {/* Link edit */}
                   <Link
                     href={`/dashboard/artikel/${artikel.id}/edit`}
                     className="font-helvetica text-xs text-accent-blue hover:opacity-60 transition-opacity duration-150 text-right"
