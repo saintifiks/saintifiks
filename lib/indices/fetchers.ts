@@ -1,12 +1,19 @@
 import { formatIdr, formatNumber, formatPercent } from './format'
+import {
+  computeTrend,
+  frankfurterRateOnOrBefore,
+  type TrendDirection,
+  type TrendWindow,
+} from './trend'
 import type { IndexItem, IndexStatus } from './types'
+import { fetchYahooQuote } from './yahoo'
 
 const USER_AGENT = 'Mozilla/5.0 (compatible; Saintifiks/1.0; +https://saintifiks.id)'
 
+const REVALIDATE_FAST = 30 // detik — pasar (Yahoo), mendekati batas 3s polling client
 const REVALIDATE_FOREX = 300
-const REVALIDATE_DAILY = 3600
 const REVALIDATE_MONTHLY = 86_400
-const REVALIDATE_ANNUAL = 2_592_000 // 30 hari
+const REVALIDATE_ANNUAL = 2_592_000
 
 function item(
   partial: Omit<IndexItem, 'status'> & { status?: IndexStatus }
@@ -17,7 +24,15 @@ function item(
 function unavailable(
   partial: Omit<IndexItem, 'value' | 'status'>
 ): IndexItem {
-  return { ...partial, value: null, status: 'unavailable' }
+  return { ...partial, value: null, status: 'unavailable', trend: 'unknown' }
+}
+
+function withTrend(
+  base: IndexItem,
+  trend: TrendDirection,
+  trendWindow?: TrendWindow
+): IndexItem {
+  return { ...base, trend, trendWindow }
 }
 
 async function fetchJson<T>(
@@ -58,54 +73,53 @@ async function fetchText(
   }
 }
 
-/** Ambil baris terakhir Indonesia dari CSV Our World in Data */
-async function fetchOwidLatest(
+async function frankfurterIdrOnDate(date: string): Promise<number | null> {
+  const data = await fetchJson<{ rates?: { IDR?: number } }>(
+    `https://api.frankfurter.app/${date}?from=USD&to=IDR`,
+    REVALIDATE_FOREX
+  )
+  const rate = data?.rates?.IDR
+  return typeof rate === 'number' && Number.isFinite(rate) ? rate : null
+}
+
+/** Dua observasi terakhir Indonesia dari CSV Our World in Data */
+async function fetchOwidLastTwo(
   grapher: string,
   revalidate: number
-): Promise<{ year: number; value: number } | null> {
+): Promise<
+  { current: { year: number; value: number }; previous: { year: number; value: number } } | null
+> {
   const url = `https://ourworldindata.org/grapher/${grapher}.csv?v=1&csvType=full&useColumnShortNames=true`
   const text = await fetchText(url, revalidate)
   if (!text || text.startsWith('{')) return null
 
-  const rows = text.split('\n').filter((line) => line.startsWith('Indonesia,'))
-  const last = rows[rows.length - 1]
-  if (!last) return null
+  const rows = text
+    .split('\n')
+    .filter((line) => line.startsWith('Indonesia,'))
+    .map((line) => {
+      const parts = line.split(',')
+      return { year: Number(parts[2]), value: Number(parts[3]) }
+    })
+    .filter((r) => Number.isFinite(r.year) && Number.isFinite(r.value))
 
-  const parts = last.split(',')
-  const year = Number(parts[2])
-  const value = Number(parts[3])
-  if (!Number.isFinite(year) || !Number.isFinite(value)) return null
-  return { year, value }
+  if (rows.length < 2) return null
+
+  const previous = rows[rows.length - 2]
+  const current = rows[rows.length - 1]
+  return { current, previous }
 }
 
-type YahooChartResponse = {
-  chart?: {
-    result?: Array<{
-      meta?: {
-        regularMarketPrice?: number
-        currency?: string
-      }
-    }>
-  }
-}
-
-async function fetchYahooPrice(symbol: string): Promise<number | null> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`
-  const data = await fetchJson<YahooChartResponse>(url, REVALIDATE_DAILY)
-  const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice
-  return typeof price === 'number' && Number.isFinite(price) ? price : null
-}
-
-// ——— Update harian / mendekati real-time ———
+// ——— Pasar (Yahoo intraday + Frankfurter) ———
 
 export async function fetchUsdIdr(): Promise<IndexItem> {
-  const data = await fetchJson<{
-    date?: string
-    rates?: { IDR?: number }
-  }>('https://api.frankfurter.app/latest?from=USD&to=IDR', REVALIDATE_FOREX)
+  const data = await fetchJson<{ date?: string; rates?: { IDR?: number } }>(
+    'https://api.frankfurter.app/latest?from=USD&to=IDR',
+    REVALIDATE_FOREX
+  )
 
   const rate = data?.rates?.IDR
-  if (!rate) {
+  const date = data?.date
+  if (!rate || !date) {
     return unavailable({
       id: 'usd-idr',
       label: 'USD/IDR',
@@ -114,19 +128,26 @@ export async function fetchUsdIdr(): Promise<IndexItem> {
     })
   }
 
-  return item({
-    id: 'usd-idr',
-    label: 'USD/IDR',
-    value: formatIdr(rate),
-    detail: data.date ? `per ${data.date}` : undefined,
-    source: 'Frankfurter (ECB)',
-    sourceUrl: 'https://www.frankfurter.app/',
-  })
+  const prior = await frankfurterRateOnOrBefore(date, frankfurterIdrOnDate)
+  const trend = computeTrend(rate, prior?.rate ?? null)
+
+  return withTrend(
+    item({
+      id: 'usd-idr',
+      label: 'USD/IDR',
+      value: formatIdr(rate),
+      detail: prior ? `vs ${prior.date}` : undefined,
+      source: 'Frankfurter (ECB)',
+      sourceUrl: 'https://www.frankfurter.app/',
+    }),
+    trend,
+    prior ? '1d' : undefined
+  )
 }
 
 export async function fetchIhsg(): Promise<IndexItem> {
-  const price = await fetchYahooPrice('^JKSE')
-  if (price == null) {
+  const quote = await fetchYahooQuote('^JKSE', REVALIDATE_FAST)
+  if (!quote) {
     return unavailable({
       id: 'ihsg',
       label: 'IHSG',
@@ -134,26 +155,30 @@ export async function fetchIhsg(): Promise<IndexItem> {
     })
   }
 
-  return item({
-    id: 'ihsg',
-    label: 'IHSG',
-    value: formatNumber(price, 2),
-    source: 'Yahoo Finance',
-    sourceUrl: 'https://finance.yahoo.com/quote/%5EJKSE',
-  })
+  return withTrend(
+    item({
+      id: 'ihsg',
+      label: 'IHSG',
+      value: formatNumber(quote.price, 2),
+      source: 'Yahoo Finance',
+      sourceUrl: 'https://finance.yahoo.com/quote/%5EJKSE',
+    }),
+    quote.trend,
+    quote.trendWindow ?? undefined
+  )
 }
 
 export async function fetchGoldIdrPerGram(): Promise<IndexItem> {
-  const [goldUsd, forex] = await Promise.all([
-    fetchYahooPrice('GC=F'),
-    fetchJson<{ rates?: { IDR?: number } }>(
+  const [gold, forex] = await Promise.all([
+    fetchYahooQuote('GC=F', REVALIDATE_FAST),
+    fetchJson<{ date?: string; rates?: { IDR?: number } }>(
       'https://api.frankfurter.app/latest?from=USD&to=IDR',
       REVALIDATE_FOREX
     ),
   ])
 
   const idrRate = forex?.rates?.IDR
-  if (goldUsd == null || idrRate == null) {
+  if (!gold || idrRate == null) {
     return unavailable({
       id: 'gold',
       label: 'Emas',
@@ -163,20 +188,24 @@ export async function fetchGoldIdrPerGram(): Promise<IndexItem> {
   }
 
   const gramsPerTroyOz = 31.1035
-  const idrPerGram = (goldUsd * idrRate) / gramsPerTroyOz
+  const idrPerGram = (gold.price * idrRate) / gramsPerTroyOz
 
-  return item({
-    id: 'gold',
-    label: 'Emas',
-    value: formatIdr(idrPerGram),
-    detail: 'per gram (estimasi)',
-    source: 'Yahoo Finance + Frankfurter',
-  })
+  return withTrend(
+    item({
+      id: 'gold',
+      label: 'Emas',
+      value: formatIdr(idrPerGram),
+      detail: 'per gram (estimasi)',
+      source: 'Yahoo Finance + Frankfurter',
+    }),
+    gold.trend,
+    gold.trendWindow ?? undefined
+  )
 }
 
 export async function fetchBrentOil(): Promise<IndexItem> {
-  const price = await fetchYahooPrice('BZ=F')
-  if (price == null) {
+  const quote = await fetchYahooQuote('BZ=F', REVALIDATE_FAST)
+  if (!quote) {
     return unavailable({
       id: 'brent',
       label: 'Minyak Brent',
@@ -185,42 +214,53 @@ export async function fetchBrentOil(): Promise<IndexItem> {
     })
   }
 
-  return item({
-    id: 'brent',
-    label: 'Minyak Brent',
-    value: `$${formatNumber(price, 2)}`,
-    detail: 'USD/barrel',
-    source: 'Yahoo Finance',
-    sourceUrl: 'https://finance.yahoo.com/quote/BZ%3DF',
-  })
+  return withTrend(
+    item({
+      id: 'brent',
+      label: 'Minyak Brent',
+      value: `$${formatNumber(quote.price, 2)}`,
+      detail: 'USD/barrel',
+      source: 'Yahoo Finance',
+      sourceUrl: 'https://finance.yahoo.com/quote/BZ%3DF',
+    }),
+    quote.trend,
+    quote.trendWindow ?? undefined
+  )
 }
 
-// ——— Update bulanan / kuartalan ———
+// ——— Kebijakan moneter ———
 
 async function fetchInflationBps(): Promise<IndexItem | null> {
   const key = process.env.BPS_API_KEY
   if (!key) return null
 
-  // Inflasi umum YoY — domain 5200 (harga), subjek inflasi
   const url = `https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/5200/subcat/5/key/${key}`
   const data = await fetchJson<{
     data?: Array<{ val: string; title: string; th: string }>
   }>(url, REVALIDATE_MONTHLY)
 
   const latest = data?.data?.[0]
+  const prev = data?.data?.[1]
   if (!latest?.val) return null
 
   const value = Number(latest.val.replace(',', '.'))
   if (!Number.isFinite(value)) return null
 
-  return item({
-    id: 'inflation',
-    label: 'Inflasi',
-    value: formatPercent(value),
-    detail: latest.th ? `YoY ${latest.th}` : 'YoY',
-    source: 'BPS',
-    sourceUrl: 'https://www.bps.go.id/',
-  })
+  const prevVal = prev?.val ? Number(prev.val.replace(',', '.')) : null
+  const trend = computeTrend(value, Number.isFinite(prevVal as number) ? prevVal : null)
+
+  return withTrend(
+    item({
+      id: 'inflation',
+      label: 'Inflasi',
+      value: formatPercent(value),
+      detail: latest.th ? `YoY ${latest.th}` : 'YoY',
+      source: 'BPS',
+      sourceUrl: 'https://www.bps.go.id/',
+    }),
+    trend,
+    prevVal != null ? '1bln' : undefined
+  )
 }
 
 export async function fetchInflation(): Promise<IndexItem> {
@@ -229,11 +269,13 @@ export async function fetchInflation(): Promise<IndexItem> {
 
   type WbRow = { date?: string; value?: number }
   const data = await fetchJson<[unknown, WbRow[]]>(
-    'https://api.worldbank.org/v2/country/IDN/indicator/FP.CPI.TOTL.ZG?format=json&mrv=1',
+    'https://api.worldbank.org/v2/country/IDN/indicator/FP.CPI.TOTL.ZG?format=json&mrv=2',
     REVALIDATE_MONTHLY
   )
 
-  const latest = data?.[1]?.[0]
+  const rows = data?.[1]
+  const latest = rows?.[0]
+  const prev = rows?.[1]
   if (latest?.value == null || !latest.date) {
     return unavailable({
       id: 'inflation',
@@ -243,14 +285,20 @@ export async function fetchInflation(): Promise<IndexItem> {
     })
   }
 
-  return item({
-    id: 'inflation',
-    label: 'Inflasi',
-    value: formatPercent(latest.value),
-    detail: `YoY tahunan ${latest.date}`,
-    source: 'World Bank',
-    sourceUrl: 'https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG?locations=ID',
-  })
+  const trend = computeTrend(latest.value, prev?.value ?? null)
+
+  return withTrend(
+    item({
+      id: 'inflation',
+      label: 'Inflasi',
+      value: formatPercent(latest.value),
+      detail: `YoY tahunan ${latest.date}`,
+      source: 'World Bank',
+      sourceUrl: 'https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG?locations=ID',
+    }),
+    trend,
+    prev ? '1th' : undefined
+  )
 }
 
 export async function fetchBi7drr(): Promise<IndexItem> {
@@ -268,13 +316,18 @@ export async function fetchBi7drr(): Promise<IndexItem> {
     if (bi7Match?.[1]) {
       const rate = Number(bi7Match[1].replace(',', '.'))
       if (Number.isFinite(rate)) {
-        return item({
-          id: 'bi7drr',
-          label: 'BI7DRR',
-          value: formatPercent(rate),
-          source: 'Bank Indonesia',
-          sourceUrl: 'https://www.bi.go.id/id/statistik/indikator/bi-rate/Default.aspx',
-        })
+        return withTrend(
+          item({
+            id: 'bi7drr',
+            label: 'BI7DRR',
+            value: formatPercent(rate),
+            source: 'Bank Indonesia',
+            sourceUrl:
+              'https://www.bi.go.id/id/statistik/indikator/bi-rate/Default.aspx',
+          }),
+          'flat',
+          undefined
+        )
       }
     }
   }
@@ -287,11 +340,38 @@ export async function fetchBi7drr(): Promise<IndexItem> {
   })
 }
 
-// ——— Update tahunan (Our World in Data → sumber asli) ———
+// ——— Tata kelola (tahunan, bandingkan tahun sebelumnya) ———
+
+function annualItem(
+  id: string,
+  label: string,
+  pair: {
+    current: { year: number; value: number }
+    previous: { year: number; value: number }
+  },
+  formatValue: (v: number) => string,
+  source: string,
+  sourceUrl: string,
+  detailExtra?: string
+): IndexItem {
+  const trend = computeTrend(pair.current.value, pair.previous.value)
+  return withTrend(
+    item({
+      id,
+      label,
+      value: formatValue(pair.current.value),
+      detail: detailExtra ?? String(pair.current.year),
+      source,
+      sourceUrl,
+    }),
+    trend,
+    '1th'
+  )
+}
 
 export async function fetchPressFreedom(): Promise<IndexItem> {
-  const latest = await fetchOwidLatest('press-freedom-index-rsf', REVALIDATE_ANNUAL)
-  if (!latest) {
+  const pair = await fetchOwidLastTwo('press-freedom-index-rsf', REVALIDATE_ANNUAL)
+  if (!pair) {
     return unavailable({
       id: 'rsf',
       label: 'Kebebasan Pers',
@@ -300,19 +380,20 @@ export async function fetchPressFreedom(): Promise<IndexItem> {
     })
   }
 
-  return item({
-    id: 'rsf',
-    label: 'Kebebasan Pers',
-    value: formatNumber(latest.value, 2),
-    detail: `skor ${latest.year}`,
-    source: 'RSF via Our World in Data',
-    sourceUrl: 'https://rsf.org/en/index',
-  })
+  return annualItem(
+    'rsf',
+    'Kebebasan Pers',
+    pair,
+    (v) => formatNumber(v, 2),
+    'RSF via Our World in Data',
+    'https://rsf.org/en/index',
+    `skor ${pair.current.year}`
+  )
 }
 
 export async function fetchCorruptionPerception(): Promise<IndexItem> {
-  const latest = await fetchOwidLatest('ti-corruption-perception-index', REVALIDATE_ANNUAL)
-  if (!latest) {
+  const pair = await fetchOwidLastTwo('ti-corruption-perception-index', REVALIDATE_ANNUAL)
+  if (!pair) {
     return unavailable({
       id: 'cpi',
       label: 'Persepsi Korupsi',
@@ -321,19 +402,20 @@ export async function fetchCorruptionPerception(): Promise<IndexItem> {
     })
   }
 
-  return item({
-    id: 'cpi',
-    label: 'Persepsi Korupsi',
-    value: String(Math.round(latest.value)),
-    detail: `skor ${latest.year}`,
-    source: 'Transparency International via OWID',
-    sourceUrl: 'https://www.transparency.org/en/cpi',
-  })
+  return annualItem(
+    'cpi',
+    'Persepsi Korupsi',
+    pair,
+    (v) => String(Math.round(v)),
+    'Transparency International via OWID',
+    'https://www.transparency.org/en/cpi',
+    `skor ${pair.current.year}`
+  )
 }
 
 export async function fetchDemocracyIndex(): Promise<IndexItem> {
-  const latest = await fetchOwidLatest('democracy-index-eiu', REVALIDATE_ANNUAL)
-  if (!latest) {
+  const pair = await fetchOwidLastTwo('democracy-index-eiu', REVALIDATE_ANNUAL)
+  if (!pair) {
     return unavailable({
       id: 'democracy',
       label: 'Indeks Demokrasi',
@@ -342,19 +424,20 @@ export async function fetchDemocracyIndex(): Promise<IndexItem> {
     })
   }
 
-  return item({
-    id: 'democracy',
-    label: 'Indeks Demokrasi',
-    value: formatNumber(latest.value, 2),
-    detail: `skala 0–10, ${latest.year}`,
-    source: 'EIU via Our World in Data',
-    sourceUrl: 'https://www.eiu.com/n/campaigns/democracy-index-2024/',
-  })
+  return annualItem(
+    'democracy',
+    'Indeks Demokrasi',
+    pair,
+    (v) => formatNumber(v, 2),
+    'EIU via Our World in Data',
+    'https://www.eiu.com/n/campaigns/democracy-index-2024/',
+    `skala 0–10, ${pair.current.year}`
+  )
 }
 
 export async function fetchHdi(): Promise<IndexItem> {
-  const latest = await fetchOwidLatest('human-development-index', REVALIDATE_ANNUAL)
-  if (!latest) {
+  const pair = await fetchOwidLastTwo('human-development-index', REVALIDATE_ANNUAL)
+  if (!pair) {
     return unavailable({
       id: 'hdi',
       label: 'IPM',
@@ -363,12 +446,13 @@ export async function fetchHdi(): Promise<IndexItem> {
     })
   }
 
-  return item({
-    id: 'hdi',
-    label: 'IPM',
-    value: formatNumber(latest.value, 3),
-    detail: String(latest.year),
-    source: 'UNDP via Our World in Data',
-    sourceUrl: 'https://hdr.undp.org/data-center/country-insights/indonesia',
-  })
+  return annualItem(
+    'hdi',
+    'IPM',
+    pair,
+    (v) => formatNumber(v, 3),
+    'UNDP via Our World in Data',
+    'https://hdr.undp.org/data-center/country-insights/indonesia',
+    String(pair.current.year)
+  )
 }

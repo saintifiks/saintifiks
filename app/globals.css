@@ -85,3 +85,13 @@ body {
 .article-content .footnotes .data-footnote-backref:hover {
   opacity: 0.6;
 }
+
+/* Strip indeks beranda — scroll horizontal tanpa scrollbar terlihat */
+.index-ticker-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.index-ticker-scroll::-webkit-scrollbar {
+  display: none;
+}
