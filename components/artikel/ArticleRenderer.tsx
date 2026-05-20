@@ -6,9 +6,16 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
-import ChartBlock from './ChartBlock'
+import dynamic from 'next/dynamic'
 
-// Import CSS akan dilakukan di layout.tsx
+// ChartBlock dimuat hanya di sisi client (bukan server)
+// Chart.js membutuhkan Canvas API yang hanya tersedia di browser — bukan di server Next.js
+const ChartBlock = dynamic(() => import('./ChartBlock'), {
+  ssr: false,
+  loading: () => (
+    <div className="my-10 w-full h-64 bg-primary-dark/5 animate-pulse border border-primary-dark/10" />
+  )
+})
 
 type ArticleRendererProps = {
   content: string
@@ -68,7 +75,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
               th: ({ children }) => <th className="px-4 py-3 bg-primary-dark/5 text-left font-medium border-b border-primary-dark/10">{children}</th>,
               td: ({ children }) => <td className="px-4 py-3 border-b border-primary-dark/10">{children}</td>,
 
-              // Blockquote & Callout
+              // Blockquote
               blockquote: ({ children }) => (
                <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg">
                  {children}
