@@ -135,7 +135,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
           
           // Penukar Dinamis: Mencegat HTML div yang masuk dan menukarnya menjadi grafik React jika teridentifikasi
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          div: ({ node, className, id, children, ...props }: any) => {
+          div: ({ className, id, children, ...props }: any) => {
             if (className === 'saintifiks-chart' && id) {
               const chartData = charts.find((c) => c.chart_identifier === id)
               return <ChartBlock identifier={id} configString={chartData ? chartData.config : null} />
