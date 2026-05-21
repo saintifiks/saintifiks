@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.6 | Status: Live | Terakhir diperbarui: 2026-05-21
+> Versi: 0.7 | Status: Live | Terakhir diperbarui: 2026-05-21
 
 ---
 
@@ -516,6 +516,9 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Ikon tren naik (hijau) / turun (merah) per rentang data tersedia
 - [x] Pembaruan pasar live via `/api/indices` + polling client 15 detik
 - [x] Scroll horizontal tanpa scrollbar terlihat
+- [x] Optimasi kecepatan render artikel (migrasi penuh ke Server Component)
+- [x] Implementasi parser luwes (json5) & parser HTML mentah (rehype-raw) untuk toleransi output AI
+- [x] Resolusi anomali pemutusan footnote via arsitektur single-pass render
 
 ---
 
@@ -713,6 +716,23 @@ Format pengisian:
              ALASAN: Ikon naik di strip indeks butuh warna semantik yang elegan dan
                      selaras dengan primary-dark/light; merah sudah dipakai untuk turun.
              CATATAN: Hanya untuk indikator naik di strip — bukan dekorasi umum.
+[21-05-2026] KEPUTUSAN: ArticleRenderer diubah murni menjadi Server Component
+             ALASAN: Memindahkan beban komputasi terjemahan Markdown dari peramban pembaca (client) ke Vercel (server). Menghasilkan
+             waktu muat halaman (First Contentful Paint) yang jauh lebih cepat dan menghemat daya perangkat pembaca.
+             ALTERNATIF DITOLAK: Client Component murni (menimbulkan latensi render di sisi klien).
+
+[21-05-2026] KEPUTUSAN: Penggunaan format JSON5 dan Regex Strip pada ChartBlock
+             ALASAN: Model AI generatif sering memproduksi format konfigurasi JSON yang kotor (membawa elemen markdown ```json,
+             melupakan kutip ganda, atau menaruh koma berlebih). JSON5 memaklumi kesalahan sintaks ringan tersebut, sementara Regex
+             mengeleminasi elemen markdown yang terbawa.
+             CATATAN IMPLEMENTASI: Celah eksekusi JavaScript native (XSS) tetap terblokir keras oleh catch error block.
+
+[21-05-2026] KEPUTUSAN: Arsitektur "Single-Pass Render" pada ArticleRenderer
+             ALASAN: Penggunaan metode .split() memotong teks Markdown menjadi beberapa bagian (array) setiap ada grafik. Ini
+             menghilangkan rekaman struktur sintaks (*AST context*), menyebabkan plugin remark-gfm gagal mengaitkan indeks footnote
+             [^1] di potongan pertama dengan referensi penjelasannya di potongan terakhir. Single-pass render menggunakan metode regex
+             .replace() untuk menyamar token grafik menjadi HTML murni <div class="saintifiks-chart">, sehingga teks dirender 100% utuh
+             dalam satu tarikan napas tanpa memutus referensi tautan.
 ```
 
 ---
@@ -1106,6 +1126,20 @@ Yang dikerjakan:
   - Perbaiki dokumentasi callout/footnote yang sudah outdated
 Keputusan baru: tidak ada
 Status akhir: selesai
+---
+> [21-05-2026] SESI #25
+Branch: feature/optimize-renderer-v2
+Tujuan sesi: Optimasi kecepatan render (Server Component), peningkatan toleransi format chart (json5), pemahaman sintaks HTML mentah di Markdown (rehype-raw), dan perbaikan integrasi footnote.
+Yang dikerjakan:
+  - Install dependensi: json5, rehype-raw
+  - Edit components/artikel/ChartBlock.tsx: Integrasi json5 parser dan filter pembersih sisa markup markdown bawaan AI. Fix dead code variabel (ESLint warning).
+  - Edit components/artikel/ArticleRenderer.tsx: Migrasi menjadi Server Component dengan mencabut direktif 'use client'. Integrasi rehype-raw. Perombakan parser menjadi arsitektur single-pass render untuk mencegat pemotongan konteks referensi (footnote). Fix dead code variabel (ESLint warning).
+Keputusan baru:
+  - ArticleRenderer sebagai Server Component (Seksi 11)
+  - Penggunaan format JSON5 (Seksi 11)
+  - Arsitektur Single-Pass Render (Seksi 11)
+Status akhir: selesai
+Next step: -
 ---
 ```
 Format:
