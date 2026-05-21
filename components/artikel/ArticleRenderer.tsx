@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown'
 import Image from 'next/image'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
-import remarkFootnotes from 'remark-footnotes'
 import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
 import dynamic from 'next/dynamic'
@@ -59,7 +58,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
         return (
           <ReactMarkdown
             key={index}
-            remarkPlugins={[remarkGfm, remarkMath, remarkFootnotes, remarkCallout]}
+            remarkPlugins={[remarkGfm, remarkMath, remarkCallout]}
             rehypePlugins={[rehypeKatex, rehypeHighlight]}
             components={{
               // Heading
