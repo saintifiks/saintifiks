@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.7 | Status: Live | Terakhir diperbarui: 2026-05-21
+> Versi: 0.8 | Status: Live | Terakhir diperbarui: 2026-05-21
 
 ---
 
@@ -221,13 +221,13 @@ Didukung via remark-gfm — styling di `app/globals.css` (FOOTNOTE STYLING).
 
 ## 5.3 WIDGET INDEKS BERANDA
 
-> Status: LIVE sejak 2026-05-21 | Hanya di halaman beranda (`app/page.tsx`)
+> Status: LIVE sejak 2026-05-21 | Hanya di halaman beranda (`/`) | Posisi diperbarui: 2026-05-21 (Sesi #27)
 
 ### Tujuan
 Memberi konteks faktual ekonomi & tata kelola bagi pembaca — selaras Prinsip Editorial #5 dan #7. Bukan untuk engagement artifisial: tanpa autoplay, tanpa animasi berkedip, tanpa infinite scroll.
 
 ### Tampilan
-- **Strip tipis** (~36px) di paling atas konten beranda (di bawah Navbar), full width, latar `primary-dark`
+- **Strip tipis** (~36px) di paling atas halaman beranda — **di atas Navbar**, full width, latar `primary-dark`
 - Satu baris horizontal; geser manual di mobile/desktop; **scrollbar disembunyikan** (class `.index-ticker-scroll`)
 - Setiap item: label + ikon tren (naik/turun/stabil) + nilai
 - Ikon: naik = `accent-green`, turun = `accent-red`, stabil = abu tipis
@@ -250,18 +250,21 @@ Memberi konteks faktual ekonomi & tata kelola bagi pembaca — selaras Prinsip E
 - **API route:** `app/api/indices/route.ts` — `force-dynamic`, `Cache-Control: no-store`, cache server in-memory **12 detik** untuk membatasi panggilan API eksternal
 - **Mode live:** `getIndicesSnapshot(true)` memakai `cache: 'no-store'` ke Yahoo; mode SSR awal boleh di-cache Next.js (revalidate per fetcher)
 - **Halaman beranda ISR:** `revalidate = 3600` — daftar artikel bisa tertinggal hingga 1 jam; **strip indeks tidak bergantung pada reload halaman** karena client polling
+- **Posisi & kondisionalitas:** `IndexStrip` dipasang di `app/layout.tsx` (bukan `app/page.tsx`) via wrapper `ConditionalIndexStrip` — komponen ini mengecek `usePathname()` dan hanya merender strip jika URL adalah `/`. Dengan ini, strip tidak muncul di halaman artikel, login, atau admin.
 
 ### File terkait
 ```
-components/widgets/IndexStrip.tsx      ← Server wrapper
-components/widgets/IndexStripClient.tsx ← Polling + render strip
-components/widgets/TrendIcon.tsx       ← Ikon panah
-lib/indices/fetchers.ts                ← Ambil & format data
-lib/indices/yahoo.ts                   ← Intraday Yahoo + tren
-lib/indices/trend.ts                   ← Logika naik/turun
-lib/indices/http.ts                    ← Helper fetch live vs cached
-lib/indices/get-indices.ts             ← Orchestrator snapshot
-app/api/indices/route.ts               ← Endpoint polling client
+components/widgets/IndexStrip.tsx           ← Server wrapper strip indeks beranda
+components/widgets/IndexStripClient.tsx     ← Polling + render strip
+components/widgets/TrendIcon.tsx            ← Ikon panah
+components/layout/ConditionalIndexStrip.tsx ← Client Component — tampilkan IndexStrip hanya di /
+components/layout/ScrollToTop.tsx           ← Client Component — paksa scroll ke atas setiap navigasi
+lib/indices/fetchers.ts                     ← Ambil & format data
+lib/indices/yahoo.ts                        ← Intraday Yahoo + tren
+lib/indices/trend.ts                        ← Logika naik/turun
+lib/indices/http.ts                         ← Helper fetch live vs cached
+lib/indices/get-indices.ts                  ← Orchestrator snapshot
+app/api/indices/route.ts                    ← Endpoint polling client
 ```
 
 ### Environment variable opsional
@@ -412,7 +415,9 @@ CREATE TRIGGER articles_updated_at
 ├── components/
 │   ├── layout/
 │   │   ├── Navbar.tsx
-│   │   └── Footer.tsx
+│   │   ├── Footer.tsx
+│   │   ├── ConditionalIndexStrip.tsx     ← Client Component — tampilkan IndexStrip hanya di /
+│   │   └── ScrollToTop.tsx               ← Client Component — paksa scroll ke atas setiap navigasi
 │   ├── widgets/
 │   │   ├── IndexStrip.tsx                ← Server wrapper strip indeks beranda
 │   │   ├── IndexStripClient.tsx          ← Client polling + render
@@ -519,6 +524,8 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Optimasi kecepatan render artikel (migrasi penuh ke Server Component)
 - [x] Implementasi parser luwes (json5) & parser HTML mentah (rehype-raw) untuk toleransi output AI
 - [x] Resolusi anomali pemutusan footnote via arsitektur single-pass render
+- [x] Widget indeks dipindah ke atas Navbar (via `ConditionalIndexStrip` di `layout.tsx`)
+- [x] Scroll otomatis ke paling atas saat navigasi halaman (via `ScrollToTop` di `layout.tsx`)
 
 ---
 
@@ -739,6 +746,32 @@ Format pengisian:
              di berbagai resolusi layar (Retina/High-DPI).
              ALTERNATIF DITOLAK: Mempertahankan berkas favicon.ico bawaan Next.js atau melakukan konversi paksa berkas SVG ke format
              ICO secara manual.
+
+[21-05-2026] KEPUTUSAN: IndexStrip dipindah ke atas Navbar, hanya di halaman beranda
+             ALASAN: Permintaan pemilik — strip indeks lebih efektif sebagai elemen editorial
+                     jika langsung terlihat sebelum navigasi, bukan setelah.
+             IMPLEMENTASI: Dua Client Component baru di components/layout/:
+                     (1) ConditionalIndexStrip.tsx — menggunakan usePathname() dari
+                         next/navigation; merender <IndexStrip /> hanya jika pathname === '/'.
+                         IndexStrip (Server Component) dioper sebagai prop children/strip
+                         agar Server Component tidak terkontaminasi menjadi Client Component.
+                     (2) Keduanya dipasang di app/layout.tsx sebelum <Navbar />.
+                     (3) <IndexStrip /> dihapus dari app/page.tsx.
+             ALTERNATIF DITOLAK: Tanpa kondisi di layout.tsx (strip muncul di semua halaman
+                                 — melanggar keputusan desain awal Seksi 5.3);
+                                 tetap di page.tsx (posisi di bawah Navbar).
+             CATATAN: Keputusan "widget hanya di beranda" dari Seksi 5.3 tetap dipertahankan.
+                      Deskripsi posisi di Seksi 5.3 diperbarui dari "di bawah Navbar"
+                      menjadi "di atas Navbar".
+
+[21-05-2026] KEPUTUSAN: ScrollToTop — paksa scroll ke paling atas setiap navigasi
+             ALASAN: Tanpa ini, Next.js App Router mempertahankan posisi scroll terakhir
+                     saat pengguna kembali ke halaman beranda, yang membingungkan.
+             IMPLEMENTASI: components/layout/ScrollToTop.tsx — Client Component ringan
+                           menggunakan useEffect + usePathname(). Dipasang di app/layout.tsx.
+                           Tidak ada library tambahan — hanya window.scrollTo(0,0).
+             ALTERNATIF DITOLAK: CSS scroll-behavior (tidak bisa dikontrol per navigasi);
+                                 solusi di masing-masing page.tsx (duplikasi, tidak terpusat).
 ```
 
 ---
@@ -783,6 +816,19 @@ Yang dikerjakan:
 Keputusan baru: Seluruh keputusan arsitektur minor maupun mayor yang dieksekusi sepanjang 26 sesi telah disahkan dan terangkum secara permanen di Seksi 11 (Keputusan Arsitektur).
 Status akhir: Selesai (Phase 0–4 dan Post-Launch tuntas).
 Next step: Pemeliharaan rutin operasional. Opsional: Penambahan `BPS_API_KEY` ke environment Vercel jika integrasi inflasi lokal langsung dibutuhkan.
+---
+
+[21-05-2026] SESI #27
+Branch: feature/widget-strip-above-navbar
+Tujuan sesi: Memindahkan widget IndexStrip ke posisi di atas Navbar (hanya di halaman beranda) dan memastikan halaman selalu dibuka dari posisi scroll paling atas.
+Yang dikerjakan:
+  - Dibuat `components/layout/ConditionalIndexStrip.tsx` — Client Component baru yang menggunakan usePathname() untuk merender IndexStrip hanya jika pathname === '/'. Server Component IndexStrip dioper sebagai prop untuk menghindari kontaminasi Server→Client.
+  - Dibuat `components/layout/ScrollToTop.tsx` — Client Component ringan yang memaksa window.scrollTo(0,0) setiap kali pathname berubah.
+  - Diubah `app/layout.tsx` — ditambahkan import dan pemasangan <ScrollToTop /> dan <ConditionalIndexStrip strip={<IndexStrip />} /> sebelum <Navbar />.
+  - Diubah `app/page.tsx` — dihapus import IndexStrip dan penggunaan <IndexStrip /> karena sudah dipindah ke layout.tsx.
+Keputusan baru: Lihat Seksi 11 — dua keputusan baru: "IndexStrip dipindah ke atas Navbar" dan "ScrollToTop".
+Status akhir: Selesai. Di-push ke feature/widget-strip-above-navbar, siap di-review via Vercel Preview sebelum merge ke main.
+Next step: Verifikasi di Vercel Preview URL → merge ke main.
 ---
 ```
 Format:
