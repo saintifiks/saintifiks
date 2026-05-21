@@ -379,7 +379,7 @@ CREATE TRIGGER articles_updated_at
 ```
 /
 ├── app/
-│   ├── favicon.ico
+│   ├── icon.svg
 │   ├── fonts/ (GeistVF.woff, GeistMonoVF.woff)
 │   ├── globals.css
 │   ├── layout.tsx
@@ -733,6 +733,12 @@ Format pengisian:
              [^1] di potongan pertama dengan referensi penjelasannya di potongan terakhir. Single-pass render menggunakan metode regex
              .replace() untuk menyamar token grafik menjadi HTML murni <div class="saintifiks-chart">, sehingga teks dirender 100% utuh
              dalam satu tarikan napas tanpa memutus referensi tautan.
+[21-05-2026] KEPUTUSAN: Mengganti app/favicon.ico dengan app/icon.svg
+             ALASAN: Next.js App Router mendukung metadata ikon berbasis SVG secara bawaan. Menggunakan berkas murni SVG dari aset logo
+             orisinal memotong kebutuhan konversi manual berkas ke format .ico konvensional, sekaligus memastikan ketajaman visual ikon
+             di berbagai resolusi layar (Retina/High-DPI).
+             ALTERNATIF DITOLAK: Mempertahankan berkas favicon.ico bawaan Next.js atau melakukan konversi paksa berkas SVG ke format
+             ICO secara manual.
 ```
 
 ---
@@ -1138,6 +1144,18 @@ Keputusan baru:
   - ArticleRenderer sebagai Server Component (Seksi 11)
   - Penggunaan format JSON5 (Seksi 11)
   - Arsitektur Single-Pass Render (Seksi 11)
+Status akhir: selesai
+Next step: -
+---
+> [21-05-2026] SESI #26
+Branch: feature/custom-favicon
+Tujuan sesi: Mengganti default favicon Vercel/Next.js dengan aset logo orisinal Saintifiks.
+Yang dikerjakan:
+  - Menghapus komponen ikon bawaan framework di `app/favicon.ico`
+  - Menduplikasi komponen logo tema terang `public/logo/symbol-lighttheme.svg` menjadi ikon utama di `app/icon.svg`
+  - Sinkronisasi arsitektur direktori pada dokumentasi Seksi 7
+Keputusan baru:
+  - Mengganti app/favicon.ico dengan app/icon.svg (Seksi 11)
 Status akhir: selesai
 Next step: -
 ---
