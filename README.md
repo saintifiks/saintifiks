@@ -1,5 +1,6 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.6 | Status: Live | Terakhir diperbarui: 2026-05-21
+> Versi: 0.6 | Status: Terintegrasi (Cabang Utama) - Pemantauan Produksi | Terakhir Diperbarui: 2026-05-21
+> Catatan: Seluruh modifikasi arsitektural telah digabungkan ke cabang `main`. Stabilitas fitur saat ini bersandar pada pemantauan berkelanjutan terhadap performa *client-side* dan metrik deployment di lingkungan *live*.
 
 ---
 
@@ -124,6 +125,8 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 | Editor artikel admin | Markdown teks biasa | Resolved — lihat Seksi 11 untuk alasan lengkap |
 | Konten format | Markdown dengan chart placeholder | `{{chart:chart-id}}` — Next.js parsing dan render keduanya |
 | Markdown renderer | react-markdown + remark-gfm + remark-math + rehype-katex + rehype-highlight | Tabel GFM, formula LaTeX, syntax highlighting — ekosistem standar, client-side |
+| Rendering Grafis | react-chartjs-2 + Dynamic Import | Terintegrasi di cabang utama. `ChartBlock.tsx` dirender eksklusif di klien (`ssr: false`) untuk memitigasi *server-side crash*. Dampaknya terhadap metrik *Time to Interactive* (TTI) wajib diobservasi. |
+| Penyimpanan Media | Supabase Storage | Menangani manajemen aset pada `ImageUpload.tsx`. Konfirmasi konsistensi *RLS (Row Level Security) Policies* pada *bucket* penyimpanan harus dilakukan secara periodik. |
 
 ### Batasan Free Tier yang Harus Diperhatikan
 
