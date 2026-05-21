@@ -6,6 +6,9 @@ import 'highlight.js/styles/github.css'
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
+import IndexStrip from "@/components/widgets/IndexStrip";
+import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 
 // Load Libre Baskerville dari Google Fonts
 // weight 400 = regular, 700 = bold; style italic tersedia untuk body artikel
@@ -51,6 +54,13 @@ export default function RootLayout({
     <html lang="id" className={libreBaskerville.variable}>
       <body className="bg-primary-light text-primary-dark font-helvetica antialiased">
         <AnalyticsTracker />
+        <ScrollToTop />
+
+        {/* IndexStrip dipasang di atas Navbar, tapi hanya tampil di halaman beranda (/).
+            IndexStrip (Server Component) dilempar sebagai prop ke ConditionalIndexStrip
+            (Client Component) — pola resmi Next.js App Router untuk kasus ini. */}
+        <ConditionalIndexStrip strip={<IndexStrip />} />
+
         <Navbar />
         {children}
         <Footer />

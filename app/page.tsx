@@ -2,7 +2,6 @@
 // Server Component: data di-fetch di server, tidak membutuhkan JavaScript tambahan di browser
 
 import type { Metadata } from 'next'
-import IndexStrip from '@/components/widgets/IndexStrip'
 import { createClient } from '@/lib/supabase/server'
 
 // ISR: Next.js meng-cache halaman ini dan memperbarui otomatis setiap 1 jam
@@ -68,10 +67,6 @@ export default async function BerandaPage() {
 
   return (
     <main className="min-h-screen bg-primary-light">
-
-      {/* Bar indikator — strip tipis di paling atas konten beranda */}
-      <IndexStrip />
-
       {/* Header beranda — logo, nama brand, dan tagline */}
       <header className="border-b border-primary-dark/10 py-16 px-6">
         <div className="max-w-2xl mx-auto text-center">
