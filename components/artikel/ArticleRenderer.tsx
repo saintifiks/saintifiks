@@ -18,7 +18,7 @@ const ChartBlock = dynamic(() => import('./ChartBlock'), {
 
 type ArticleRendererProps = {
   content: string
-  charts: { chart_identifier: string; config: string }[]
+  charts: { chart_identifier: string; config: string | object }[]
 }
 
 const CALLOUT_CONFIG: Record<string, { label: string; borderClass: string; bgClass: string; labelClass: string }> = {
