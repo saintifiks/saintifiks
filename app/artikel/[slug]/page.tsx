@@ -10,6 +10,9 @@ export const revalidate = 3600
 
 // [PERBAIKAN SESI #15]
 // Tipe article_corrections diperbarui: tambah kolom 'status' untuk filter approved
+// [PERBAIKAN SESI #16]
+// Tipe article_charts diperbarui: config bisa string | object karena Supabase JSONB
+// auto-deserialize menjadi object, bukan selalu string
 type Article = {
   id: string
   title: string
@@ -18,7 +21,7 @@ type Article = {
   excerpt: string | null
   cover_image_url: string | null
   published_at: string | null
-  article_charts: { chart_identifier: string; config: string }[]
+  article_charts: { chart_identifier: string; config: string | object }[]
   article_corrections: {
     id: string
     original_text: string

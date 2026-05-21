@@ -8,7 +8,7 @@ ChartJS.register(...registerables)
 
 type ChartBlockProps = {
   identifier: string
-  configString: string | null
+  configString: string | object | null
 }
 
 export default function ChartBlock({ identifier, configString }: ChartBlockProps) {
@@ -23,7 +23,20 @@ export default function ChartBlock({ identifier, configString }: ChartBlockProps
   }
 
   try {
-    let cleanConfig = configString.trim()
+    // Handle Supabase JSONB yang di-auto-deserialize menjadi object
+    // atau string dari admin preview (textarea state)
+    let cleanConfig: string
+    
+    if (typeof configString === 'string') {
+      cleanConfig = configString
+    } else if (typeof configString === 'object' && configString !== null) {
+      // Supabase JSONB: already parsed object, convert back to string for processing
+      cleanConfig = JSON.stringify(configString)
+    } else {
+      throw new Error('Invalid config format')
+    }
+
+    cleanConfig = cleanConfig.trim()
     cleanConfig = cleanConfig.replace(/^```(json)?\s*/i, '')
     cleanConfig = cleanConfig.replace(/\s*```$/i, '')
 
