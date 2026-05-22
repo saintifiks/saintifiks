@@ -73,11 +73,10 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       return
     }
 
-    // Optimistic update
+    // Optimistic update hanya untuk isLiked (UX responsif), count menunggu server
     const previousState = isLiked
     const previousCount = likeCount
     setIsLiked(!previousState)
-    setLikeCount(previousState ? previousCount - 1 : previousCount + 1)
 
     if (!previousState) {
       fetch('/api/analytics', {

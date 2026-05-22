@@ -33,7 +33,14 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (existing) {
-      return NextResponse.json({ message: 'Sudah disukai' }, { status: 200 })
+      // Sudah like — kembalikan count terkini
+      const { count: existingCount } = await supabase
+        .from('likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('article_id', articleId)
+      return NextResponse.json({ success: true, count: existingCount || 0 }, {
+        headers: { 'Cache-Control': 'no-store' }
+      })
     }
 
     const { error } = await supabase
