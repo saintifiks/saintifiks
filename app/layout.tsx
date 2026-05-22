@@ -52,7 +52,7 @@ export default function RootLayout({
   return (
     // lang="id" karena seluruh konten dalam Bahasa Indonesia
     // variable font Libre Baskerville ditaruh di <html> agar bisa diakses seluruh halaman
-    <html lang="id" className={libreBaskerville.variable}>
+    <html lang="id" className={libreBaskerville.variable} style={{ colorScheme: 'only light' }}>
       <body className="bg-primary-light text-primary-dark font-helvetica antialiased">
         <AnalyticsTracker />
         <ScrollToTop />
