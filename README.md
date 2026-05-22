@@ -303,9 +303,18 @@ app/api/indices/route.ts                    ← Endpoint polling client
 articles          — konten artikel (judul, slug, isi Markdown, status publikasi, metadata)
 article_charts    — konfigurasi Chart.js per artikel (type, data, options sebagai JSON; relasi ke articles via foreign key)
 likes             — data interaksi likes pembaca (user_id, article_id, timestamp)
+article_corrections — koreksi dan klarifikasi publik (dari pembaca, di-approve admin)
+comments          — komentar publik (privacy: ditampilkan sebagai "Pembaca")
+shares            — tracking share per platform (instagram, twitter, facebook, whatsapp, copy)
 analytics_events  — event tracking internal (page_view, scroll_depth, dll — BUKAN untuk dijual)
 users             — akun pembaca (dikelola otomatis oleh Supabase Auth saat login pertama)
 ```
+
+**Catatan koreksi:** Tabel `article_corrections` memiliki kolom `status` (pending/approved/rejected) untuk moderasi.
+
+**Catatan komentar:** Privacy-first — nama pengguna tidak di-expose, semua komentar ditampilkan sebagai "Pembaca".
+
+**Catatan shares:** Tracking anonymized — hanya mencatat platform dan article_id, tidak mencatat siapa yang share.
 
 **Catatan chart:** Setiap artikel bisa memiliki satu atau lebih chart. Config Chart.js disimpan sebagai JSON di `article_charts`, di-render client-side via Chart.js saat halaman artikel dibuka. Chart bersifat interaktif.
 
@@ -424,9 +433,12 @@ CREATE TRIGGER articles_updated_at
 │   │   └── TrendIcon.tsx                 ← Ikon naik/turun
 │   ├── artikel/
 │   │   ├── ArticleRenderer.tsx
+│   │   ├── ArticleInteractions.tsx     ← Client Component wrapper untuk seluruh section interaksi
 │   │   ├── ChartBlock.tsx
-│   │   ├── LikeButton.tsx
-│   │   ├── CorrectionSection.tsx
+│   │   ├── LikeButton.tsx              ← Icon Heart + optimistic update + count
+│   │   ├── CorrectionSection.tsx       ← Icon AlertCircle + count koreksi
+│   │   ├── ShareButton.tsx             ← Generate gambar Instagram Story 1080x1920
+│   │   ├── CommentsSection.tsx         ← Komentar publik (privacy: "Pembaca")
 │   │   └── ImageUpload.tsx
 │   └── analytics/
 │       └── AnalyticsTracker.tsx
@@ -772,6 +784,45 @@ Format pengisian:
                            Tidak ada library tambahan — hanya window.scrollTo(0,0).
              ALTERNATIF DITOLAK: CSS scroll-behavior (tidak bisa dikontrol per navigasi);
                                  solusi di masing-masing page.tsx (duplikasi, tidak terpusat).
+[22-05-2026] KEPUTUSAN: Social Interaction Icons menggunakan lucide-react
+             ALASAN: Keperluan icon yang konsisten dan modern untuk Like (Heart), Share (Share2),
+                     dan Correction (AlertCircle). lucide-react adalah library icon yang ringan,
+                     tree-shakeable, dan actively maintained.
+             CATATAN IMPLEMENTASI: Tidak menambah dependency berat — bundle hanya include icon yang digunakan.
+             ALTERNATIF DITOLAK: SVG manual (maintenance burden tinggi), react-icons (bundle lebih besar).
+[22-05-2026] KEPUTUSAN: ShareButton dengan html-to-image untuk Instagram Story
+             ALASAN: Kebutuhan generate gambar 1080x1920 secara client-side untuk dibagikan ke
+                     Instagram Story tanpa perlu server-side rendering atau storage.
+             CATATAN IMPLEMENTASI: html-to-image ringan, output PNG/Canvas, tidak perlu server.
+             ALTERNATIF DITOLAK: html2canvas (lebih berat), puppeteer SSR (quota mahal).
+[22-05-2026] KEPUTUSAN: Comments Section — privacy-first dengan nama "Pembaca"
+             ALASAN: Menghindari expose data pribadi user (real name/avatar) dari auth.users.
+                     Tabel auth.users tidak bisa di-join via API dengan anon key.
+             CATATAN IMPLEMENTASI: Display "Pembaca" untuk semua komentar. Simpan user_id di DB
+                     untuk moderasi/admin purposes saja.
+             ALTERNATIF DITOLAK: Join ke auth.users (tidak bisa dengan anon key), expose real name.
+[22-05-2026] KEPUTUSAN: ArticleInteractions sebagai Client Component wrapper
+             ALASAN: Mengisolasi seluruh section interaksi (Like, Share, Comments) dalam satu
+                     Client Component agar error di satu bagian tidak merusak artikel.
+             CATATAN IMPLEMENTASI: Wrapper memanggil LikeButton, ShareButton, CommentsSection, CorrectionSection.
+             ALTERNATIF DITOLAK: Masing-masing di page.tsx (error satu komponen = crash seluruh halaman).
+[22-05-2026] KEPUTUSAN: Supabase query `.maybeSingle()` bukan `.single()` untuk likes
+             ALASAN: `.single()` throw error 406 jika 0 rows (user belum like). `.maybeSingle()`
+                     return `null` gracefully — lebih aman untuk client-side check.
+             CATATAN IMPLEMENTASI: Dipakai di LikeButton.tsx untuk cek status like user.
+             ALTERNATIF DITOLAK: `.single()` dengan try-catch (lebih verbose, tidak idiomatic).
+[22-05-2026] KEPUTUSAN: Error handling dengan try-catch di Client Components
+             ALASAN: Mencegah satu error (misal: API fail, network issue) menghancurkan seluruh UI.
+                     User tetap bisa baca artikel meski fitur interaksi error.
+             CATATAN IMPLEMENTASI: Wrap Supabase calls dan fetch dengan try-catch, log error ke console,
+                     fallback UI jika perlu.
+             ALTERNATIF DITOLAK: Error boundary React (lebih kompleks), biarkan crash (UX buruk).
+[22-05-2026] KEPUTUSAN: ISR revalidate = 3600 untuk halaman artikel
+             ALASAN: Hemat Supabase quota dengan cache 1 jam. Artikel jarang berubah setelah publish.
+                     Koreksi dan interaksi tetap real-time via Client Components.
+             CATATAN IMPLEMENTASI: `export const revalidate = 3600` di page.tsx. Jika urgent update,
+                     redeploy manual via Vercel dashboard.
+             ALTERNATIF DITOLAK: `dynamic = 'force-dynamic'` (boros quota, tidak perlu untuk artikel static).
 ```
 
 ---
@@ -815,7 +866,8 @@ Yang dikerjakan:
 
 Keputusan baru: Seluruh keputusan arsitektur minor maupun mayor yang dieksekusi sepanjang 26 sesi telah disahkan dan terangkum secara permanen di Seksi 11 (Keputusan Arsitektur).
 Status akhir: Selesai (Phase 0–4 dan Post-Launch tuntas).
-Next step: Pemeliharaan rutin operasional. Opsional: Penambahan `BPS_API_KEY` ke environment Vercel jika integrasi inflasi lokal langsung dibutuhkan.
+Next step: [LIHAT SESI #28] Implementasi fitur social interaction (like, share, comments) dan Instagram Story generator.
+---
 ---
 
 [21-05-2026] SESI #27
@@ -829,6 +881,44 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — dua keputusan baru: "IndexStrip dipindah ke atas Navbar" dan "ScrollToTop".
 Status akhir: Selesai. Di-push ke feature/widget-strip-above-navbar, siap di-review via Vercel Preview sebelum merge ke main.
 Next step: Verifikasi di Vercel Preview URL → merge ke main.
+---
+
+[22-05-2026] SESI #28
+Branch: feature/social-interaction-icons
+Tujuan sesi: Menambahkan fitur social interaction (like, share, comments) dengan icon yang lebih menarik dan kemampuan generate gambar Instagram Story.
+Yang dikerjakan:
+  [DATABASE & API]
+  - Migration tabel `comments` dan `shares` dengan RLS policy lengkap di Supabase.
+  - Dibuat API routes: `/api/likes/count`, `/api/comments`, `/api/shares`.
+  
+  [KOMPONEN UI BARU]
+  - `ShareButton.tsx` — Client Component dengan:
+    • Icon Share dari lucide-react
+    • Modal pilihan platform (Instagram Story, Twitter, Facebook, WhatsApp, Copy Link)
+    • Generate gambar Instagram Story 1080x1920 menggunakan html-to-image
+    • Tracking share count per platform
+  - `CommentsSection.tsx` — Client Component dengan:
+    • Tampilan komentar publik (privacy: nama ditampilkan sebagai "Pembaca")
+    • Form input komentar untuk user yang sudah login
+    • Error handling untuk isolasi error
+  - `ArticleInteractions.tsx` — Client Component wrapper yang mengisolasi seluruh section interaksi
+  
+  [UPDATE KOMPONEN EXISTING]
+  - `LikeButton.tsx` — Ditambah icon Heart dari lucide-react dan tampilan jumlah like publik.
+  - `CorrectionSection.tsx` — Ditambah icon AlertCircle dan tampilan jumlah koreksi.
+  - `page.tsx` artikel — Integrasi ArticleInteractions dengan ISR revalidate = 3600 untuk hemat quota.
+  
+  [DEPENDENCIES]
+  - Install `lucide-react` — Icon library untuk konsistensi visual
+  - Install `html-to-image` — Generate gambar dari HTML untuk Instagram Story
+  
+  [PEMECAHAN MASALAH KRUSIAL]
+  - Debug error 406 (Not Acceptable) karena `.single()` digunakan saat user belum like → diubah ke `.maybeSingle()`
+  - Debug error "No API key" — ternyata perlu merge ke main agar env vars ter-load dengan benar di production
+  - Implementasi error boundary di Client Components agar satu error tidak menghancurkan seluruh UI
+Keputusan baru: Lihat Seksi 11 — tujuh keputusan baru terkait social interaction dan error handling.
+Status akhir: Selesai. Di-merge ke main dan live di production.
+Next step: Monitoring quota Supabase; pertimbangkan penambahan fitur reply komentar atau notifikasi di masa depan.
 ---
 ```
 Format:
