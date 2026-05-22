@@ -7,11 +7,9 @@ import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 import ArticleInteractions from '@/components/artikel/ArticleInteractions'
 
-// [PERUBAHAN SESI #28] — Pakai dynamic rendering saat testing fitur baru
-// Setelah stabil, bisa kembalikan ke revalidate = 60 atau 3600
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
-export const dynamicParams = true
+// [STABIL] Fitur social interaction sudah berjalan, hemat quota dengan cache 1 jam
+// Note: Koreksi dan interaksi (like/share/comment) tetap real-time via Client Components
+export const revalidate = 3600  // Cache 1 jam — artikel jarang berubah, quota efisien
 
 // [PERBAIKAN SESI #15]
 // Tipe article_corrections diperbarui: tambah kolom 'status' untuk filter approved
