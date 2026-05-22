@@ -1,3 +1,5 @@
+// [PERUBAHAN SESI #28] — Tambah ShareButton, CommentsSection, dan tata ulang layout interaksi
+
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -5,6 +7,8 @@ import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 import LikeButton from '@/components/artikel/LikeButton'
 import CorrectionSection from '@/components/artikel/CorrectionSection'
+import ShareButton from '@/components/artikel/ShareButton'
+import CommentsSection from '@/components/artikel/CommentsSection'
 
 export const revalidate = 3600
 
@@ -177,12 +181,24 @@ export default async function ArtikelPage({ params }: Props) {
       <article className="max-w-2xl mx-auto px-6 py-12">
         <ArticleRenderer content={artikel.content} charts={charts} />
         
-        {/* Like Button */}
-        <div className="mt-12 pt-8 border-t border-primary-dark/10 flex items-center justify-between">
-          <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">
-            Dukung Jurnalisme Independen
+        {/* Section Interaksi: Like, Share, Stats */}
+        <div className="mt-12 pt-8 border-t border-primary-dark/10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <LikeButton articleId={artikel.id} />
+            </div>
+            
+            <ShareButton 
+              articleId={artikel.id}
+              articleTitle={artikel.title}
+              articleExcerpt={artikel.excerpt}
+              articleSlug={artikel.slug}
+            />
+          </div>
+          
+          <p className="font-helvetica text-xs text-primary-dark/40 mt-6 text-center sm:text-left">
+            Dukung jurnalisme independen dengan menyukai dan membagikan artikel ini.
           </p>
-          <LikeButton articleId={artikel.id} />
         </div>
 
         {/* Koreksi Section */}
@@ -190,6 +206,9 @@ export default async function ArtikelPage({ params }: Props) {
           articleId={artikel.id} 
           corrections={corrections} 
         />
+
+        {/* Komentar Section */}
+        <CommentsSection articleId={artikel.id} />
       </article>
     </main>
   )

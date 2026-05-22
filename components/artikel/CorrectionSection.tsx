@@ -1,6 +1,9 @@
 'use client'
 
+// [PERUBAHAN SESI #28] — Tambah icon AlertCircle dan tampilkan count koreksi
+
 import { useState } from 'react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { submitCorrection } from '@/app/(admin)/dashboard/koreksi/actions'
 
 type Correction = {
@@ -51,13 +54,26 @@ export default function CorrectionSection({ articleId, corrections }: Correction
     setIsSubmitting(false)
   }
 
+  const correctionCount = corrections.length
+
   return (
     <div className="mt-16 pt-8 border-t border-primary-dark/10">
+      {/* Header dengan icon dan count */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="font-libre text-2xl font-bold text-primary-dark">Koreksi & Klarifikasi</h3>
+        <div className="flex items-center gap-3">
+          <AlertCircle size={24} className="text-accent-blue" />
+          <h3 className="font-libre text-2xl font-bold text-primary-dark">
+            Koreksi & Klarifikasi
+          </h3>
+          {correctionCount > 0 && (
+            <span className="font-helvetica text-sm text-primary-dark/50 bg-accent-blue/10 text-accent-blue px-3 py-1">
+              {correctionCount}
+            </span>
+          )}
+        </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="font-helvetica text-sm px-5 py-2 border border-primary-dark/40 hover:bg-primary-dark hover:text-primary-light transition-colors"
+          className="flex items-center gap-2 font-helvetica text-sm px-5 py-2 border border-primary-dark/40 hover:bg-primary-dark hover:text-primary-light transition-colors"
         >
           {isOpen ? 'Tutup Form' : 'Usulkan Koreksi'}
         </button>
@@ -130,9 +146,16 @@ export default function CorrectionSection({ articleId, corrections }: Correction
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-primary-dark text-primary-light py-3 font-helvetica hover:opacity-90 disabled:opacity-50 transition-opacity"
+              className="w-full bg-primary-dark text-primary-light py-3 font-helvetica hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
             >
-              {isSubmitting ? 'Mengirim Koreksi...' : 'Kirim Koreksi untuk Ditinjau'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Mengirim Koreksi...
+                </>
+              ) : (
+                'Kirim Koreksi untuk Ditinjau'
+              )}
             </button>
           </div>
         </form>
