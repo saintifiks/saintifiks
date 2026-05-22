@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.8 | Status: Live | Terakhir diperbarui: 2026-05-21
+> Versi: 0.9 | Status: Live | Terakhir diperbarui: 2026-05-22
 
 ---
 
@@ -830,6 +830,24 @@ Format pengisian:
              CATATAN IMPLEMENTASI: `export const revalidate = 3600` di page.tsx. Jika urgent update,
                      redeploy manual via Vercel dashboard.
              ALTERNATIF DITOLAK: `dynamic = 'force-dynamic'` (boros quota, tidak perlu untuk artikel static).
+[22-05-2026] KEPUTUSAN: color-scheme: only light — situs tidak mendukung dark mode
+             ALASAN: Samsung Internet dan beberapa browser mobile menerapkan "Forced Dark Mode"
+                     secara otomatis ketika mode malam perangkat aktif. Tanpa deklarasi ini,
+                     browser meng-invert atau mengurangi saturasi warna elemen secara paksa —
+                     menyebabkan logo berubah abu-abu dan avatar profil warnanya terbalik.
+                     Situs Saintifiks saat ini hanya mendukung tema terang; deklarasi ini
+                     mencegah browser memodifikasi tampilan tanpa izin.
+             CATATAN IMPLEMENTASI: Tiga lapisan perlindungan:
+                     (1) `color-scheme: only light` di `:root` pada app/globals.css
+                     (2) `colorScheme: "only light"` di metadata Next.js (app/layout.tsx)
+                         → menghasilkan `<meta name="color-scheme" content="only light">`
+                     (3) Elemen logo di app/page.tsx diubah dari `<img>` biasa menjadi
+                         `<picture>` dengan `<source media="(prefers-color-scheme: dark)">`
+                         sebagai fallback eksplisit untuk browser yang tetap
+                         menghormati media query dark mode.
+             ALTERNATIF DITOLAK: Kelas `dark:` Tailwind (Tailwind darkMode tidak dikonfigurasi
+                                 dan situs memang tidak dirancang untuk dark mode);
+                                 filter CSS manual (tidak mengatasi root cause).
 ```
 
 ---
@@ -926,6 +944,19 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — tujuh keputusan baru terkait social interaction dan error handling.
 Status akhir: Selesai. Di-merge ke main dan live di production.
 Next step: Monitoring quota Supabase; pertimbangkan penambahan fitur reply komentar atau notifikasi di masa depan.
+---
+
+[22-05-2026] SESI #29
+Branch: feature/share-instagram-story-improvements
+Tujuan sesi: Memperbaiki bug tampilan situs di browser Samsung Internet saat mode malam perangkat aktif — logo berubah abu-abu dan avatar profil warnanya terbalik.
+Yang dikerjakan:
+  - Diubah `app/globals.css` — ditambahkan `color-scheme: only light` di `:root` sebagai sinyal utama ke browser agar tidak menerapkan forced dark mode.
+  - Diubah `app/layout.tsx` — ditambahkan `colorScheme: "only light"` di objek metadata Next.js, menghasilkan `<meta name="color-scheme">` di `<head>` yang dibaca browser sebelum CSS dimuat.
+  - Diubah `app/page.tsx` — elemen `<img>` logo beranda diganti dengan `<picture>` + `<source media="(prefers-color-scheme: dark)">` agar browser otomatis memilih logo yang tepat (lighttheme vs darktheme) sesuai preferensi sistem.
+  - Diubah `components/layout/Navbar.tsx` — verifikasi bahwa avatar profil sudah konsisten menggunakan `bg-primary-dark text-primary-light` tanpa kelas `dark:` yang bisa terpengaruh forced dark mode.
+Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "color-scheme: only light — situs tidak mendukung dark mode".
+Status akhir: Selesai. Di-push ke feature/share-instagram-story-improvements.
+Next step: Test di Samsung Internet dengan mode malam aktif untuk verifikasi fix.
 ---
 ```
 Format:

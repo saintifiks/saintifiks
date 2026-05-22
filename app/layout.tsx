@@ -28,6 +28,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
   ),
+  colorScheme: "only light",
   title: "Saintifiks",
   description: "Media independen untuk pembaca yang peduli kualitas informasi publik.",
   // Default OG site-wide — halaman individual akan override ini
