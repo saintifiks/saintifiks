@@ -13,10 +13,11 @@ export async function createClient() {
   } catch {
     // Fallback jika cookies() tidak tersedia
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    cookieStore = {
+    const fallbackStore: any = {
       getAll: () => [] as Array<{ name: string; value: string }>,
       set: () => {},
-    } as any
+    }
+    cookieStore = fallbackStore
   }
 
   return createServerClient(
