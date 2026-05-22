@@ -12,8 +12,9 @@ export async function createClient() {
     cookieStore = await cookies()
   } catch {
     // Fallback jika cookies() tidak tersedia
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cookieStore = {
-      getAll: () => [],
+      getAll: () => [] as Array<{ name: string; value: string }>,
       set: () => {},
     } as any
   }
