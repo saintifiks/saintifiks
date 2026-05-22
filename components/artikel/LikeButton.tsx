@@ -27,8 +27,8 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       try {
         // Fetch count dan status like secara paralel
         const [countRes, statusRes] = await Promise.all([
-          fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store' }),
-          fetch(`/api/likes?articleId=${articleId}`, { cache: 'no-store' }),
+          fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store', credentials: 'include' }),
+          fetch(`/api/likes?articleId=${articleId}`, { cache: 'no-store', credentials: 'include' }),
         ])
 
         if (countRes.ok) {
@@ -104,6 +104,7 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ articleId }),
         cache: 'no-store',
+        credentials: 'include',
       })
 
       if (!res.ok) {
