@@ -40,16 +40,22 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       if (session?.user) {
         setUserId(session.user.id)
         
-        // [FIX] Gunakan maybeSingle() bukan single() — handle case user belum like (0 rows)
-        const { data } = await supabase
-          .from('likes')
-          .select('id')
-          .eq('article_id', articleId)
-          .eq('user_id', session.user.id)
-          .maybeSingle()
-        
-        if (data) {
-          setIsLiked(true)
+        // [FIX] Gunakan maybeSingle() dan wrap dengan try-catch
+        try {
+          const { data, error: likeError } = await supabase
+            .from('likes')
+            .select('id')
+            .eq('article_id', articleId)
+            .eq('user_id', session.user.id)
+            .maybeSingle()
+          
+          if (likeError) {
+            console.warn('Like status check error (non-fatal):', likeError)
+          } else if (data) {
+            setIsLiked(true)
+          }
+        } catch (err) {
+          console.error('Error checking like status:', err)
         }
       }
       setIsLoading(false)
