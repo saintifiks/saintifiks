@@ -830,6 +830,19 @@ Format pengisian:
              CATATAN IMPLEMENTASI: `export const revalidate = 3600` di page.tsx. Jika urgent update,
                      redeploy manual via Vercel dashboard.
              ALTERNATIF DITOLAK: `dynamic = 'force-dynamic'` (boros quota, tidak perlu untuk artikel static).
+[22-05-2026] KEPUTUSAN: Fix likes count — useMemo + cache no-store + rollback count
+             ALASAN: Tiga bug ditemukan di LikeButton.tsx:
+                     (1) createClient() dipanggil di body komponen tanpa useMemo → instance baru
+                         setiap render → useEffect depend pada supabase yang selalu berubah →
+                         likeCount di-reset ke 0 setiap render, termasuk saat user lain membuka artikel.
+                     (2) likeCount tidak di-rollback saat insert/delete error — hanya isLiked yang di-revert.
+                     (3) Fetch /api/likes/count tanpa cache: 'no-store' → potensi stale response dari Next.js.
+             CATATAN IMPLEMENTASI: (1) useMemo(() => createClient(), []) di LikeButton.tsx;
+                     (2) setLikeCount(previousCount) ditambah di blok error handling;
+                     (3) cache: 'no-store' di semua fetch + export const dynamic = 'force-dynamic'
+                         dan Cache-Control no-store header di /api/likes/count/route.ts.
+             ALTERNATIF DITOLAK: Re-fetch setiap interval (polling boros); tidak rollback (UX salah).
+
 [22-05-2026] KEPUTUSAN: color-scheme: only light — situs tidak mendukung dark mode
              ALASAN: Samsung Internet dan beberapa browser mobile menerapkan "Forced Dark Mode"
                      secara otomatis ketika mode malam perangkat aktif. Tanpa deklarasi ini,
@@ -957,6 +970,24 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "color-scheme: only light — situs tidak mendukung dark mode".
 Status akhir: Selesai. Di-push ke feature/share-instagram-story-improvements.
 Next step: Test di Samsung Internet dengan mode malam aktif untuk verifikasi fix.
+---
+
+[22-05-2026] SESI #30
+Branch: feature/share-instagram-story-improvements
+Tujuan sesi: Memperbaiki bug sistem likes — jumlah like tidak sinkron antar user (akun B melihat 0 likes padahal akun A sudah like, dan setelah akun B like tertulis 1 bukan 2).
+Yang dikerjakan:
+  - Diubah `components/artikel/LikeButton.tsx`:
+    • Ganti `createClient()` di body komponen menjadi `useMemo(() => createClient(), [])` agar instance Supabase tidak dibuat ulang setiap render — mencegah useEffect re-run dan reset likeCount ke 0.
+    • Tambah import `useMemo` di baris import React.
+    • Hapus `supabase` dari dependency array useEffect (cukup `[articleId]`).
+    • Tambah `setLikeCount(previousCount)` di blok error handling insert dan delete untuk rollback penuh.
+    • Tambah `cache: 'no-store'` di semua fetch ke `/api/likes/count`.
+  - Diubah `app/api/likes/count/route.ts`:
+    • Tambah `export const dynamic = 'force-dynamic'` untuk mencegah Next.js meng-cache route ini.
+    • Tambah header `Cache-Control: no-store, no-cache, must-revalidate` pada response sukses.
+Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Fix likes count — useMemo + cache no-store + rollback count".
+Status akhir: Selesai. Di-push ke feature/share-instagram-story-improvements.
+Next step: Test manual — like dengan dua akun berbeda di artikel yang sama, verifikasi angka konsisten.
 ---
 ```
 Format:

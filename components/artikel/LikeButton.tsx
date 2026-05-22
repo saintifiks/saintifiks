@@ -3,7 +3,7 @@
 // Komponen LikeButton — tombol suka artikel dengan optimistic update dan count
 // [PERUBAHAN SESI #28] — Tambah icon Heart dan tampilkan jumlah like publik
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Heart, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { usePathname } from 'next/navigation'
@@ -20,13 +20,13 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
   const [likeCount, setLikeCount] = useState(0)
   
   const pathname = usePathname()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     async function checkLikeStatus() {
       // Fetch total likes count
       try {
-        const res = await fetch(`/api/likes/count?articleId=${articleId}`)
+        const res = await fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store' })
         if (res.ok) {
           const data = await res.json()
           setLikeCount(data.count || 0)
@@ -62,7 +62,7 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
     }
     
     checkLikeStatus()
-  }, [articleId, supabase])
+  }, [articleId])
 
   async function handleLikeClick() {
     if (!userId) {
@@ -109,7 +109,16 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
         .from('likes')
         .insert({ article_id: articleId, user_id: userId })
       
-      if (error) setIsLiked(previousState)
+      if (error) {
+        setIsLiked(previousState)
+        setLikeCount(previousCount)
+      } else {
+        const res = await fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setLikeCount(data.count || 0)
+        }
+      }
     } else {
       const { error } = await supabase
         .from('likes')
@@ -117,7 +126,16 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
         .eq('article_id', articleId)
         .eq('user_id', userId)
       
-      if (error) setIsLiked(previousState)
+      if (error) {
+        setIsLiked(previousState)
+        setLikeCount(previousCount)
+      } else {
+        const res = await fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setLikeCount(data.count || 0)
+        }
+      }
     }
   }
 
