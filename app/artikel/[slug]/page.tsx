@@ -13,6 +13,8 @@ import CommentsSection from '@/components/artikel/CommentsSection'
 // [PERUBAHAN SESI #28] — Pakai dynamic rendering saat testing fitur baru
 // Setelah stabil, bisa kembalikan ke revalidate = 60 atau 3600
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const dynamicParams = true
 
 // [PERBAIKAN SESI #15]
 // Tipe article_corrections diperbarui: tambah kolom 'status' untuk filter approved
