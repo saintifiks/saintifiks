@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // API endpoint untuk mendapatkan jumlah like suatu artikel
 // GET /api/likes/count?articleId=xxx
 export async function GET(request: NextRequest) {
@@ -30,7 +32,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ count: count || 0 })
+    return NextResponse.json({ count: count || 0 }, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+    })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json(
