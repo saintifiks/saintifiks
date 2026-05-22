@@ -18,15 +18,11 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient()
 
+    // [CATATAN] Tidak melakukan join ke auth.users karena tabel tersebut 
+    // berada di schema auth dan tidak bisa diakses via PostgREST dengan anon key
     const { data, error } = await supabase
       .from('comments')
-      .select(`
-        id,
-        content,
-        created_at,
-        user_id,
-        users: user_id (raw_user_meta_data)
-      `)
+      .select('id, content, created_at, user_id')
       .eq('article_id', articleId)
       .order('created_at', { ascending: false })
 
@@ -38,19 +34,15 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Format data untuk frontend
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const formattedComments = data?.map((comment: any) => {
-      const userMeta = comment.users?.raw_user_meta_data
-      return {
-        id: comment.id,
-        content: comment.content,
-        created_at: comment.created_at,
-        user_id: comment.user_id,
-        user_name: userMeta?.name || 'Pembaca',
-        user_avatar: userMeta?.avatar_url || null,
-      }
-    }) || []
+    // Format data untuk frontend - tampilkan "Pembaca" untuk semua
+    const formattedComments = data?.map((comment) => ({
+      id: comment.id,
+      content: comment.content,
+      created_at: comment.created_at,
+      user_id: comment.user_id,
+      user_name: 'Pembaca',
+      user_avatar: null,
+    })) || []
 
     return NextResponse.json({ comments: formattedComments })
   } catch (error) {
@@ -86,6 +78,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // [CATATAN] Simpan user_id tapi nama tidak ditampilkan demi privasi
     const { data, error } = await supabase
       .from('comments')
       .insert({
@@ -93,7 +86,7 @@ export async function POST(request: NextRequest) {
         user_id: session.user.id,
         content: content.trim(),
       })
-      .select()
+      .select('id, content, created_at, user_id')
       .single()
 
     if (error) {
@@ -104,7 +97,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ comment: data }, { status: 201 })
+    // Format response untuk frontend
+    const formattedComment = {
+      ...data,
+      user_name: 'Pembaca',
+      user_avatar: null,
+    }
+
+    return NextResponse.json({ comment: formattedComment }, { status: 201 })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json(
