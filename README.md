@@ -415,6 +415,13 @@ CREATE TRIGGER articles_updated_at
 │   │   └── page.tsx
 │   └── api/
 │       ├── analytics/
+│       ├── comments/
+│       │   └── route.ts                  ← GET/POST komentar publik
+│       ├── likes/
+│       │   └── count/
+│       │       └── route.ts              ← GET jumlah like publik
+│       └── shares/
+│           └── route.ts                  ← POST tracking share per platform
 │       │   └── route.ts
 │       ├── indices/
 │       │   └── route.ts                  ← Polling data strip indeks (force-dynamic)
