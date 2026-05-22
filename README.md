@@ -823,6 +823,20 @@ Format pengisian:
              CATATAN IMPLEMENTASI: `export const revalidate = 3600` di page.tsx. Jika urgent update,
                      redeploy manual via Vercel dashboard.
              ALTERNATIF DITOLAK: `dynamic = 'force-dynamic'` (boros quota, tidak perlu untuk artikel static).
+[22-05-2026] KEPUTUSAN: Semua operasi likes via API server-side (admin client, bypass RLS)
+             ALASAN: Insert langsung dari client (anon key) dan count via server anon key
+                     keduanya terblokir RLS — likes user lain tidak terbaca, insert bisa gagal.
+                     Service role key di server-side adalah satu-satunya cara yang andal untuk
+                     operasi agregat (count semua rows) dan operasi tulis yang perlu bypass RLS.
+             CATATAN IMPLEMENTASI: lib/supabase/admin.ts — createAdminClient() pakai service_role key.
+                     app/api/likes/route.ts — GET/POST/DELETE semua via admin client.
+                     Auth user tetap diverifikasi via cookie session sebelum tulis (tidak anonymous).
+                     LikeButton.tsx tidak lagi direct-query Supabase untuk likes — hanya via /api/likes.
+                     SUPABASE_SERVICE_ROLE_KEY wajib ada di .env.local DAN Vercel env vars.
+             KEAMANAN: service_role key TIDAK PERNAH expose ke client — hanya di server API routes.
+             ALTERNATIF DITOLAK: Relaksasi RLS SELECT (tidak aman untuk data writes);
+                                 bypass via anon key di client (tidak bisa tanpa ubah RLS).
+
 [22-05-2026] KEPUTUSAN: Fix likes count — useMemo + cache no-store + rollback count
              ALASAN: Tiga bug ditemukan di LikeButton.tsx:
                      (1) createClient() dipanggil di body komponen tanpa useMemo → instance baru
@@ -979,8 +993,22 @@ Yang dikerjakan:
     • Tambah `export const dynamic = 'force-dynamic'` untuk mencegah Next.js meng-cache route ini.
     • Tambah header `Cache-Control: no-store, no-cache, must-revalidate` pada response sukses.
 Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Fix likes count — useMemo + cache no-store + rollback count".
+Status akhir: Selesai — namun masalah tetap terjadi saat test multiuser. Investigasi lanjutan di sesi #31.
+Next step: Investigasi RLS policy tabel likes di Supabase.
+---
+
+[22-05-2026] SESI #31
+Branch: feature/share-instagram-story-improvements
+Tujuan sesi: Investigasi dan fix root cause likes count tidak sinkron antar user — setelah sesi #30 masalah masih terjadi.
+Root cause ditemukan: API route `/api/likes/count` menggunakan anon key (createClient dari server.ts). Di server-side tidak ada session user → Supabase mengeksekusi query sebagai anonymous → jika RLS policy SELECT tabel `likes` hanya memperbolehkan user membaca baris miliknya sendiri, maka count selalu 0 untuk semua user. Demikian pula insert dari client langsung juga bisa gagal silent karena RLS.
+Yang dikerjakan:
+  - Dibuat `lib/supabase/admin.ts` — service role client baru menggunakan SUPABASE_SERVICE_ROLE_KEY. Hanya untuk digunakan di server-side (API routes). TIDAK PERNAH di-import di client component.
+  - Dibuat `app/api/likes/route.ts` — API route baru: GET (cek status like user), POST (insert like), DELETE (hapus like). Semua menggunakan admin client untuk bypass RLS. Auth user diverifikasi via cookie session (createClient server.ts) sebelum operasi tulis.
+  - Diubah `app/api/likes/count/route.ts` — ganti createClient (anon) dengan createAdminClient (service role) agar count membaca SEMUA rows tanpa terblokir RLS.
+  - Diubah `components/artikel/LikeButton.tsx` — refactor total: hapus state userId, ganti dengan isLoggedIn; semua operasi likes (GET status, POST, DELETE) melalui /api/likes bukan langsung ke Supabase client; supabase client hanya digunakan untuk cek session login (signInWithOAuth).
+Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Semua operasi likes via API server-side (admin client)".
 Status akhir: Selesai. Di-push ke feature/share-instagram-story-improvements.
-Next step: Test manual — like dengan dua akun berbeda di artikel yang sama, verifikasi angka konsisten.
+Next step: (1) Tambahkan SUPABASE_SERVICE_ROLE_KEY ke .env.local dan Vercel environment variables. (2) Test manual multiuser. (3) Merge ke main setelah verified.
 ---
 ```
 Format:

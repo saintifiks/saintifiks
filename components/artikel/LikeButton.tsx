@@ -1,7 +1,7 @@
 'use client'
 
 // Komponen LikeButton — tombol suka artikel dengan optimistic update dan count
-// [PERUBAHAN SESI #28] — Tambah icon Heart dan tampilkan jumlah like publik
+// [PERUBAHAN SESI #30] — Semua operasi likes via API server-side (admin client, bypass RLS)
 
 import { useState, useEffect, useMemo } from 'react'
 import { Heart, Loader2 } from 'lucide-react'
@@ -16,56 +16,46 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
   const [isLiked, setIsLiked] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
-  const [userId, setUserId] = useState<string | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
   
   const pathname = usePathname()
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    async function checkLikeStatus() {
-      // Fetch total likes count
+    async function checkInitialState() {
       try {
-        const res = await fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
+        // Fetch count dan status like secara paralel
+        const [countRes, statusRes] = await Promise.all([
+          fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store' }),
+          fetch(`/api/likes?articleId=${articleId}`, { cache: 'no-store' }),
+        ])
+
+        if (countRes.ok) {
+          const data = await countRes.json()
           setLikeCount(data.count || 0)
         }
-      } catch (error) {
-        console.error('Error fetching like count:', error)
+
+        if (statusRes.ok) {
+          const data = await statusRes.json()
+          setIsLiked(data.isLiked || false)
+        }
+      } catch (err) {
+        console.error('Error fetching like state:', err)
       }
 
+      // Cek apakah user sudah login (hanya untuk tombol login)
       const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        setUserId(session.user.id)
-        
-        // [FIX] Gunakan maybeSingle() dan wrap dengan try-catch
-        try {
-          const { data, error: likeError } = await supabase
-            .from('likes')
-            .select('id')
-            .eq('article_id', articleId)
-            .eq('user_id', session.user.id)
-            .maybeSingle()
-          
-          if (likeError) {
-            console.warn('Like status check error (non-fatal):', likeError)
-          } else if (data) {
-            setIsLiked(true)
-          }
-        } catch (err) {
-          console.error('Error checking like status:', err)
-        }
-      }
+      setIsLoggedIn(!!session?.user)
+
       setIsLoading(false)
     }
     
-    checkLikeStatus()
+    checkInitialState()
   }, [articleId])
 
   async function handleLikeClick() {
-    if (!userId) {
+    if (!isLoggedIn) {
       setIsLoggingIn(true)
       
       const origin = window.location.origin
@@ -83,10 +73,9 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       return
     }
 
-    // Proses like/unlike dengan optimistic update count
+    // Optimistic update
     const previousState = isLiked
     const previousCount = likeCount
-    
     setIsLiked(!previousState)
     setLikeCount(previousState ? previousCount - 1 : previousCount + 1)
 
@@ -104,38 +93,28 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       }).catch(() => {})
     }
 
-    if (!previousState) {
-      const { error } = await supabase
-        .from('likes')
-        .insert({ article_id: articleId, user_id: userId })
-      
-      if (error) {
+    try {
+      const res = await fetch('/api/likes', {
+        method: previousState ? 'DELETE' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articleId }),
+        cache: 'no-store',
+      })
+
+      if (!res.ok) {
+        // Rollback jika gagal
         setIsLiked(previousState)
         setLikeCount(previousCount)
       } else {
-        const res = await fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
-          setLikeCount(data.count || 0)
+        const data = await res.json()
+        if (typeof data.count === 'number') {
+          setLikeCount(data.count)
         }
       }
-    } else {
-      const { error } = await supabase
-        .from('likes')
-        .delete()
-        .eq('article_id', articleId)
-        .eq('user_id', userId)
-      
-      if (error) {
-        setIsLiked(previousState)
-        setLikeCount(previousCount)
-      } else {
-        const res = await fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
-          setLikeCount(data.count || 0)
-        }
-      }
+    } catch (err) {
+      console.error('Error toggling like:', err)
+      setIsLiked(previousState)
+      setLikeCount(previousCount)
     }
   }
 
