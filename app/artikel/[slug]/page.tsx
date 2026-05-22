@@ -5,10 +5,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
-import LikeButton from '@/components/artikel/LikeButton'
-import CorrectionSection from '@/components/artikel/CorrectionSection'
-import ShareButton from '@/components/artikel/ShareButton'
-import CommentsSection from '@/components/artikel/CommentsSection'
+import ArticleInteractions from '@/components/artikel/ArticleInteractions'
 
 // [PERUBAHAN SESI #28] — Pakai dynamic rendering saat testing fitur baru
 // Setelah stabil, bisa kembalikan ke revalidate = 60 atau 3600
@@ -185,34 +182,14 @@ export default async function ArtikelPage({ params }: Props) {
       <article className="max-w-2xl mx-auto px-6 py-12">
         <ArticleRenderer content={artikel.content} charts={charts} />
         
-        {/* Section Interaksi: Like, Share, Stats */}
-        <div className="mt-12 pt-8 border-t border-primary-dark/10">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <LikeButton articleId={artikel.id} />
-            </div>
-            
-            <ShareButton 
-              articleId={artikel.id}
-              articleTitle={artikel.title}
-              articleExcerpt={artikel.excerpt}
-              articleSlug={artikel.slug}
-            />
-          </div>
-          
-          <p className="font-helvetica text-xs text-primary-dark/40 mt-6 text-center sm:text-left">
-            Dukung jurnalisme independen dengan menyukai dan membagikan artikel ini.
-          </p>
-        </div>
-
-        {/* Koreksi Section */}
-        <CorrectionSection 
-          articleId={artikel.id} 
-          corrections={corrections} 
+        {/* Section Interaksi — Client Component wrapper untuk menghindari cache */}
+        <ArticleInteractions
+          articleId={artikel.id}
+          articleTitle={artikel.title}
+          articleExcerpt={artikel.excerpt}
+          articleSlug={artikel.slug}
+          corrections={corrections}
         />
-
-        {/* Komentar Section */}
-        <CommentsSection articleId={artikel.id} />
       </article>
     </main>
   )
