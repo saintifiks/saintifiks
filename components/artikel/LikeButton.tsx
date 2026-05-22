@@ -33,18 +33,12 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
 
         if (countRes.ok) {
           const data = await countRes.json()
-          console.log('[LikeButton] count dari API:', data.count, '| articleId:', articleId)
           setLikeCount(data.count || 0)
-        } else {
-          console.error('[LikeButton] count API gagal:', countRes.status, await countRes.text())
         }
 
         if (statusRes.ok) {
           const data = await statusRes.json()
-          console.log('[LikeButton] isLiked dari API:', data.isLiked)
           setIsLiked(data.isLiked || false)
-        } else {
-          console.error('[LikeButton] status API gagal:', statusRes.status, await statusRes.text())
         }
       } catch (err) {
         console.error('Error fetching like state:', err)

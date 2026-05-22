@@ -15,14 +15,16 @@ export async function POST(request: NextRequest) {
 
     // Verifikasi user yang login via cookie session
     const authClient = await createClient()
-    const { data: { session } } = await authClient.auth.getSession()
+    const { data: { user }, error: authError } = await authClient.auth.getUser()
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    const userId = user.id
     const supabase = createAdminClient()
+
+    console.log('[POST /api/likes] userId:', userId, '| articleId:', articleId)
 
     // Cek apakah sudah like (hindari duplikat)
     const { data: existing } = await supabase
@@ -31,6 +33,8 @@ export async function POST(request: NextRequest) {
       .eq('article_id', articleId)
       .eq('user_id', userId)
       .maybeSingle()
+
+    console.log('[POST /api/likes] existing check:', existing ? 'SUDAH LIKE' : 'BELUM LIKE')
 
     if (existing) {
       // Sudah like — kembalikan count terkini
@@ -78,13 +82,13 @@ export async function DELETE(request: NextRequest) {
 
     // Verifikasi user yang login via cookie session
     const authClient = await createClient()
-    const { data: { session } } = await authClient.auth.getSession()
+    const { data: { user }, error: authError } = await authClient.auth.getUser()
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    const userId = user.id
     const supabase = createAdminClient()
 
     const { error } = await supabase
@@ -124,9 +128,9 @@ export async function GET(request: NextRequest) {
     }
 
     const authClient = await createClient()
-    const { data: { session } } = await authClient.auth.getSession()
+    const { data: { user } } = await authClient.auth.getUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ isLiked: false }, {
         headers: { 'Cache-Control': 'no-store' }
       })
@@ -138,7 +142,7 @@ export async function GET(request: NextRequest) {
       .from('likes')
       .select('id')
       .eq('article_id', articleId)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .maybeSingle()
 
     return NextResponse.json({ isLiked: !!data }, {
