@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('article_id', articleId)
 
+    console.log('[/api/likes/count] articleId:', articleId, '| count:', count, '| error:', error)
+
     if (error) {
       console.error('Error fetching likes count:', error)
       return NextResponse.json(
