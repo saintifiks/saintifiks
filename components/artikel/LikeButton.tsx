@@ -1,9 +1,10 @@
 'use client'
 
-// Komponen LikeButton — tombol suka artikel dengan optimistic update
-// [PERUBAHAN SESI #16] — Improve Login UX: tambah prompt select_account via queryParams
+// Komponen LikeButton — tombol suka artikel dengan optimistic update dan count
+// [PERUBAHAN SESI #28] — Tambah icon Heart dan tampilkan jumlah like publik
 
 import { useState, useEffect } from 'react'
+import { Heart, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { usePathname } from 'next/navigation'
 
@@ -16,26 +17,45 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [likeCount, setLikeCount] = useState(0)
   
   const pathname = usePathname()
   const supabase = createClient()
 
   useEffect(() => {
     async function checkLikeStatus() {
+      // Fetch total likes count
+      try {
+        const res = await fetch(`/api/likes/count?articleId=${articleId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setLikeCount(data.count || 0)
+        }
+      } catch (error) {
+        console.error('Error fetching like count:', error)
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       
       if (session?.user) {
         setUserId(session.user.id)
         
-        const { data } = await supabase
-          .from('likes')
-          .select('id')
-          .eq('article_id', articleId)
-          .eq('user_id', session.user.id)
-          .single()
-        
-        if (data) {
-          setIsLiked(true)
+        // [FIX] Gunakan maybeSingle() dan wrap dengan try-catch
+        try {
+          const { data, error: likeError } = await supabase
+            .from('likes')
+            .select('id')
+            .eq('article_id', articleId)
+            .eq('user_id', session.user.id)
+            .maybeSingle()
+          
+          if (likeError) {
+            console.warn('Like status check error (non-fatal):', likeError)
+          } else if (data) {
+            setIsLiked(true)
+          }
+        } catch (err) {
+          console.error('Error checking like status:', err)
         }
       }
       setIsLoading(false)
@@ -63,9 +83,12 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       return
     }
 
-    // Proses like/unlike (tetap sama seperti sebelumnya)
+    // Proses like/unlike dengan optimistic update count
     const previousState = isLiked
+    const previousCount = likeCount
+    
     setIsLiked(!previousState)
+    setLikeCount(previousState ? previousCount - 1 : previousCount + 1)
 
     if (!previousState) {
       fetch('/api/analytics', {
@@ -100,27 +123,36 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
 
   if (isLoading) {
     return (
-      <div className="h-10 w-[120px] border border-primary-dark/10 bg-primary-dark/5 animate-pulse"></div>
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 border border-primary-dark/10 bg-primary-dark/5 animate-pulse rounded-full"></div>
+        <div className="h-4 w-16 bg-primary-dark/10 animate-pulse"></div>
+      </div>
     )
   }
 
   return (
-    <button
-      onClick={handleLikeClick}
-      disabled={isLoggingIn}
-      className={`font-helvetica text-sm px-6 py-2.5 transition-colors duration-150 border ${
-        isLiked 
-          ? 'bg-primary-dark text-primary-light border-primary-dark' 
-          : 'bg-transparent text-primary-dark border-primary-dark/40 hover:border-primary-dark'
-      } disabled:opacity-50 flex items-center gap-2`}
-    >
-      {isLoggingIn ? (
-        <>Membuka Google...</>
-      ) : isLiked ? (
-        'Telah Disukai'
-      ) : (
-        'Sukai Artikel'
-      )}
-    </button>
+    <div className="flex items-center gap-3">
+      <button
+        onClick={handleLikeClick}
+        disabled={isLoggingIn}
+        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-150 ${
+          isLiked 
+            ? 'bg-accent-red text-primary-light' 
+            : 'bg-transparent border border-primary-dark/30 text-primary-dark hover:border-accent-red hover:text-accent-red'
+        } disabled:opacity-50`}
+        aria-label={isLiked ? 'Batalkan suka' : 'Sukai artikel'}
+        title={isLiked ? 'Telah disukai' : 'Sukai artikel'}
+      >
+        {isLoggingIn ? (
+          <Loader2 size={18} className="animate-spin" />
+        ) : (
+          <Heart size={18} className={isLiked ? 'fill-current' : ''} />
+        )}
+      </button>
+      
+      <span className="font-helvetica text-sm text-primary-dark/70">
+        {likeCount > 0 ? `${likeCount} suka` : 'Jadilah yang pertama menyukai'}
+      </span>
+    </div>
   )
 }

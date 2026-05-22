@@ -1,12 +1,17 @@
+// [PERUBAHAN SESI #28] — Tambah ShareButton, CommentsSection, dan tata ulang layout interaksi
+
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
-import LikeButton from '@/components/artikel/LikeButton'
-import CorrectionSection from '@/components/artikel/CorrectionSection'
+import ArticleInteractions from '@/components/artikel/ArticleInteractions'
 
-export const revalidate = 3600
+// [PERUBAHAN SESI #28] — Pakai dynamic rendering saat testing fitur baru
+// Setelah stabil, bisa kembalikan ke revalidate = 60 atau 3600
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const dynamicParams = true
 
 // [PERBAIKAN SESI #15]
 // Tipe article_corrections diperbarui: tambah kolom 'status' untuk filter approved
@@ -177,18 +182,13 @@ export default async function ArtikelPage({ params }: Props) {
       <article className="max-w-2xl mx-auto px-6 py-12">
         <ArticleRenderer content={artikel.content} charts={charts} />
         
-        {/* Like Button */}
-        <div className="mt-12 pt-8 border-t border-primary-dark/10 flex items-center justify-between">
-          <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">
-            Dukung Jurnalisme Independen
-          </p>
-          <LikeButton articleId={artikel.id} />
-        </div>
-
-        {/* Koreksi Section */}
-        <CorrectionSection 
-          articleId={artikel.id} 
-          corrections={corrections} 
+        {/* Section Interaksi — Client Component wrapper untuk menghindari cache */}
+        <ArticleInteractions
+          articleId={artikel.id}
+          articleTitle={artikel.title}
+          articleExcerpt={artikel.excerpt}
+          articleSlug={artikel.slug}
+          corrections={corrections}
         />
       </article>
     </main>

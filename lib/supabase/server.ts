@@ -6,7 +6,19 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
-  const cookieStore = await cookies()
+  // [CATATAN] cookies() bisa error di edge cases, jadi kita wrap dengan try-catch
+  let cookieStore
+  try {
+    cookieStore = await cookies()
+  } catch {
+    // Fallback jika cookies() tidak tersedia
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fallbackStore: any = {
+      getAll: () => [] as Array<{ name: string; value: string }>,
+      set: () => {},
+    }
+    cookieStore = fallbackStore
+  }
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
