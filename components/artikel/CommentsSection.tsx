@@ -34,9 +34,13 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
       // Fetch comments
       try {
         const res = await fetch(`/api/comments?articleId=${articleId}`)
-        if (res.ok) {
+        // [FIX] Cek content-type dan status sebelum parse JSON
+        const contentType = res.headers.get('content-type')
+        if (res.ok && contentType?.includes('application/json')) {
           const data = await res.json()
           setComments(data.comments || [])
+        } else {
+          console.warn('Comments API returned non-JSON or error status:', res.status)
         }
       } catch (error) {
         console.error('Error fetching comments:', error)
@@ -44,8 +48,12 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
       setIsLoading(false)
 
       // Cek session
-      const { data: { session } } = await supabase.auth.getSession()
-      setUserId(session?.user?.id || null)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setUserId(session?.user?.id || null)
+      } catch (sessionError) {
+        console.error('Session check error:', sessionError)
+      }
     }
 
     init()

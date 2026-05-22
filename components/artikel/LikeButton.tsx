@@ -40,12 +40,13 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       if (session?.user) {
         setUserId(session.user.id)
         
+        // [FIX] Gunakan maybeSingle() bukan single() — handle case user belum like (0 rows)
         const { data } = await supabase
           .from('likes')
           .select('id')
           .eq('article_id', articleId)
           .eq('user_id', session.user.id)
-          .single()
+          .maybeSingle()
         
         if (data) {
           setIsLiked(true)
