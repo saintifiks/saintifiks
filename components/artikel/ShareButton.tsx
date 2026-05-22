@@ -78,7 +78,7 @@ export default function ShareButton({ articleId, articleTitle, articleExcerpt, a
             if (userId) await trackShare('instagram')
             return
           }
-        } catch (_) {
+        } catch {
           // User batalkan share atau API gagal — fallback ke download
         }
       }
