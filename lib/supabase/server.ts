@@ -6,7 +6,17 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
-  const cookieStore = await cookies()
+  // [CATATAN] cookies() bisa error di edge cases, jadi kita wrap dengan try-catch
+  let cookieStore
+  try {
+    cookieStore = await cookies()
+  } catch {
+    // Fallback jika cookies() tidak tersedia
+    cookieStore = {
+      getAll: () => [],
+      set: () => {},
+    } as any
+  }
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
