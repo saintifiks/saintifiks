@@ -71,11 +71,14 @@ export default async function BerandaPage() {
       <header className="border-b border-primary-dark/10 py-16 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <div className="mx-auto mb-8 h-24 w-24 sm:h-28 sm:w-28">
-            <img
-              src="/logo/symbol-lighttheme.svg"
-              alt="Logo Saintifiks"
-              className="h-full w-full object-contain"
-            />
+            <picture>
+              <source srcSet="/logo/symbol-darktheme.svg" media="(prefers-color-scheme: dark)" />
+              <img
+                src="/logo/symbol-lighttheme.svg"
+                alt="Logo Saintifiks"
+                className="h-full w-full object-contain"
+              />
+            </picture>
           </div>
           <h1 className="font-libre text-5xl font-bold text-primary-dark tracking-tight sm:text-6xl">
             Saintifiks

@@ -9,6 +9,7 @@
   --accent-red: #C90203;
   --accent-blue: #002EC7;
   --accent-green: #5C8F6E;
+  color-scheme: only light;
 }
 
 /* Base body — 90% halaman hanya dua warna ini */
