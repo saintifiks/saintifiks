@@ -55,48 +55,40 @@ export default function ArticleInteractions({
 }: ArticleInteractionsProps) {
   return (
     <>
-      {/* Section Interaksi: Like, Share — selalu render meski error */}
+      {/* Toolbar interaksi utama */}
       <div className="mt-12 pt-8 border-t border-primary-dark/10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-          <SafeComponent fallback={
-            <div className="font-helvetica text-sm text-primary-dark/50">
-              Fitur like tidak tersedia
-            </div>
-          }>
-            <LikeButton articleId={articleId} />
-          </SafeComponent>
-          
-          <SafeComponent>
-            <ShareButton 
+        <div className="flex items-start justify-between gap-4">
+
+          {/* Kiri: Koreksi & Klarifikasi */}
+          <div className="flex-1 min-w-0">
+            <CorrectionSection
               articleId={articleId}
-              articleTitle={articleTitle}
-              articleExcerpt={articleExcerpt}
-              articleSlug={articleSlug}
+              corrections={corrections}
             />
-          </SafeComponent>
+          </div>
+
+          {/* Kanan: Like + Komentar + Share — icon only, rata kanan */}
+          <div className="flex items-start gap-3 flex-shrink-0 pt-1">
+            <SafeComponent fallback={null}>
+              <LikeButton articleId={articleId} />
+            </SafeComponent>
+
+            <SafeComponent fallback={null}>
+              <CommentsSection articleId={articleId} />
+            </SafeComponent>
+
+            <SafeComponent fallback={null}>
+              <ShareButton
+                articleId={articleId}
+                articleTitle={articleTitle}
+                articleExcerpt={articleExcerpt}
+                articleSlug={articleSlug}
+              />
+            </SafeComponent>
+          </div>
+
         </div>
-        
-        <p className="font-helvetica text-xs text-primary-dark/40 mt-6 text-center sm:text-left">
-          Dukung jurnalisme independen dengan menyukai dan membagikan artikel ini.
-        </p>
       </div>
-
-      {/* Koreksi Section */}
-      <CorrectionSection 
-        articleId={articleId} 
-        corrections={corrections} 
-      />
-
-      {/* Komentar Section — diisolasi agar error tidak merusak yang lain */}
-      <SafeComponent fallback={
-        <div className="mt-16 pt-8 border-t border-primary-dark/10">
-          <p className="font-helvetica text-sm text-primary-dark/50">
-            Fitur komentar tidak tersedia saat ini.
-          </p>
-        </div>
-      }>
-        <CommentsSection articleId={articleId} />
-      </SafeComponent>
     </>
   )
 }

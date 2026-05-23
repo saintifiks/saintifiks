@@ -57,7 +57,7 @@ export default function CorrectionSection({ articleId, corrections }: Correction
   const correctionCount = corrections.length
 
   return (
-    <div className="mt-16 pt-8 border-t border-primary-dark/10">
+    <div>
       {/* Header dengan icon dan count */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
