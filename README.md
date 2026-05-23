@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 1.0 | Status: Live | Terakhir diperbarui: 2026-05-23
+> Versi: 1.1 | Status: Live | Terakhir diperbarui: 2026-05-24
 
 ---
 
@@ -906,12 +906,49 @@ Format pengisian:
                - Moderasi admin: /dashboard/opinions
              FILE YANG TIDAK BOLEH DISENTUH (tetap berlaku):
                ArticleRenderer.tsx, ChartBlock.tsx, LikeButton.tsx, CorrectionSection.tsx,
-               app/artikel/[slug]/page.tsx, app/page.tsx, app/api/analytics/route.ts,
+               app/artikel/[slug]/page.tsx, app/api/analytics/route.ts,
                app/api/keep-alive/route.ts, lib/indices/, components/widgets/,
                app/(admin)/dashboard/artikel/
              ALTERNATIF DITOLAK: Menyatukan dengan sistem editorial (terlalu berisiko merusak
                                  konten redaksi yang sudah stabil); moderasi pre-publish (menambah
                                  bottleneck tanpa benefit proporsional di fase awal).
+
+[24-05-2026] KEPUTUSAN: Homepage tab [Saintifiks | Opinions] — dua konten setara di satu halaman
+             ALASAN: Opinions harus berbobot setara dengan konten redaksi — tidak boleh ada
+                     superioritas intelektual antara konten redaksi dan opini pembaca. Tab dua arah
+                     di bawah header beranda adalah cara paling jujur mengekspresikan kesetaraan ini
+                     tanpa mengubah struktur navigasi yang sudah ada.
+             CATATAN IMPLEMENTASI:
+               - Dibuat `components/layout/HomepageTabs.tsx` — Client Component, handle state tab.
+               - Tab sticky `top-[93px]` = IndexStrip (h-9=36px) + Navbar (py-5+text-lg=57px).
+               - Background tab solid `bg-primary-light` agar konten tidak "menembus" saat scroll.
+               - Tab aktif: `border-b-2 border-primary-dark`. Tab non-aktif: `text-primary-dark/40`.
+               - `app/page.tsx` dimodifikasi: fetch paralel `Promise.all` untuk editorial + opinions.
+               - `revalidate` turun dari 3600 → 300 agar sinkron dengan `/opinions`.
+               - `app/page.tsx` dihapus dari daftar file yang tidak boleh disentuh (konfirmasi
+                 pemilik [24-05-2026]).
+             ALTERNATIF DITOLAK: Section opinions di bawah editorial (menempatkan opinions sebagai
+                                 konten sekunder); dua halaman terpisah tanpa hubungan di beranda
+                                 (opinions tidak terlihat untuk pengunjung baru).
+
+[24-05-2026] KEPUTUSAN: Exception library baru — TipTap WYSIWYG untuk editor opinions
+             ALASAN: Editor split panel (textarea kiri + preview kanan) menampilkan sintaks Markdown
+                     mentah (##, **, |||, --) yang mengganggu pengalaman menulis. Penulis seharusnya
+                     fokus pada konten, bukan markup. TipTap + tiptap-markdown memungkinkan WYSIWYG
+                     penuh: penulis melihat hasil render langsung, Markdown tersimpan di background.
+             PACKAGE YANG DITAMBAHKAN:
+               - `@tiptap/react` — core WYSIWYG editor, React-first, ~120KB
+               - `@tiptap/starter-kit` — ekstensi dasar (bold, italic, heading, list, dll)
+               - `tiptap-markdown` — konversi WYSIWYG ↔ Markdown (community, gratis)
+             CATATAN IMPLEMENTASI:
+               - `EditorTextarea.tsx` dan `EditorToolbar.tsx` diganti total dengan TipTap.
+               - Custom Node extension untuk `{{chart:id}}` placeholder — dirender sebagai chip/badge
+                 di editor, dikembalikan ke string asli saat ekspor ke Markdown.
+               - Output ke DB tetap Markdown — `OpinionContentRenderer.tsx` tidak perlu diubah.
+               - `OpinionPreview.tsx` (live preview lama) dihapus — tidak diperlukan lagi.
+             ALTERNATIF DITOLAK: Membangun WYSIWYG sendiri tanpa library (terlalu kompleks, banyak
+                                 edge case pada sinkronisasi kursor); Milkdown (kurang mature,
+                                 custom node lebih sulit).
 
 [23-05-2026] KEPUTUSAN: Toolbar interaksi artikel — icon-only dengan bottom sheet
              ALASAN: Tampilan lama (teks + tombol besar) memakan ruang horizontal dan menyebabkan
@@ -1167,6 +1204,25 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Opinions Platform — platform opini pengguna terpisah dari sistem editorial".
 Status akhir: Selesai (80%). Build clean (exit code 0, 44 file baru). Di-push ke feature/opinions-platform dan di-merge ke main oleh pemilik.
 Next step: Test end-to-end flow (registrasi username → tulis → publish → like → laporan → moderasi). Catatan dari pemilik: masih ada beberapa hal yang perlu disempurnakan — akan disampaikan di sesi berikutnya.
+---
+
+[24-05-2026] SESI #34
+Branch: feature/homepage-opinions-tab
+Tujuan sesi: Implementasi homepage tab [Saintifiks | Opinions] — menempatkan konten opinions setara dengan konten redaksi di halaman beranda.
+Yang dikerjakan:
+  [FILE BARU]
+  - `components/layout/HomepageTabs.tsx` — Client Component baru untuk tab navigasi homepage.
+    Menampilkan daftar artikel editorial (tab Saintifiks) dan daftar opinions (tab Opinions).
+    Tab sticky top-[93px], background solid primary-light, underline indicator untuk tab aktif.
+
+  [FILE DIMODIFIKASI]
+  - `app/page.tsx` — ditambah import HomepageTabs, fetch paralel Promise.all untuk editorial +
+    opinions, mapping OpinionItem, revalidate 3600→300. Section konten lama diganti HomepageTabs.
+
+Keputusan baru: Lihat Seksi 11 — dua keputusan baru: "Homepage tab [Saintifiks | Opinions]" dan
+               "Exception library baru — TipTap WYSIWYG" (implementasi TipTap di sesi berikutnya).
+Status akhir: Selesai. Build clean (exit code 0). Di-push ke feature/homepage-opinions-tab, di-merge ke main oleh pemilik.
+Next step: Implementasi TipTap WYSIWYG — ganti EditorTextarea + EditorToolbar dengan TipTap + tiptap-markdown + custom node {{chart:id}}.
 ---
 ```
 Format:
