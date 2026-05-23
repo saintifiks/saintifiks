@@ -3,10 +3,11 @@
 
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import HomepageTabs from '@/components/layout/HomepageTabs'
 
-// ISR: Next.js meng-cache halaman ini dan memperbarui otomatis setiap 1 jam
-// Artikel baru yang di-publish akan muncul dalam maksimal 60 menit
-export const revalidate = 3600
+// ISR: Next.js meng-cache halaman ini dan memperbarui otomatis setiap 5 menit
+// Selaras dengan revalidate opinions page agar kedua tab terasa segar
+export const revalidate = 300
 
 // Metadata statis untuk halaman beranda
 // Halaman artikel individual punya metadata dinamis sendiri di masing-masing page.tsx
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
   },
 }
 
-// Tipe data untuk satu artikel yang diambil dari database
+// Tipe data untuk artikel editorial
 type Article = {
   id: string
   title: string
@@ -38,32 +39,66 @@ type Article = {
   published_at: string | null
 }
 
-// Format tanggal dari format database (2026-05-19T...) ke format Indonesia (19 Mei 2026)
-function formatTanggal(tanggal: string): string {
-  return new Date(tanggal).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+// Tipe data untuk artikel opinions
+type OpinionItem = {
+  id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  cover_image_url: string | null
+  published_at: string
+  like_count: number
+  username: string
+  display_name: string
+  avatar_url: string | null
 }
 
 export default async function BerandaPage() {
   const supabase = await createClient()
 
-  // Ambil artikel yang sudah dipublikasikan, urutkan dari yang terbaru
-  const { data: articles, error } = await supabase
-    .from('articles')
-    .select('id, title, slug, excerpt, published_at')
-    .eq('is_published', true)
-    .order('published_at', { ascending: false })
+  // Fetch paralel: artikel editorial + artikel opinions terbaru
+  const [{ data: articles, error: errArticles }, { data: opinions, error: errOpinions }] =
+    await Promise.all([
+      supabase
+        .from('articles')
+        .select('id, title, slug, excerpt, published_at')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false }),
+      supabase
+        .from('opinion_articles')
+        .select(`
+          id, title, slug, excerpt, cover_image_url, published_at, author_id,
+          user_profiles!opinion_articles_author_id_fkey(username, display_name, avatar_url),
+          opinion_likes(count)
+        `)
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(20),
+    ])
 
-  // Jika ada error saat mengambil data, catat di log server (tidak ditampilkan ke pembaca)
-  if (error) {
-    console.error('[Beranda] Gagal mengambil artikel:', error.message)
-  }
+  if (errArticles) console.error('[Beranda] Gagal mengambil artikel:', errArticles.message)
+  if (errOpinions) console.error('[Beranda] Gagal mengambil opinions:', errOpinions.message)
 
-  // Jika data null (misalnya karena error), gunakan array kosong agar halaman tetap bisa render
   const daftarArtikel: Article[] = articles ?? []
+
+  const daftarOpinions: OpinionItem[] = (opinions ?? []).map((a) => {
+    const profile = Array.isArray(a.user_profiles) ? a.user_profiles[0] : a.user_profiles
+    const likeCount = Array.isArray(a.opinion_likes)
+      ? (a.opinion_likes[0] as { count: number })?.count ?? 0
+      : 0
+    return {
+      id: a.id,
+      title: a.title,
+      slug: a.slug,
+      excerpt: a.excerpt ?? null,
+      cover_image_url: (a as { cover_image_url?: string | null }).cover_image_url ?? null,
+      published_at: a.published_at as string,
+      like_count: likeCount,
+      username: (profile as { username: string } | null)?.username ?? '',
+      display_name: (profile as { display_name: string } | null)?.display_name ?? 'Penulis',
+      avatar_url: (profile as { avatar_url?: string | null } | null)?.avatar_url ?? null,
+    }
+  })
 
   return (
     <main className="min-h-screen bg-primary-light">
@@ -94,55 +129,8 @@ export default async function BerandaPage() {
         </div>
       </header>
 
-      {/* Daftar artikel */}
-      <section className="max-w-2xl mx-auto px-6 py-12">
-
-        {daftarArtikel.length === 0 ? (
-
-          // Kondisi kosong: belum ada artikel yang dipublikasikan
-          // Ini yang akan muncul saat database masih kosong
-          <p className="font-helvetica text-sm text-primary-dark/40">
-            Belum ada artikel yang dipublikasikan.
-          </p>
-
-        ) : (
-
-          // Kondisi ada artikel: tampilkan daftar
-          <ul className="divide-y divide-primary-dark/10">
-            {daftarArtikel.map((artikel) => (
-              <li key={artikel.id} className="py-10">
-                <a
-                  href={`/artikel/${artikel.slug}`}
-                  className="group block"
-                >
-                  {/* Tanggal terbit — hanya tampil jika ada */}
-                  {artikel.published_at && (
-                    <time
-                      dateTime={artikel.published_at}
-                      className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest"
-                    >
-                      {formatTanggal(artikel.published_at)}
-                    </time>
-                  )}
-
-                  {/* Judul artikel */}
-                  <h2 className="font-libre text-2xl font-bold text-primary-dark mt-2 group-hover:opacity-60 transition-opacity duration-150">
-                    {artikel.title}
-                  </h2>
-
-                  {/* Excerpt / ringkasan — hanya tampil jika ada */}
-                  {artikel.excerpt && (
-                    <p className="font-helvetica text-base text-primary-dark/70 mt-2 leading-relaxed">
-                      {artikel.excerpt}
-                    </p>
-                  )}
-                </a>
-              </li>
-            ))}
-          </ul>
-
-        )}
-      </section>
+      {/* Tab Saintifiks | Opinions — sticky, konten di-handle HomepageTabs */}
+      <HomepageTabs articles={daftarArtikel} opinions={daftarOpinions} />
 
     </main>
   )
