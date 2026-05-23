@@ -57,37 +57,33 @@ export default function ArticleInteractions({
     <>
       {/* Toolbar interaksi utama */}
       <div className="mt-12 pt-8 border-t border-primary-dark/10">
-        <div className="flex items-start justify-between gap-4">
 
-          {/* Kiri: Koreksi & Klarifikasi */}
-          <div className="flex-1 min-w-0">
-            <CorrectionSection
+        {/* Toolbar icon — selalu rata kanan, di atas di mobile */}
+        <div className="flex justify-end gap-3 mb-6">
+          <SafeComponent fallback={null}>
+            <LikeButton articleId={articleId} />
+          </SafeComponent>
+
+          <SafeComponent fallback={null}>
+            <CommentsSection articleId={articleId} />
+          </SafeComponent>
+
+          <SafeComponent fallback={null}>
+            <ShareButton
               articleId={articleId}
-              corrections={corrections}
+              articleTitle={articleTitle}
+              articleExcerpt={articleExcerpt}
+              articleSlug={articleSlug}
             />
-          </div>
-
-          {/* Kanan: Like + Komentar + Share — icon only, rata kanan */}
-          <div className="flex items-start gap-3 flex-shrink-0 pt-1">
-            <SafeComponent fallback={null}>
-              <LikeButton articleId={articleId} />
-            </SafeComponent>
-
-            <SafeComponent fallback={null}>
-              <CommentsSection articleId={articleId} />
-            </SafeComponent>
-
-            <SafeComponent fallback={null}>
-              <ShareButton
-                articleId={articleId}
-                articleTitle={articleTitle}
-                articleExcerpt={articleExcerpt}
-                articleSlug={articleSlug}
-              />
-            </SafeComponent>
-          </div>
-
+          </SafeComponent>
         </div>
+
+        {/* Koreksi & Klarifikasi — full width di bawah toolbar */}
+        <CorrectionSection
+          articleId={articleId}
+          corrections={corrections}
+        />
+
       </div>
     </>
   )
