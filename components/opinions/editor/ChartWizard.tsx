@@ -8,7 +8,7 @@ import { X, Plus, Trash2 } from 'lucide-react'
 
 type ChartWizardProps = {
   articleId: string
-  onInsert: (placeholderMarkdown: string, chartId: string, config: object) => void
+  onInsert: (chartId: string, config: object) => void
   onClose: () => void
 }
 
@@ -114,8 +114,9 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
       },
     }
 
-    const placeholder = `\n{{chart:${chartId}}}\n`
-    onInsert(placeholder, chartId, config)
+    // Dispatch event ke TipTapEditor agar chart diinsert sebagai custom node
+    window.dispatchEvent(new CustomEvent('tiptap:insert-chart', { detail: chartId }))
+    onInsert(chartId, config)
     onClose()
   }
 

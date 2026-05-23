@@ -43,8 +43,8 @@ export default function HomepageTabs({ articles, opinions }: Props) {
 
   return (
     <>
-      {/* Tab navigation — sticky tepat di bawah IndexStrip (h-9=36px) + Navbar (py-5+text-lg=57px) = 93px */}
-      <div className="sticky top-[93px] z-30 bg-primary-light border-b border-primary-dark/10">
+      {/* Tab navigation — statis, ikut scroll ke atas bersama header */}
+      <div className="border-b border-primary-dark/10">
         <div className="max-w-2xl mx-auto px-6">
           <div className="flex items-center justify-center">
             <button
