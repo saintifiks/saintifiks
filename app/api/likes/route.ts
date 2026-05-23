@@ -1,12 +1,28 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 // POST /api/likes — tambah like
 export async function POST(request: NextRequest) {
   try {
+    // [RATE LIMITING] Cegah abuse like — maks 20 per menit per IP
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(
+      `likes:${clientIP}`,
+      RATE_LIMITS.likes.limit,
+      RATE_LIMITS.likes.windowMs
+    )
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Terlalu banyak aksi. Silakan tunggu sebentar.' },
+        { status: 429 }
+      )
+    }
+
     const { articleId } = await request.json()
 
     if (!articleId) {
@@ -24,8 +40,6 @@ export async function POST(request: NextRequest) {
     const userId = user.id
     const supabase = createAdminClient()
 
-    console.log('[POST /api/likes] userId:', userId, '| articleId:', articleId)
-
     // Cek apakah sudah like (hindari duplikat)
     const { data: existing } = await supabase
       .from('likes')
@@ -33,8 +47,6 @@ export async function POST(request: NextRequest) {
       .eq('article_id', articleId)
       .eq('user_id', userId)
       .maybeSingle()
-
-    console.log('[POST /api/likes] existing check:', existing ? 'SUDAH LIKE' : 'BELUM LIKE')
 
     if (existing) {
       // Sudah like — kembalikan count terkini
@@ -74,6 +86,21 @@ export async function POST(request: NextRequest) {
 // DELETE /api/likes — hapus like
 export async function DELETE(request: NextRequest) {
   try {
+    // [RATE LIMITING] Cegah abuse unlike — maks 20 per menit per IP (shared dengan POST)
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(
+      `likes:${clientIP}`,
+      RATE_LIMITS.likes.limit,
+      RATE_LIMITS.likes.windowMs
+    )
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Terlalu banyak aksi. Silakan tunggu sebentar.' },
+        { status: 429 }
+      )
+    }
+
     const { articleId } = await request.json()
 
     if (!articleId) {
