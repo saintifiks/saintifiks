@@ -62,10 +62,10 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     
-    // Cek session user
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session?.user) {
+    // Cek auth user — getUser() memverifikasi token ke server Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
       return NextResponse.json(
         { error: 'Harus login untuk mencatat share' },
         { status: 401 }
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       .from('shares')
       .insert({
         article_id,
-        user_id: session.user.id,
+        user_id: user.id,
         platform,
       })
       .select()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { toPng } from 'html-to-image'
 import { Share2, Link2, X, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -22,7 +22,8 @@ export default function ShareButton({ articleId, articleTitle, articleExcerpt, a
   
   const storyRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
-  const supabase = createClient()
+  // Instance Supabase singleton — jangan buat ulang setiap render
+  const supabase = useMemo(() => createClient(), [])
 
   // Cek status login
   const checkUser = useCallback(async () => {

@@ -6,13 +6,14 @@ export async function POST(request: Request) {
     const body = await request.json()
     const supabase = await createClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
+    // Verifikasi user — getUser() memvalidasi token ke server Supabase
+    const { data: { user } } = await supabase.auth.getUser()
 
     const payload = {
       event_type: body.event_type,
       path: body.path,
       session_id: body.session_id || 'anonymous',
-      user_id: session?.user?.id || null,
+      user_id: user?.id || null,
       metadata: body.metadata || {}
     }
 

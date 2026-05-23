@@ -2,7 +2,7 @@
 
 // [PERUBAHAN SESI #32] — Refactor ke bottom sheet: CommentButton (icon+count) + bottom sheet konten
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { MessageCircle, Send, Loader2, User, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -27,7 +27,8 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
   const [userId, setUserId] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
 
-  const supabase = createClient()
+  // Instance Supabase singleton — jangan buat ulang setiap render
+  const supabase = useMemo(() => createClient(), [])
 
   // Fetch comments dan cek login status
   useEffect(() => {
