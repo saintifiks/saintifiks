@@ -58,31 +58,38 @@ export default function ArticleInteractions({
       {/* Toolbar interaksi utama */}
       <div className="mt-12 pt-8 border-t border-primary-dark/10">
 
-        {/* Toolbar icon — selalu rata kanan, di atas di mobile */}
-        <div className="flex justify-end gap-3 mb-6">
-          <SafeComponent fallback={null}>
-            <LikeButton articleId={articleId} />
-          </SafeComponent>
+        {/* Satu baris: koreksi rata kiri, like+komentar+share rata kanan */}
+        <div className="flex items-center justify-between">
 
+          {/* Kiri: icon Koreksi & Klarifikasi */}
           <SafeComponent fallback={null}>
-            <CommentsSection articleId={articleId} />
-          </SafeComponent>
-
-          <SafeComponent fallback={null}>
-            <ShareButton
+            <CorrectionSection
               articleId={articleId}
-              articleTitle={articleTitle}
-              articleExcerpt={articleExcerpt}
-              articleSlug={articleSlug}
+              corrections={corrections}
             />
           </SafeComponent>
-        </div>
 
-        {/* Koreksi & Klarifikasi — full width di bawah toolbar */}
-        <CorrectionSection
-          articleId={articleId}
-          corrections={corrections}
-        />
+          {/* Kanan: Like + Komentar + Share */}
+          <div className="flex items-center gap-3">
+            <SafeComponent fallback={null}>
+              <LikeButton articleId={articleId} />
+            </SafeComponent>
+
+            <SafeComponent fallback={null}>
+              <CommentsSection articleId={articleId} />
+            </SafeComponent>
+
+            <SafeComponent fallback={null}>
+              <ShareButton
+                articleId={articleId}
+                articleTitle={articleTitle}
+                articleExcerpt={articleExcerpt}
+                articleSlug={articleSlug}
+              />
+            </SafeComponent>
+          </div>
+
+        </div>
 
       </div>
     </>
