@@ -875,6 +875,24 @@ Format pengisian:
              ALTERNATIF DITOLAK: Kelas `dark:` Tailwind (Tailwind darkMode tidak dikonfigurasi
                                  dan situs memang tidak dirancang untuk dark mode);
                                  filter CSS manual (tidak mengatasi root cause).
+
+[23-05-2026] KEPUTUSAN: Toolbar interaksi artikel — icon-only dengan bottom sheet
+             ALASAN: Tampilan lama (teks + tombol besar) memakan ruang horizontal dan menyebabkan
+                     elemen saling tumpuk di mobile. Like count publik dihapus dari UI untuk
+                     menghindari social proof bias (data tetap dicatat di DB untuk analitik admin).
+                     Bottom sheet konsisten dengan pola UI mobile-first (Instagram-style).
+             CATATAN IMPLEMENTASI:
+                     - LikeButton.tsx: hapus likeCount state dan teks, pertahankan logika insert/delete.
+                     - CommentsSection.tsx: refactor ke icon (w-10 h-10 rounded-full) + bottom sheet.
+                       Jumlah komentar sebagai badge di pojok kanan atas icon agar tidak mengganggu alignment.
+                     - ShareButton.tsx: tombol teks→icon rounded, modal tengah→bottom sheet.
+                     - CorrectionSection.tsx: header+form inline→icon AlertCircle + bottom sheet.
+                       Warna icon biru (accent-blue) untuk membedakan dari interaksi lain (abu).
+                     - ArticleInteractions.tsx: satu baris flex justify-between — koreksi rata kiri,
+                       like+komentar+share rata kanan. Tidak ada teks, tidak ada layout bertingkat.
+             KEAMANAN: Tidak ada perubahan RLS, tidak ada endpoint baru.
+             ALTERNATIF DITOLAK: Layout dua baris (mobile kurang efisien);
+                                 angka komentar di bawah icon (mendorong alignment vertikal).
 ```
 
 ---
@@ -1016,6 +1034,40 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Semua operasi likes via API server-side (admin client)".
 Status akhir: Selesai. Di-push ke feature/share-instagram-story-improvements.
 Next step: (1) Tambahkan SUPABASE_SERVICE_ROLE_KEY ke .env.local dan Vercel environment variables. (2) Test manual multiuser. (3) Merge ke main setelah verified.
+---
+
+[23-05-2026] SESI #32
+Branch: feature/interaction-ui-redesign
+Tujuan sesi: Redesign toolbar interaksi artikel — hapus tampilan like count dari UI, ubah semua tombol interaksi menjadi icon-only, implementasi bottom sheet untuk komentar dan share, icon koreksi rata kiri berbeda warna.
+Yang dikerjakan:
+  [UI REDESIGN]
+  - Diubah `components/artikel/LikeButton.tsx`:
+    • Hapus state `likeCount`, fetch `/api/likes/count`, dan render teks "X suka".
+    • Logika insert/delete like ke DB tetap berjalan — hanya tampilan count dihapus.
+    • Loading state disederhanakan (hanya pulse circle, tanpa pulse teks).
+  - Diubah `components/artikel/CommentsSection.tsx`:
+    • Refactor dari tampilan inline penuh menjadi icon-only trigger + bottom sheet.
+    • Jumlah komentar sebagai badge `absolute -top-1 -right-1` agar alignment icon tidak terganggu.
+    • Bottom sheet: handle bar, header, area scroll, form komentar pinned di bawah.
+    • Scroll body dikunci (`overflow: hidden`) saat sheet terbuka.
+  - Diubah `components/artikel/ShareButton.tsx`:
+    • Tombol teks "Bagikan" → icon `Share2` rounded (w-10 h-10).
+    • Modal tengah → bottom sheet dengan grid 4 platform + copy link.
+  - Diubah `components/artikel/CorrectionSection.tsx`:
+    • Hapus header teks "Koreksi & Klarifikasi" dan form inline yang selalu tampil.
+    • Ganti dengan icon `AlertCircle` rounded berwarna `accent-blue` + badge jumlah koreksi.
+    • Seluruh konten (daftar koreksi + form usulan) dipindah ke dalam bottom sheet.
+  - Diubah `components/artikel/ArticleInteractions.tsx`:
+    • Layout baru: satu baris `flex justify-between` — koreksi rata kiri, like+komentar+share rata kanan.
+    • Hapus teks "Dukung jurnalisme..." dan section CommentsSection terpisah di bawah.
+
+  [BUG FIX MOBILE]
+  - Fix elemen saling tumpuk di mobile: layout diubah dari side-by-side menjadi dua baris, kemudian direfactor ulang ke satu baris setelah CorrectionSection menjadi icon-only.
+  - Fix ketidaksimetrisan icon: angka komentar dipindah dari `flex-col` teks bawah icon → badge pojok atas.
+
+Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Toolbar interaksi artikel — icon-only dengan bottom sheet".
+Status akhir: Selesai. Di-push ke feature/interaction-ui-redesign, siap di-review via Vercel Preview.
+Next step: Review visual di Vercel Preview URL → merge ke main jika approved.
 ---
 ```
 Format:
