@@ -82,6 +82,13 @@ export default async function DashboardPage() {
             </Link>
 
             <Link
+              href="/dashboard/analytics"
+              className="font-helvetica text-sm border border-primary-dark/40 px-5 py-2.5 hover:bg-primary-dark hover:text-primary-light transition-all duration-150"
+            >
+              Analytics
+            </Link>
+
+            <Link
               href="/dashboard/koreksi"
               className="font-helvetica text-sm border border-primary-dark/40 px-5 py-2.5 hover:bg-primary-dark hover:text-primary-light transition-all duration-150"
             >
