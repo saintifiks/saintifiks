@@ -119,18 +119,16 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
 
   return (
     <>
-      {/* Icon trigger — dirender di dalam toolbar kanan oleh ArticleInteractions */}
+      {/* Icon trigger — w-10 h-10 sejajar dengan icon lain, badge count di pojok */}
       <button
         onClick={() => setIsOpen(true)}
-        className="flex flex-col items-center gap-1 text-primary-dark/60 hover:text-primary-dark transition-colors duration-150"
+        className="relative flex items-center justify-center w-10 h-10 rounded-full border border-primary-dark/30 text-primary-dark/60 hover:border-primary-dark hover:text-primary-dark transition-colors duration-150"
         aria-label="Buka komentar"
         title="Komentar"
       >
-        <div className="flex items-center justify-center w-10 h-10 rounded-full border border-primary-dark/30 hover:border-primary-dark transition-colors duration-150">
-          <MessageCircle size={18} />
-        </div>
-        {!isLoadingComments && (
-          <span className="font-helvetica text-xs text-primary-dark/50">
+        <MessageCircle size={18} />
+        {!isLoadingComments && comments.length > 0 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-dark text-primary-light font-helvetica text-[10px] rounded-full flex items-center justify-center leading-none">
             {comments.length}
           </span>
         )}
