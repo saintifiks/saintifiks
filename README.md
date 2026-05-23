@@ -1277,6 +1277,41 @@ Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Toolbar interaksi artik
 Status akhir: Selesai. Di-push ke feature/interaction-ui-redesign, siap di-review via Vercel Preview.
 Next step: Review visual di Vercel Preview URL → merge ke main jika approved.
 ---
+[24-05-2026] SESI #38 — COMPLETE AUDIT CLEANUP
+Branch: feature/complete-audit-cleanup
+Tujuan sesi: Menyelesaikan sisa technical debt: sitemap, robots.txt, slug refactor, dead code, navbar fix
+Yang dikerjakan:
+  [SEO & CRAWLING]
+  - `app/sitemap.ts` — Dynamic sitemap dengan daftar artikel dari database
+    • Revalidate 24 jam (ISR)
+    • Static pages: /, /login, /akun
+    • Dynamic: /artikel/[slug] dari tabel articles (is_published = true)
+  - `app/robots.ts` — Robots.txt konfigurasi
+    • Disallow: /(admin)/, /api/, /login, /akun/tulis
+    • Sitemap reference ke /sitemap.xml
+
+  [REFACTORING — DRY PRINCIPLE]
+  - `lib/slug.ts` — Centralized slug generation
+    • `generateSlug()` — Konversi judul ke URL-friendly slug
+    • `buatSlug` — Alias untuk backward compatibility
+    • Menangani karakter aksen (àáâäãåā → a, dll)
+  - `app/(admin)/dashboard/artikel/baru/page.tsx` — Hapus fungsi buatSlug lokal, import dari lib/slug.ts
+  - `app/(admin)/dashboard/artikel/[id]/edit/page.tsx` — Hapus fungsi buatSlug lokal, import dari lib/slug.ts
+
+  [NEXT.JS BEST PRACTICE]
+  - `components/layout/Navbar.tsx` — Ganti `<a href="/">` dengan `<Link href="/">`
+    • Import Link dari next/link
+    • Memungkinkan client-side navigation tanpa full page reload
+
+  [DEAD CODE CLEANUP]
+  - Pencarian: EditorTextarea.tsx, EditorToolbar.tsx, OpinionPreview.tsx
+  - Status: File tidak ditemukan (sudah dibersihkan di sesi sebelumnya)
+
+Keputusan baru: Tidak ada keputusan arsitektur baru.
+Status akhir: Selesai. Build clean. Siap merge ke main.
+Next step: Merge ke main, lalu semua technical debt audit selesai.
+---
+
 
 [23-05-2026] SESI #33
 Branch: feature/opinions-platform
