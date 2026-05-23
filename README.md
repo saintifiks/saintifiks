@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.9 | Status: Live | Terakhir diperbarui: 2026-05-22
+> Versi: 1.0 | Status: Live | Terakhir diperbarui: 2026-05-23
 
 ---
 
@@ -876,6 +876,43 @@ Format pengisian:
                                  dan situs memang tidak dirancang untuk dark mode);
                                  filter CSS manual (tidak mengatasi root cause).
 
+[23-05-2026] KEPUTUSAN: Opinions Platform — platform opini pengguna terpisah dari sistem editorial
+             ALASAN: Memungkinkan pembaca terpilih mempublikasikan artikel opini tanpa mengubah
+                     sistem editorial yang sudah stabil. Dipisahkan secara penuh — tabel DB sendiri,
+                     komponen sendiri, URL sendiri — agar tidak ada risiko kontaminasi ke konten redaksi.
+             KEPUTUSAN TURUNAN:
+               (1) Moderasi Opsi C: artikel opini publish langsung tanpa review — admin bisa takedown.
+               (2) Username permanen setelah dibuat; display_name bisa diubah kapan saja.
+               (3) Slug terkunci (slug_locked=true) setelah artikel pertama kali dipublish.
+               (4) Status artikel: draft | published | hidden.
+               (5) OpinionContentRenderer adalah Server Component BARU — salinan logika ArticleRenderer
+                   tapi terpisah total. ArticleRenderer.tsx TIDAK BOLEH disentuh.
+               (6) Editor: Markdown + toolbar visual (dua panel textarea + live preview).
+                   Preview (OpinionPreview.tsx) adalah Client Component karena digunakan dalam editor.
+               (7) Analitik per penulis dijamin via RLS — setiap penulis hanya bisa membaca data miliknya.
+               (8) Like opinions menggunakan admin client (service_role) untuk bypass RLS — pola sama
+                   dengan sistem likes editorial (keputusan [22-05-2026]).
+             CATATAN IMPLEMENTASI:
+               - 6 tabel baru: user_profiles, opinion_articles, opinion_article_charts,
+                 article_reports, opinion_likes, opinion_analytics_events. RLS aktif di semua.
+               - Storage bucket baru: opinions-gambar (public read, auth write, max 5MB).
+               - 14 API endpoints baru di /api/opinions/, /api/opinion-charts/, /api/admin/opinions/,
+                 /api/user-profiles/.
+               - URL artikel opini: /opinions/[username]/[slug]
+               - URL profil penulis: /penulis/[username]
+               - Dashboard penulis: /akun
+               - Editor tulis baru: /akun/tulis
+               - Editor edit: /akun/artikel/[id]/edit
+               - Moderasi admin: /dashboard/opinions
+             FILE YANG TIDAK BOLEH DISENTUH (tetap berlaku):
+               ArticleRenderer.tsx, ChartBlock.tsx, LikeButton.tsx, CorrectionSection.tsx,
+               app/artikel/[slug]/page.tsx, app/page.tsx, app/api/analytics/route.ts,
+               app/api/keep-alive/route.ts, lib/indices/, components/widgets/,
+               app/(admin)/dashboard/artikel/
+             ALTERNATIF DITOLAK: Menyatukan dengan sistem editorial (terlalu berisiko merusak
+                                 konten redaksi yang sudah stabil); moderasi pre-publish (menambah
+                                 bottleneck tanpa benefit proporsional di fase awal).
+
 [23-05-2026] KEPUTUSAN: Toolbar interaksi artikel — icon-only dengan bottom sheet
              ALASAN: Tampilan lama (teks + tombol besar) memakan ruang horizontal dan menyebabkan
                      elemen saling tumpuk di mobile. Like count publik dihapus dari UI untuk
@@ -1068,6 +1105,68 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Toolbar interaksi artikel — icon-only dengan bottom sheet".
 Status akhir: Selesai. Di-push ke feature/interaction-ui-redesign, siap di-review via Vercel Preview.
 Next step: Review visual di Vercel Preview URL → merge ke main jika approved.
+---
+
+[23-05-2026] SESI #33
+Branch: feature/opinions-platform
+Tujuan sesi: Implementasi Opinions Platform — platform opini pengguna terpisah dari sistem editorial redaksi Saintifiks.
+Yang dikerjakan:
+  [DATABASE & STORAGE]
+  - 6 tabel baru di Supabase (dijalankan manual via SQL Editor oleh pemilik):
+    • `user_profiles` — profil penulis opini (username permanen, display_name, bio, avatar_url)
+    • `opinion_articles` — artikel opini (title, content, slug, status, slug_locked, published_at)
+    • `opinion_article_charts` — chart config per artikel opini
+    • `article_reports` — laporan pelanggaran dari pembaca
+    • `opinion_likes` — likes artikel opini (terpisah dari likes editorial)
+    • `opinion_analytics_events` — analitik mandiri per artikel opini (page_view, scroll depth)
+  - RLS policy aktif di semua 6 tabel.
+  - Storage bucket baru: `opinions-gambar` (public read, auth write, max 5MB, JPEG/PNG/WebP/GIF).
+  - Environment variable baru: `ADMIN_EMAIL=saintifiks@gmail.com` (ditambah di .env.local dan Vercel).
+
+  [API ROUTES — 14 endpoint baru]
+  - `lib/admin-check.ts` — helper verifikasi admin via ADMIN_EMAIL env var
+  - `/api/user-profiles` — GET/POST/PATCH profil penulis
+  - `/api/user-profiles/[username]` — GET profil publik + daftar artikel
+  - `/api/opinions` — GET semua artikel milik user, POST buat draft baru (slug auto-generate)
+  - `/api/opinions/[id]` — GET detail artikel, PATCH update, DELETE (hanya draft)
+  - `/api/opinions/[id]/publish` — POST publish, DELETE tarik ke draft
+  - `/api/opinions/[id]/like` — GET status like, POST tambah like, DELETE unlike
+  - `/api/opinions/[id]/report` — POST laporkan artikel
+  - `/api/opinion-charts` — POST buat chart config
+  - `/api/opinion-charts/[id]` — PATCH update, DELETE hapus chart config
+  - `/api/admin/opinions` — GET semua artikel untuk moderasi admin
+  - `/api/admin/opinions/[id]/hide` — POST hide artikel, DELETE restore
+  - `/api/admin/opinions/reports` — GET semua laporan, PATCH mark reviewed
+  - `/api/opinions/analytics/event` — POST kirim analytics event dari client
+  - `/api/opinions/analytics/summary` — GET tren views 7 hari + statistik per artikel
+
+  [KOMPONEN — 18 file baru di components/opinions/]
+  - Read-only: `OpinionLabel`, `AuthorByline`, `OpinionCard`, `OpinionLikeButton`, `ReportButton`
+  - Render konten: `OpinionContentRenderer` (Server Component, salinan logika ArticleRenderer)
+  - Analitik: `OpinionAnalyticsTracker` (Client Component, tracking page_view + scroll depth)
+  - Dashboard: `OpinionAnalyticsDashboard`, `AkunClient`, `OpinionsModeratorClient`
+  - Editor: `UsernameSetup`, `EditorToolbar`, `EditorTextarea`, `TableWizard`, `ImageModal`,
+    `ChartWizard`, `OpinionPreview`, `OpinionEditorPage`, `OpinionEditor`
+
+  [HALAMAN — 7 halaman baru]
+  - `/opinions` — daftar artikel opini publik (ISR 5 menit)
+  - `/opinions/[username]/[slug]` — halaman artikel opini individual
+  - `/penulis/[username]` — halaman profil publik penulis
+  - `/akun` — dashboard penulis (daftar artikel + analitik)
+  - `/akun/tulis` — editor tulis artikel baru
+  - `/akun/artikel/[id]/edit` — editor edit artikel existing
+  - `/dashboard/opinions` — halaman moderasi admin
+
+  [MODIFIKASI FILE EXISTING]
+  - `components/layout/Navbar.tsx` — tambah link "Opinions" + link avatar ke /akun
+  - `app/(admin)/dashboard/page.tsx` — tambah tombol "Moderasi Opinions"
+
+  [HELPERS]
+  - `lib/editor-helpers.ts` — insertAtCursor, insertFootnote, generateMarkdownTable
+
+Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Opinions Platform — platform opini pengguna terpisah dari sistem editorial".
+Status akhir: Selesai (80%). Build clean (exit code 0, 44 file baru). Di-push ke feature/opinions-platform dan di-merge ke main oleh pemilik.
+Next step: Test end-to-end flow (registrasi username → tulis → publish → like → laporan → moderasi). Catatan dari pemilik: masih ada beberapa hal yang perlu disempurnakan — akan disampaikan di sesi berikutnya.
 ---
 ```
 Format:
