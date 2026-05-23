@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.9 | Status: Live | Terakhir diperbarui: 2026-05-22
+> Versi: 1.0 | Status: Live | Terakhir diperbarui: 2026-05-24
 
 ---
 
@@ -390,12 +390,16 @@ CREATE TRIGGER articles_updated_at
 
 ```
 /
+├── middleware.ts                         ← Token refresh + security headers (X-Frame-Options, dll)
+│
 ├── app/
 │   ├── icon.svg
 │   ├── fonts/ (GeistVF.woff, GeistMonoVF.woff)
 │   ├── globals.css
 │   ├── layout.tsx
 │   ├── page.tsx                          ← Halaman beranda
+│   ├── not-found.tsx                     ← Custom 404 page (bukan default Next.js)
+│   ├── error.tsx                         ← Global error boundary
 │   ├── artikel/
 │   │   └── [slug]/
 │   │       └── page.tsx                  ← Halaman artikel publik
@@ -410,49 +414,51 @@ CREATE TRIGGER articles_updated_at
 │   │           └── actions.ts
 │   ├── auth/
 │   │   └── callback/
-│   │       └── route.ts
+│   │       └── route.ts                  ← OAuth callback dengan validasi redirect
 │   ├── login/
 │   │   └── page.tsx
 │   └── api/
 │       ├── analytics/
+│       │   └── route.ts                  ← POST analytics events (gunakan getUser() bukan getSession())
 │       ├── comments/
-│       │   └── route.ts                  ← GET/POST komentar publik
+│       │   └── route.ts                  ← GET/POST komentar publik (gunakan getUser() bukan getSession())
 │       ├── likes/
+│       │   ├── route.ts                  ← GET/POST/DELETE likes (admin client, bypass RLS)
 │       │   └── count/
-│       │       └── route.ts              ← GET jumlah like publik
-│       └── shares/
-│           └── route.ts                  ← POST tracking share per platform
-│       │   └── route.ts
+│       │       └── route.ts              ← GET jumlah like publik (admin client)
+│       ├── shares/
+│       │   └── route.ts                  ← POST tracking share (gunakan getUser() bukan getSession())
 │       ├── indices/
 │       │   └── route.ts                  ← Polling data strip indeks (force-dynamic)
 │       └── keep-alive/
-│           └── route.ts
+│           └── route.ts                  ← Cron job mencegah hibernasi Supabase
 │
 ├── components/
 │   ├── layout/
 │   │   ├── Navbar.tsx
 │   │   ├── Footer.tsx
 │   │   ├── ConditionalIndexStrip.tsx     ← Client Component — tampilkan IndexStrip hanya di /
-│   │   └── ScrollToTop.tsx               ← Client Component — paksa scroll ke atas setiap navigasi
+│   │   ├── ScrollToTop.tsx               ← Client Component — paksa scroll ke atas setiap navigasi
+│   │   └── HomepageTabs.tsx              ← Tab [Saintifiks | Opinions] di beranda
 │   ├── widgets/
 │   │   ├── IndexStrip.tsx                ← Server wrapper strip indeks beranda
 │   │   ├── IndexStripClient.tsx          ← Client polling + render
 │   │   └── TrendIcon.tsx                 ← Ikon naik/turun
 │   ├── artikel/
-│   │   ├── ArticleRenderer.tsx
-│   │   ├── ArticleInteractions.tsx     ← Client Component wrapper untuk seluruh section interaksi
-│   │   ├── ChartBlock.tsx
-│   │   ├── LikeButton.tsx              ← Icon Heart + optimistic update + count
-│   │   ├── CorrectionSection.tsx       ← Icon AlertCircle + count koreksi
-│   │   ├── ShareButton.tsx             ← Generate gambar Instagram Story 1080x1920
-│   │   ├── CommentsSection.tsx         ← Komentar publik (privacy: "Pembaca")
+│   │   ├── ArticleRenderer.tsx           ← **SERVER COMPONENT — TIDAK BOLEH DISENTUH**
+│   │   ├── ArticleInteractions.tsx       ← Client Component wrapper untuk seluruh section interaksi
+│   │   ├── ChartBlock.tsx                ← **JANGAN DISENTUH TANPA KONFIRMASI**
+│   │   ├── LikeButton.tsx                ← **JANGAN DISENTUH TANPA KONFIRMASI**
+│   │   ├── CorrectionSection.tsx         ← **JANGAN DISENTUH TANPA KONFIRMASI**
+│   │   ├── ShareButton.tsx
+│   │   ├── CommentsSection.tsx
 │   │   └── ImageUpload.tsx
 │   └── analytics/
 │       └── AnalyticsTracker.tsx
 │
 ├── lib/
 │   ├── indices/
-│   │   ├── fetchers.ts                   ← Fetch semua indeks + tren
+│   │   ├── fetchers.ts                   ← **JANGAN DISENTUH TANPA KONFIRMASI**
 │   │   ├── get-indices.ts
 │   │   ├── http.ts
 │   │   ├── format.ts
@@ -460,8 +466,9 @@ CREATE TRIGGER articles_updated_at
 │   │   ├── types.ts
 │   │   └── yahoo.ts
 │   └── supabase/
-│       ├── client.ts
-│       ├── server.ts
+│       ├── client.ts                     ← Browser client (anon key)
+│       ├── server.ts                     ← Server client (anon key, with cookies)
+│       ├── admin.ts                      ← Server-only admin client (service_role key) — HANYA UNTUK API ROUTES
 │       └── remark/
 │           └── remarkCallout.ts
 │
@@ -473,6 +480,38 @@ CREATE TRIGGER articles_updated_at
 ├── vercel.json
 └── README.md
 ```
+
+### File yang TIDAK BOLEH DISENTUH (Red Zones)
+
+| File/Folder | Alasan |
+|-------------|--------|
+| `ArticleRenderer.tsx` | Server Component murni — perubahan bisa merusak performa atau parsing Markdown |
+| `ChartBlock.tsx` | SSR/Client boundary sudah di-tune — risiko crash |
+| `LikeButton.tsx` | Sistem likes sudah fix 3 kali — sangat sensitif terhadap RLS |
+| `CorrectionSection.tsx` | Bagian dari interaksi artikel yang sudah stabil |
+| `app/artikel/[slug]/page.tsx` | ISR strategy sudah di-tune — perubahan bisa merusak caching |
+| `app/api/analytics/route.ts` | Tracking sistem — perubahan bisa merusak data |
+| `app/api/keep-alive/route.ts` | Risiko eksistensial — database bisa hibernate jika rusak |
+| `lib/indices/` | Widget indeks sudah di-tune untuk rate limiting |
+| `components/widgets/` | Polling 15 detik sudah stabil |
+| `app/(admin)/dashboard/artikel/` | Workflow editorial sudah stabil |
+
+### Catatan Kritis: Supabase Clients
+
+Terdapat 3 jenis Supabase client — **jangan pernah salah pakai**:
+
+1. **`lib/supabase/client.ts`** → Browser/Client Component (anon key)
+   - Gunakan di: `'use client'` components
+   - Jangan gunakan untuk: Operasi likes (terblokir RLS)
+
+2. **`lib/supabase/server.ts`** → Server Component & API routes (anon key with cookie handling)
+   - Gunakan di: API routes untuk verifikasi auth (`getUser()`)
+   - Jangan gunakan untuk: Count likes (terblokir RLS)
+
+3. **`lib/supabase/admin.ts`** → Server-side ONLY (service_role key)
+   - Gunakan di: API routes untuk operasi agregat (count likes) atau bypass RLS
+   - **⚠️ JANGAN PERNAH IMPORT DI CLIENT COMPONENT** — ini bug keamanan kritis
+   - Selalu verifikasi auth via `server.ts` sebelum pakai `admin.ts` untuk tulis data
 
 ---
 
@@ -533,6 +572,8 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Mekanisme koreksi artikel (publik)
 - [x] Performance audit
 - [x] Perbaikan UX Login Google OAuth (account chooser + loading feedback)
+- [x] **Security audit fixes — getUser() vs getSession(), middleware, security headers** ← 24-05-2026
+- [x] **Custom 404 page dan global error boundary** ← 24-05-2026
 
 ### Post-launch — Beranda & konteks data
 - [x] Widget indeks beranda (fetch otomatis, tanpa hardcode)
@@ -589,6 +630,17 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
              RESOLVED: 20-05-2026 | Sesi #19 — implementasi custom remark plugin
                        (lib/remark/remarkCallout.ts) yang memproses AST sebelum render.
                        Mendukung [!NOTE], [!WARNING], [!IMPORTANT], [!TIP].
+
+[24-05-2026] TECHNICAL DEBT: Sisa temuan audit yang BELUM dikerjakan (prioritas menurun):
+             - [HIGH] Rate limiting di API routes (T-01, H-02) — belum ada mekanisme proteksi abuse
+             - [MEDIUM] sitemap.ts dan robots.ts (S-01, M-01) — SEO tooling belum lengkap
+             - [MEDIUM] rehype-sanitize untuk konten opini (S-03, M-04) — proteksi XSS tambahan
+             - [LOW] Refactor generateSlug ke lib/slug.ts (S-07, M-05) — duplikasi kode di 2 file
+             - [LOW] Hapus dead code (EditorTextarea.tsx, EditorToolbar.tsx, OpinionPreview.tsx)
+             - [LOW] Ganti <a> dengan <Link> di Navbar.tsx untuk brand link (R-03, L-01)
+             STATUS: open (dikerjakan di sesi berikutnya)
+             WORKAROUND: -
+             RESOLVED: -
 
 ```
 Format pengisian:
@@ -893,6 +945,52 @@ Format pengisian:
              KEAMANAN: Tidak ada perubahan RLS, tidak ada endpoint baru.
              ALTERNATIF DITOLAK: Layout dua baris (mobile kurang efisien);
                                  angka komentar di bawah icon (mendorong alignment vertikal).
+
+[24-05-2026] KEPUTUSAN: getUser() wajib digunakan alih-alih getSession() di API routes server-side
+             ALASAN: Dokumentasi Supabase secara eksplisit menyatakan "Never trust getSession() inside 
+                     server code. It isn't guaranteed to revalidate the Auth token." getSession() hanya
+                     membaca cookie tanpa memvalidasi ke server Supabase — token bisa expired atau dipalsukan.
+                     getUser() memverifikasi token ke server Supabase, menjamin autentikasi valid.
+             CATATAN IMPLEMENTASI:
+                     - Ganti: const { data: { session } } = await supabase.auth.getSession()
+                     - Menjadi: const { data: { user }, error: authError } = await supabase.auth.getUser()
+                     - File yang diubah: app/api/comments/route.ts, app/api/shares/route.ts, 
+                       app/api/analytics/route.ts
+                     - Jika authError atau !user, return 401 Unauthorized
+             ALTERNATIF DITOLAK: Tetap pakai getSession() (rentan terhadap token forgery)
+
+[24-05-2026] KEPUTUSAN: Validasi parameter redirect di OAuth callback untuk mencegah open redirect
+             ALASAN: Parameter 'next' dari query string bisa dimanipulasi penyerang untuk mengarahkan
+                     pengguna ke situs berbahaya setelah login (contoh: //evil.com atau path traversal).
+             CATATAN IMPLEMENTASI:
+                     - const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
+                     - File: app/auth/callback/route.ts
+                     - Hanya izinkan path yang dimulai dengan / dan bukan protocol-relative URL (//)
+             ALTERNATIF DITOLAK: Tidak ada validasi (rentan open redirect attack)
+
+[24-05-2026] KEPUTUSAN: Middleware.ts untuk token refresh otomatis dan security headers
+             ALASAN: Supabase Auth JWT kedaluwarsa. Tanpa middleware yang refresh token di setiap request,
+                     pengguna bisa mengalami "logged out" tiba-tiba. Security headers (X-Frame-Options,
+                     X-Content-Type-Options, Referrer-Policy) melindungi dari clickjacking dan MIME sniffing.
+             CATATAN IMPLEMENTASI:
+                     - File: middleware.ts di root project (bukan di app/)
+                     - Menggunakan @supabase/ssr createServerClient dengan cookie handling
+                     - await supabase.auth.getUser() di middleware akan refresh token jika perlu
+                     - Headers ditambahkan ke semua response: X-Frame-Options: DENY, 
+                       X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin
+             ALTERNATIF DITOLAK: Tanpa middleware (session timeout tak terduga, tanpa security headers)
+
+[24-05-2026] KEPUTUSAN: useMemo wajib untuk createClient() di Client Components
+             ALASAN: createClient() di body komponen tanpa useMemo membuat instance baru setiap render.
+                     Ini menyebabkan: (1) memory leak, (2) useEffect dependency berubah terus → re-run efek,
+                     (3) potensi race condition pada fetch data.
+             CATATAN IMPLEMENTASI:
+                     - Ganti: const supabase = createClient()
+                     - Menjadi: const supabase = useMemo(() => createClient(), [])
+                     - File yang diubah: components/artikel/CommentsSection.tsx, 
+                       components/artikel/ShareButton.tsx
+                     - Pattern ini sudah diterapkan di LikeButton.tsx sejak Sesi #30
+             ALTERNATIF DITOLAK: Biarkan tanpa useMemo (performance degradation, potential bugs)
 ```
 
 ---
@@ -938,6 +1036,40 @@ Keputusan baru: Seluruh keputusan arsitektur minor maupun mayor yang dieksekusi 
 Status akhir: Selesai (Phase 0–4 dan Post-Launch tuntas).
 Next step: [LIHAT SESI #28] Implementasi fitur social interaction (like, share, comments) dan Instagram Story generator.
 ---
+---
+
+[24-05-2026] SESI #36 — SECURITY AUDIT FIXES
+Branch: feature/security-audit-fixes
+Tujuan sesi: Menyelesaikan temuan audit keamanan kritis (C-01, C-02, H-01, H-03, H-04, H-05, S-04, S-05, M-02)
+Yang dikerjakan:
+  [CRITICAL SECURITY FIXES]
+  - `app/api/comments/route.ts` — Ganti `getSession()` dengan `getUser()` untuk verifikasi auth yang aman (C-01, T-02).
+  - `app/api/shares/route.ts` — Ganti `getSession()` dengan `getUser()` (C-01, T-02).
+  - `app/api/analytics/route.ts` — Ganti `getSession()` dengan `getUser()` (C-01, T-02).
+  - `app/auth/callback/route.ts` — Tambah validasi parameter `next` untuk mencegah open redirect attack (C-02).
+    Validasi: hanya izinkan path yang dimulai dengan `/` dan bukan `//` (protocol-relative URL).
+  - `app/api/likes/count/route.ts` — Hapus `console.log` yang mencetak prefix `SUPABASE_SERVICE_ROLE_KEY` (H-04, S-05).
+    Meskipun `removeConsole` aktif di production, log ini tetap berisiko di development/logs.
+
+  [PERFORMANCE FIXES]
+  - `components/artikel/CommentsSection.tsx` — Tambah `useMemo(() => createClient(), [])` untuk mencegah
+    instance Supabase baru setiap render (H-05, S-04). Ini mencegah useEffect re-run terus-menerus.
+  - `components/artikel/ShareButton.tsx` — Tambah `useMemo` untuk `createClient()` (H-05).
+    Pattern ini sudah diterapkan di `LikeButton.tsx` sejak Sesi #30.
+
+  [MIDDLEWARE & ERROR HANDLING]
+  - `middleware.ts` (baru, root level) — Implementasi token refresh otomatis dan security headers (H-01, H-03).
+    Menggunakan `@supabase/ssr` createServerClient dengan cookie handling. Headers yang ditambahkan:
+    X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin.
+  - `app/not-found.tsx` (baru) — Custom 404 page dengan branding Saintifiks (M-02, S-02).
+    Menggunakan font Libre Baskerville dan palette warna yang konsisten.
+  - `app/error.tsx` (baru) — Global error boundary dengan tombol "Coba Lagi" dan "Kembali ke Beranda" (M-02, S-02).
+
+Keputusan baru: Lihat Seksi 11 — empat keputusan baru: "getUser() wajib digunakan alih-alih getSession()",
+"Validasi parameter redirect di OAuth callback", "Middleware.ts untuk token refresh dan security headers",
+"useMemo wajib untuk createClient() di Client Components".
+Status akhir: Selesai dan di-merge ke main. Test di production: like ✓, komentar ✓, 404 custom ✓.
+Next step: Lanjutkan sisa temuan audit (rate limiting H-02/T-01, sitemap M-01/S-01, dead code cleanup) di sesi berikutnya.
 ---
 
 [21-05-2026] SESI #27
