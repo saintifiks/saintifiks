@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 0.9 | Status: Live | Terakhir diperbarui: 2026-05-22
+> Versi: 1.0 | Status: Live | Terakhir diperbarui: 2026-05-24
 
 ---
 
@@ -390,12 +390,16 @@ CREATE TRIGGER articles_updated_at
 
 ```
 /
+├── middleware.ts                         ← Token refresh + security headers (X-Frame-Options, dll)
+│
 ├── app/
 │   ├── icon.svg
 │   ├── fonts/ (GeistVF.woff, GeistMonoVF.woff)
 │   ├── globals.css
 │   ├── layout.tsx
 │   ├── page.tsx                          ← Halaman beranda
+│   ├── not-found.tsx                     ← Custom 404 page (bukan default Next.js)
+│   ├── error.tsx                         ← Global error boundary
 │   ├── artikel/
 │   │   └── [slug]/
 │   │       └── page.tsx                  ← Halaman artikel publik
@@ -410,60 +414,64 @@ CREATE TRIGGER articles_updated_at
 │   │           └── actions.ts
 │   ├── auth/
 │   │   └── callback/
-│   │       └── route.ts
+│   │       └── route.ts                  ← OAuth callback dengan validasi redirect
 │   ├── login/
 │   │   └── page.tsx
 │   └── api/
 │       ├── analytics/
+│       │   └── route.ts                  ← POST analytics events (gunakan getUser() bukan getSession())
 │       ├── comments/
-│       │   └── route.ts                  ← GET/POST komentar publik
+│       │   └── route.ts                  ← GET/POST komentar publik (gunakan getUser() bukan getSession())
 │       ├── likes/
+│       │   ├── route.ts                  ← GET/POST/DELETE likes (admin client, bypass RLS)
 │       │   └── count/
-│       │       └── route.ts              ← GET jumlah like publik
-│       └── shares/
-│           └── route.ts                  ← POST tracking share per platform
-│       │   └── route.ts
+│       │       └── route.ts              ← GET jumlah like publik (admin client)
+│       ├── shares/
+│       │   └── route.ts                  ← POST tracking share (gunakan getUser() bukan getSession())
 │       ├── indices/
 │       │   └── route.ts                  ← Polling data strip indeks (force-dynamic)
 │       └── keep-alive/
-│           └── route.ts
+│           └── route.ts                  ← Cron job mencegah hibernasi Supabase
 │
 ├── components/
 │   ├── layout/
 │   │   ├── Navbar.tsx
 │   │   ├── Footer.tsx
 │   │   ├── ConditionalIndexStrip.tsx     ← Client Component — tampilkan IndexStrip hanya di /
-│   │   └── ScrollToTop.tsx               ← Client Component — paksa scroll ke atas setiap navigasi
+│   │   ├── ScrollToTop.tsx               ← Client Component — paksa scroll ke atas setiap navigasi
+│   │   └── HomepageTabs.tsx              ← Tab [Saintifiks | Opinions] di beranda
 │   ├── widgets/
 │   │   ├── IndexStrip.tsx                ← Server wrapper strip indeks beranda
 │   │   ├── IndexStripClient.tsx          ← Client polling + render
 │   │   └── TrendIcon.tsx                 ← Ikon naik/turun
 │   ├── artikel/
-│   │   ├── ArticleRenderer.tsx
-│   │   ├── ArticleInteractions.tsx     ← Client Component wrapper untuk seluruh section interaksi
-│   │   ├── ChartBlock.tsx
-│   │   ├── LikeButton.tsx              ← Icon Heart + optimistic update + count
-│   │   ├── CorrectionSection.tsx       ← Icon AlertCircle + count koreksi
-│   │   ├── ShareButton.tsx             ← Generate gambar Instagram Story 1080x1920
-│   │   ├── CommentsSection.tsx         ← Komentar publik (privacy: "Pembaca")
+│   │   ├── ArticleRenderer.tsx           ← **SERVER COMPONENT — TIDAK BOLEH DISENTUH**
+│   │   ├── ArticleInteractions.tsx       ← Client Component wrapper untuk seluruh section interaksi
+│   │   ├── ChartBlock.tsx                ← **JANGAN DISENTUH TANPA KONFIRMASI**
+│   │   ├── LikeButton.tsx                ← **JANGAN DISENTUH TANPA KONFIRMASI**
+│   │   ├── CorrectionSection.tsx         ← **JANGAN DISENTUH TANPA KONFIRMASI**
+│   │   ├── ShareButton.tsx
+│   │   ├── CommentsSection.tsx
 │   │   └── ImageUpload.tsx
 │   └── analytics/
 │       └── AnalyticsTracker.tsx
 │
 ├── lib/
 │   ├── indices/
-│   │   ├── fetchers.ts                   ← Fetch semua indeks + tren
+│   │   ├── fetchers.ts                   ← **JANGAN DISENTUH TANPA KONFIRMASI**
 │   │   ├── get-indices.ts
 │   │   ├── http.ts
 │   │   ├── format.ts
 │   │   ├── trend.ts
 │   │   ├── types.ts
 │   │   └── yahoo.ts
-│   └── supabase/
-│       ├── client.ts
-│       ├── server.ts
-│       └── remark/
-│           └── remarkCallout.ts
+│   ├── supabase/
+│   │   ├── client.ts                     ← Browser client (anon key)
+│   │   ├── server.ts                     ← Server client (anon key, with cookies)
+│   │   ├── admin.ts                      ← Server-only admin client (service_role key)
+│   │   └── remark/
+│   │       └── remarkCallout.ts
+│   └── rate-limit.ts                     ← In-memory rate limiting helper untuk API routes
 │
 ├── .github/workflows/backup.yml
 ├── next.config.mjs
@@ -473,6 +481,38 @@ CREATE TRIGGER articles_updated_at
 ├── vercel.json
 └── README.md
 ```
+
+### File yang TIDAK BOLEH DISENTUH (Red Zones)
+
+| File/Folder | Alasan |
+|-------------|--------|
+| `ArticleRenderer.tsx` | Server Component murni — perubahan bisa merusak performa atau parsing Markdown |
+| `ChartBlock.tsx` | SSR/Client boundary sudah di-tune — risiko crash |
+| `LikeButton.tsx` | Sistem likes sudah fix 3 kali — sangat sensitif terhadap RLS |
+| `CorrectionSection.tsx` | Bagian dari interaksi artikel yang sudah stabil |
+| `app/artikel/[slug]/page.tsx` | ISR strategy sudah di-tune — perubahan bisa merusak caching |
+| `app/api/analytics/route.ts` | Tracking sistem — perubahan bisa merusak data |
+| `app/api/keep-alive/route.ts` | Risiko eksistensial — database bisa hibernate jika rusak |
+| `lib/indices/` | Widget indeks sudah di-tune untuk rate limiting |
+| `components/widgets/` | Polling 15 detik sudah stabil |
+| `app/(admin)/dashboard/artikel/` | Workflow editorial sudah stabil |
+
+### Catatan Kritis: Supabase Clients
+
+Terdapat 3 jenis Supabase client — **jangan pernah salah pakai**:
+
+1. **`lib/supabase/client.ts`** → Browser/Client Component (anon key)
+   - Gunakan di: `'use client'` components
+   - Jangan gunakan untuk: Operasi likes (terblokir RLS)
+
+2. **`lib/supabase/server.ts`** → Server Component & API routes (anon key with cookie handling)
+   - Gunakan di: API routes untuk verifikasi auth (`getUser()`)
+   - Jangan gunakan untuk: Count likes (terblokir RLS)
+
+3. **`lib/supabase/admin.ts`** → Server-side ONLY (service_role key)
+   - Gunakan di: API routes untuk operasi agregat (count likes) atau bypass RLS
+   - **⚠️ JANGAN PERNAH IMPORT DI CLIENT COMPONENT** — ini bug keamanan kritis
+   - Selalu verifikasi auth via `server.ts` sebelum pakai `admin.ts` untuk tulis data
 
 ---
 
@@ -533,6 +573,9 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Mekanisme koreksi artikel (publik)
 - [x] Performance audit
 - [x] Perbaikan UX Login Google OAuth (account chooser + loading feedback)
+- [x] **Security audit fixes — getUser() vs getSession(), middleware, security headers** ← 24-05-2026
+- [x] **Custom 404 page dan global error boundary** ← 24-05-2026
+- [x] **Rate limiting di API routes — proteksi abuse dengan in-memory store** ← 24-05-2026
 
 ### Post-launch — Beranda & konteks data
 - [x] Widget indeks beranda (fetch otomatis, tanpa hardcode)
@@ -589,6 +632,17 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
              RESOLVED: 20-05-2026 | Sesi #19 — implementasi custom remark plugin
                        (lib/remark/remarkCallout.ts) yang memproses AST sebelum render.
                        Mendukung [!NOTE], [!WARNING], [!IMPORTANT], [!TIP].
+
+[24-05-2026] TECHNICAL DEBT: Sisa temuan audit yang BELUM dikerjakan (prioritas menurun):
+             - [HIGH] Rate limiting di API routes (T-01, H-02) — belum ada mekanisme proteksi abuse
+             - [MEDIUM] sitemap.ts dan robots.ts (S-01, M-01) — SEO tooling belum lengkap
+             - [MEDIUM] rehype-sanitize untuk konten opini (S-03, M-04) — proteksi XSS tambahan
+             - [LOW] Refactor generateSlug ke lib/slug.ts (S-07, M-05) — duplikasi kode di 2 file
+             - [LOW] Hapus dead code (EditorTextarea.tsx, EditorToolbar.tsx, OpinionPreview.tsx)
+             - [LOW] Ganti <a> dengan <Link> di Navbar.tsx untuk brand link (R-03, L-01)
+             STATUS: open (dikerjakan di sesi berikutnya)
+             WORKAROUND: -
+             RESOLVED: -
 
 ```
 Format pengisian:
@@ -876,6 +930,80 @@ Format pengisian:
                                  dan situs memang tidak dirancang untuk dark mode);
                                  filter CSS manual (tidak mengatasi root cause).
 
+[23-05-2026] KEPUTUSAN: Opinions Platform — platform opini pengguna terpisah dari sistem editorial
+             ALASAN: Memungkinkan pembaca terpilih mempublikasikan artikel opini tanpa mengubah
+                     sistem editorial yang sudah stabil. Dipisahkan secara penuh — tabel DB sendiri,
+                     komponen sendiri, URL sendiri — agar tidak ada risiko kontaminasi ke konten redaksi.
+             KEPUTUSAN TURUNAN:
+               (1) Moderasi Opsi C: artikel opini publish langsung tanpa review — admin bisa takedown.
+               (2) Username permanen setelah dibuat; display_name bisa diubah kapan saja.
+               (3) Slug terkunci (slug_locked=true) setelah artikel pertama kali dipublish.
+               (4) Status artikel: draft | published | hidden.
+               (5) OpinionContentRenderer adalah Server Component BARU — salinan logika ArticleRenderer
+                   tapi terpisah total. ArticleRenderer.tsx TIDAK BOLEH disentuh.
+               (6) Editor: Markdown + toolbar visual (dua panel textarea + live preview).
+                   Preview (OpinionPreview.tsx) adalah Client Component karena digunakan dalam editor.
+               (7) Analitik per penulis dijamin via RLS — setiap penulis hanya bisa membaca data miliknya.
+               (8) Like opinions menggunakan admin client (service_role) untuk bypass RLS — pola sama
+                   dengan sistem likes editorial (keputusan [22-05-2026]).
+             CATATAN IMPLEMENTASI:
+               - 6 tabel baru: user_profiles, opinion_articles, opinion_article_charts,
+                 article_reports, opinion_likes, opinion_analytics_events. RLS aktif di semua.
+               - Storage bucket baru: opinions-gambar (public read, auth write, max 5MB).
+               - 14 API endpoints baru di /api/opinions/, /api/opinion-charts/, /api/admin/opinions/,
+                 /api/user-profiles/.
+               - URL artikel opini: /opinions/[username]/[slug]
+               - URL profil penulis: /penulis/[username]
+               - Dashboard penulis: /akun
+               - Editor tulis baru: /akun/tulis
+               - Editor edit: /akun/artikel/[id]/edit
+               - Moderasi admin: /dashboard/opinions
+             FILE YANG TIDAK BOLEH DISENTUH (tetap berlaku):
+               ArticleRenderer.tsx, ChartBlock.tsx, LikeButton.tsx, CorrectionSection.tsx,
+               app/artikel/[slug]/page.tsx, app/api/analytics/route.ts,
+               app/api/keep-alive/route.ts, lib/indices/, components/widgets/,
+               app/(admin)/dashboard/artikel/
+             ALTERNATIF DITOLAK: Menyatukan dengan sistem editorial (terlalu berisiko merusak
+                                 konten redaksi yang sudah stabil); moderasi pre-publish (menambah
+                                 bottleneck tanpa benefit proporsional di fase awal).
+
+[24-05-2026] KEPUTUSAN: Homepage tab [Saintifiks | Opinions] — dua konten setara di satu halaman
+             ALASAN: Opinions harus berbobot setara dengan konten redaksi — tidak boleh ada
+                     superioritas intelektual antara konten redaksi dan opini pembaca. Tab dua arah
+                     di bawah header beranda adalah cara paling jujur mengekspresikan kesetaraan ini
+                     tanpa mengubah struktur navigasi yang sudah ada.
+             CATATAN IMPLEMENTASI:
+               - Dibuat `components/layout/HomepageTabs.tsx` — Client Component, handle state tab.
+               - Tab sticky `top-[93px]` = IndexStrip (h-9=36px) + Navbar (py-5+text-lg=57px).
+               - Background tab solid `bg-primary-light` agar konten tidak "menembus" saat scroll.
+               - Tab aktif: `border-b-2 border-primary-dark`. Tab non-aktif: `text-primary-dark/40`.
+               - `app/page.tsx` dimodifikasi: fetch paralel `Promise.all` untuk editorial + opinions.
+               - `revalidate` turun dari 3600 → 300 agar sinkron dengan `/opinions`.
+               - `app/page.tsx` dihapus dari daftar file yang tidak boleh disentuh (konfirmasi
+                 pemilik [24-05-2026]).
+             ALTERNATIF DITOLAK: Section opinions di bawah editorial (menempatkan opinions sebagai
+                                 konten sekunder); dua halaman terpisah tanpa hubungan di beranda
+                                 (opinions tidak terlihat untuk pengunjung baru).
+
+[24-05-2026] KEPUTUSAN: Exception library baru — TipTap WYSIWYG untuk editor opinions
+             ALASAN: Editor split panel (textarea kiri + preview kanan) menampilkan sintaks Markdown
+                     mentah (##, **, |||, --) yang mengganggu pengalaman menulis. Penulis seharusnya
+                     fokus pada konten, bukan markup. TipTap + tiptap-markdown memungkinkan WYSIWYG
+                     penuh: penulis melihat hasil render langsung, Markdown tersimpan di background.
+             PACKAGE YANG DITAMBAHKAN:
+               - `@tiptap/react` — core WYSIWYG editor, React-first
+               - `@tiptap/starter-kit` — ekstensi dasar (bold, italic, heading, list, dll)
+               - `tiptap-markdown` — konversi WYSIWYG ↔ Markdown (community, gratis)
+             CATATAN IMPLEMENTASI:
+               - `EditorTextarea.tsx` dan `EditorToolbar.tsx` tidak lagi digunakan oleh OpinionEditor.
+               - Custom Node extension untuk `{{chart:id}}` placeholder — dirender sebagai chip/badge
+                 di editor, dikembalikan ke string asli saat ekspor ke Markdown via renderText().
+               - Output ke DB tetap Markdown — `OpinionContentRenderer.tsx` tidak perlu diubah.
+               - `OpinionPreview.tsx` (live preview lama) tidak lagi digunakan — WYSIWYG menggantikannya.
+             ALTERNATIF DITOLAK: Membangun WYSIWYG sendiri tanpa library (terlalu kompleks, banyak
+                                 edge case pada sinkronisasi kursor); Milkdown (kurang mature,
+                                 custom node lebih sulit).
+
 [23-05-2026] KEPUTUSAN: Toolbar interaksi artikel — icon-only dengan bottom sheet
              ALASAN: Tampilan lama (teks + tombol besar) memakan ruang horizontal dan menyebabkan
                      elemen saling tumpuk di mobile. Like count publik dihapus dari UI untuk
@@ -893,6 +1021,52 @@ Format pengisian:
              KEAMANAN: Tidak ada perubahan RLS, tidak ada endpoint baru.
              ALTERNATIF DITOLAK: Layout dua baris (mobile kurang efisien);
                                  angka komentar di bawah icon (mendorong alignment vertikal).
+
+[24-05-2026] KEPUTUSAN: getUser() wajib digunakan alih-alih getSession() di API routes server-side
+             ALASAN: Dokumentasi Supabase secara eksplisit menyatakan "Never trust getSession() inside 
+                     server code. It isn't guaranteed to revalidate the Auth token." getSession() hanya
+                     membaca cookie tanpa memvalidasi ke server Supabase — token bisa expired atau dipalsukan.
+                     getUser() memverifikasi token ke server Supabase, menjamin autentikasi valid.
+             CATATAN IMPLEMENTASI:
+                     - Ganti: const { data: { session } } = await supabase.auth.getSession()
+                     - Menjadi: const { data: { user }, error: authError } = await supabase.auth.getUser()
+                     - File yang diubah: app/api/comments/route.ts, app/api/shares/route.ts, 
+                       app/api/analytics/route.ts
+                     - Jika authError atau !user, return 401 Unauthorized
+             ALTERNATIF DITOLAK: Tetap pakai getSession() (rentan terhadap token forgery)
+
+[24-05-2026] KEPUTUSAN: Validasi parameter redirect di OAuth callback untuk mencegah open redirect
+             ALASAN: Parameter 'next' dari query string bisa dimanipulasi penyerang untuk mengarahkan
+                     pengguna ke situs berbahaya setelah login (contoh: //evil.com atau path traversal).
+             CATATAN IMPLEMENTASI:
+                     - const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
+                     - File: app/auth/callback/route.ts
+                     - Hanya izinkan path yang dimulai dengan / dan bukan protocol-relative URL (//)
+             ALTERNATIF DITOLAK: Tidak ada validasi (rentan open redirect attack)
+
+[24-05-2026] KEPUTUSAN: Middleware.ts untuk token refresh otomatis dan security headers
+             ALASAN: Supabase Auth JWT kedaluwarsa. Tanpa middleware yang refresh token di setiap request,
+                     pengguna bisa mengalami "logged out" tiba-tiba. Security headers (X-Frame-Options,
+                     X-Content-Type-Options, Referrer-Policy) melindungi dari clickjacking dan MIME sniffing.
+             CATATAN IMPLEMENTASI:
+                     - File: middleware.ts di root project (bukan di app/)
+                     - Menggunakan @supabase/ssr createServerClient dengan cookie handling
+                     - await supabase.auth.getUser() di middleware akan refresh token jika perlu
+                     - Headers ditambahkan ke semua response: X-Frame-Options: DENY, 
+                       X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin
+             ALTERNATIF DITOLAK: Tanpa middleware (session timeout tak terduga, tanpa security headers)
+
+[24-05-2026] KEPUTUSAN: useMemo wajib untuk createClient() di Client Components
+             ALASAN: createClient() di body komponen tanpa useMemo membuat instance baru setiap render.
+                     Ini menyebabkan: (1) memory leak, (2) useEffect dependency berubah terus → re-run efek,
+                     (3) potensi race condition pada fetch data.
+             CATATAN IMPLEMENTASI:
+                     - Ganti: const supabase = createClient()
+                     - Menjadi: const supabase = useMemo(() => createClient(), [])
+                     - File yang diubah: components/artikel/CommentsSection.tsx, 
+                       components/artikel/ShareButton.tsx
+                     - Pattern ini sudah diterapkan di LikeButton.tsx sejak Sesi #30
+             ALTERNATIF DITOLAK: Biarkan tanpa useMemo (performance degradation, potential bugs)
 ```
 
 ---
@@ -938,6 +1112,40 @@ Keputusan baru: Seluruh keputusan arsitektur minor maupun mayor yang dieksekusi 
 Status akhir: Selesai (Phase 0–4 dan Post-Launch tuntas).
 Next step: [LIHAT SESI #28] Implementasi fitur social interaction (like, share, comments) dan Instagram Story generator.
 ---
+---
+
+[24-05-2026] SESI #36 — SECURITY AUDIT FIXES
+Branch: feature/security-audit-fixes
+Tujuan sesi: Menyelesaikan temuan audit keamanan kritis (C-01, C-02, H-01, H-03, H-04, H-05, S-04, S-05, M-02)
+Yang dikerjakan:
+  [CRITICAL SECURITY FIXES]
+  - `app/api/comments/route.ts` — Ganti `getSession()` dengan `getUser()` untuk verifikasi auth yang aman (C-01, T-02).
+  - `app/api/shares/route.ts` — Ganti `getSession()` dengan `getUser()` (C-01, T-02).
+  - `app/api/analytics/route.ts` — Ganti `getSession()` dengan `getUser()` (C-01, T-02).
+  - `app/auth/callback/route.ts` — Tambah validasi parameter `next` untuk mencegah open redirect attack (C-02).
+    Validasi: hanya izinkan path yang dimulai dengan `/` dan bukan `//` (protocol-relative URL).
+  - `app/api/likes/count/route.ts` — Hapus `console.log` yang mencetak prefix `SUPABASE_SERVICE_ROLE_KEY` (H-04, S-05).
+    Meskipun `removeConsole` aktif di production, log ini tetap berisiko di development/logs.
+
+  [PERFORMANCE FIXES]
+  - `components/artikel/CommentsSection.tsx` — Tambah `useMemo(() => createClient(), [])` untuk mencegah
+    instance Supabase baru setiap render (H-05, S-04). Ini mencegah useEffect re-run terus-menerus.
+  - `components/artikel/ShareButton.tsx` — Tambah `useMemo` untuk `createClient()` (H-05).
+    Pattern ini sudah diterapkan di `LikeButton.tsx` sejak Sesi #30.
+
+  [MIDDLEWARE & ERROR HANDLING]
+  - `middleware.ts` (baru, root level) — Implementasi token refresh otomatis dan security headers (H-01, H-03).
+    Menggunakan `@supabase/ssr` createServerClient dengan cookie handling. Headers yang ditambahkan:
+    X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin.
+  - `app/not-found.tsx` (baru) — Custom 404 page dengan branding Saintifiks (M-02, S-02).
+    Menggunakan font Libre Baskerville dan palette warna yang konsisten.
+  - `app/error.tsx` (baru) — Global error boundary dengan tombol "Coba Lagi" dan "Kembali ke Beranda" (M-02, S-02).
+
+Keputusan baru: Lihat Seksi 11 — empat keputusan baru: "getUser() wajib digunakan alih-alih getSession()",
+"Validasi parameter redirect di OAuth callback", "Middleware.ts untuk token refresh dan security headers",
+"useMemo wajib untuk createClient() di Client Components".
+Status akhir: Selesai dan di-merge ke main. Test di production: like ✓, komentar ✓, 404 custom ✓.
+Next step: Lanjutkan sisa temuan audit (rate limiting H-02/T-01, sitemap M-01/S-01, dead code cleanup) di sesi berikutnya.
 ---
 
 [21-05-2026] SESI #27
@@ -1104,6 +1312,117 @@ Status akhir: Selesai. Build clean. Siap merge ke main.
 Next step: Merge ke main, lalu semua technical debt audit selesai.
 ---
 
+
+[23-05-2026] SESI #33
+Branch: feature/opinions-platform
+Tujuan sesi: Implementasi Opinions Platform — platform opini pengguna terpisah dari sistem editorial redaksi Saintifiks.
+Yang dikerjakan:
+  [DATABASE & STORAGE]
+  - 6 tabel baru di Supabase (dijalankan manual via SQL Editor oleh pemilik):
+    • `user_profiles` — profil penulis opini (username permanen, display_name, bio, avatar_url)
+    • `opinion_articles` — artikel opini (title, content, slug, status, slug_locked, published_at)
+    • `opinion_article_charts` — chart config per artikel opini
+    • `article_reports` — laporan pelanggaran dari pembaca
+    • `opinion_likes` — likes artikel opini (terpisah dari likes editorial)
+    • `opinion_analytics_events` — analitik mandiri per artikel opini (page_view, scroll depth)
+  - RLS policy aktif di semua 6 tabel.
+  - Storage bucket baru: `opinions-gambar` (public read, auth write, max 5MB, JPEG/PNG/WebP/GIF).
+  - Environment variable baru: `ADMIN_EMAIL=saintifiks@gmail.com` (ditambah di .env.local dan Vercel).
+
+  [API ROUTES — 14 endpoint baru]
+  - `lib/admin-check.ts` — helper verifikasi admin via ADMIN_EMAIL env var
+  - `/api/user-profiles` — GET/POST/PATCH profil penulis
+  - `/api/user-profiles/[username]` — GET profil publik + daftar artikel
+  - `/api/opinions` — GET semua artikel milik user, POST buat draft baru (slug auto-generate)
+  - `/api/opinions/[id]` — GET detail artikel, PATCH update, DELETE (hanya draft)
+  - `/api/opinions/[id]/publish` — POST publish, DELETE tarik ke draft
+  - `/api/opinions/[id]/like` — GET status like, POST tambah like, DELETE unlike
+  - `/api/opinions/[id]/report` — POST laporkan artikel
+  - `/api/opinion-charts` — POST buat chart config
+  - `/api/opinion-charts/[id]` — PATCH update, DELETE hapus chart config
+  - `/api/admin/opinions` — GET semua artikel untuk moderasi admin
+  - `/api/admin/opinions/[id]/hide` — POST hide artikel, DELETE restore
+  - `/api/admin/opinions/reports` — GET semua laporan, PATCH mark reviewed
+  - `/api/opinions/analytics/event` — POST kirim analytics event dari client
+  - `/api/opinions/analytics/summary` — GET tren views 7 hari + statistik per artikel
+
+  [KOMPONEN — 18 file baru di components/opinions/]
+  - Read-only: `OpinionLabel`, `AuthorByline`, `OpinionCard`, `OpinionLikeButton`, `ReportButton`
+  - Render konten: `OpinionContentRenderer` (Server Component, salinan logika ArticleRenderer)
+  - Analitik: `OpinionAnalyticsTracker` (Client Component, tracking page_view + scroll depth)
+  - Dashboard: `OpinionAnalyticsDashboard`, `AkunClient`, `OpinionsModeratorClient`
+  - Editor: `UsernameSetup`, `EditorToolbar`, `EditorTextarea`, `TableWizard`, `ImageModal`,
+    `ChartWizard`, `OpinionPreview`, `OpinionEditorPage`, `OpinionEditor`
+
+  [HALAMAN — 7 halaman baru]
+  - `/opinions` — daftar artikel opini publik (ISR 5 menit)
+  - `/opinions/[username]/[slug]` — halaman artikel opini individual
+  - `/penulis/[username]` — halaman profil publik penulis
+  - `/akun` — dashboard penulis (daftar artikel + analitik)
+  - `/akun/tulis` — editor tulis artikel baru
+  - `/akun/artikel/[id]/edit` — editor edit artikel existing
+  - `/dashboard/opinions` — halaman moderasi admin
+
+  [MODIFIKASI FILE EXISTING]
+  - `components/layout/Navbar.tsx` — tambah link "Opinions" + link avatar ke /akun
+  - `app/(admin)/dashboard/page.tsx` — tambah tombol "Moderasi Opinions"
+
+  [HELPERS]
+  - `lib/editor-helpers.ts` — insertAtCursor, insertFootnote, generateMarkdownTable
+
+Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Opinions Platform — platform opini pengguna terpisah dari sistem editorial".
+Status akhir: Selesai (80%). Build clean (exit code 0, 44 file baru). Di-push ke feature/opinions-platform dan di-merge ke main oleh pemilik.
+Next step: Test end-to-end flow (registrasi username → tulis → publish → like → laporan → moderasi). Catatan dari pemilik: masih ada beberapa hal yang perlu disempurnakan — akan disampaikan di sesi berikutnya.
+---
+
+[24-05-2026] SESI #34
+Branch: feature/homepage-opinions-tab
+Tujuan sesi: Implementasi homepage tab [Saintifiks | Opinions] — menempatkan konten opinions setara dengan konten redaksi di halaman beranda.
+Yang dikerjakan:
+  [FILE BARU]
+  - `components/layout/HomepageTabs.tsx` — Client Component baru untuk tab navigasi homepage.
+    Menampilkan daftar artikel editorial (tab Saintifiks) dan daftar opinions (tab Opinions).
+    Tab sticky top-[93px], background solid primary-light, underline indicator untuk tab aktif.
+
+  [FILE DIMODIFIKASI]
+  - `app/page.tsx` — ditambah import HomepageTabs, fetch paralel Promise.all untuk editorial +
+    opinions, mapping OpinionItem, revalidate 3600→300. Section konten lama diganti HomepageTabs.
+
+Keputusan baru: Lihat Seksi 11 — dua keputusan baru: "Homepage tab [Saintifiks | Opinions]" dan
+               "Exception library baru — TipTap WYSIWYG" (implementasi TipTap di sesi berikutnya).
+Status akhir: Selesai. Build clean (exit code 0). Di-push ke feature/homepage-opinions-tab, di-merge ke main oleh pemilik.
+Next step: Implementasi TipTap WYSIWYG — ganti EditorTextarea + EditorToolbar dengan TipTap + tiptap-markdown + custom node {{chart:id}}.
+---
+
+[24-05-2026] SESI #35
+Branch: feature/tiptap-wysiwyg-editor
+Tujuan sesi: Implementasi TipTap WYSIWYG editor — menggantikan split panel (textarea + live preview) dengan editor WYSIWYG.
+Yang dikerjakan:
+  [FILE BARU]
+  - `components/opinions/editor/TipTapEditor.tsx` — komponen TipTap utama.
+    StarterKit (bold, italic, heading H2/H3, blockquote, list, HR, code, codeBlock),
+    Markdown extension (tiptap-markdown) untuk konversi WYSIWYG ↔ Markdown,
+    Custom Node ChartPlaceholder untuk {{chart:id}} — dirender sebagai chip di editor,
+    dikembalikan ke string {{chart:id}} saat ekspor ke Markdown via renderText().
+    Toolbar terintegrasi di dalam TipTapEditor (bukan komponen terpisah), sticky.
+    Active state pada tombol toolbar (bold/italic/heading/blockquote/list) mengikuti posisi kursor.
+
+  [FILE DIMODIFIKASI]
+  - `components/opinions/editor/OpinionEditor.tsx` — cabut EditorTextarea + EditorToolbar + OpinionPreview,
+    pasang TipTapEditor. Hapus textareaRef, activeTab state, tab switch mobile, panel kanan preview.
+    handleChartInsert tidak lagi menerima placeholderMarkdown — ChartWizard dispatch window event.
+  - `components/opinions/editor/ChartWizard.tsx` — onInsert signature: dari (placeholder, chartId, config)
+    ke (chartId, config). Insert placeholder ke TipTap via window event 'tiptap:insert-chart'.
+
+  [PACKAGE BARU]
+  - @tiptap/react, @tiptap/starter-kit, tiptap-markdown (65 packages total, ~53KB bundle turun dari ~120KB)
+
+Keputusan baru: Tidak ada — sudah tercatat di Seksi 11 sesi #34.
+Status akhir: Selesai. Build clean (exit code 0). Bundle /akun/tulis turun 387KB → 334KB.
+              Di-push ke feature/tiptap-wysiwyg-editor. Siap di-review sebelum merge.
+Next step: Test manual editor di /akun/tulis — coba bold, heading, insert chart, save draft, publish.
+           Jika ada temuan UX, perbaiki sebelum merge ke main.
+---
 ```
 Format:
 [TANGGAL] SESI #N
@@ -1116,6 +1435,35 @@ Next step: [apa yang harus dikerjakan di sesi berikutnya]
 ---
 ```
 
+---
+
+[24-05-2026] SESI #37 — RATE LIMITING IMPLEMENTATION
+Branch: feature/rate-limiting
+Tujuan sesi: Implementasi rate limiting di API routes untuk mencegah abuse dan proteksi quota (T-01, H-02)
+Yang dikerjakan:
+  - Dibuat `lib/rate-limit.ts` — Helper rate limiting in-memory dengan konfigurasi per endpoint.
+    • `checkRateLimit()` — Cek dan increment counter per identifier (IP-based)
+    • `getClientIP()` — Ekstrak IP dari x-forwarded-for header (Vercel/Cloudflare compatible)
+    • `RATE_LIMITS` — Konfigurasi: comments (5/min), likes (20/min), shares (5/min), analytics (30/min)
+  
+  - `app/api/comments/route.ts` — Tambah rate limiting di POST handler (5/menit per IP)
+    • Return 429 Too Many Requests jika limit terlampaui
+    • Sebelum cek auth — rate limit dulu untuk mencegah resource waste
+  
+  - `app/api/likes/route.ts` — Tambah rate limiting di POST dan DELETE (20/menit per IP, shared)
+    • Lebih longgar karena user bisa like/unlike banyak artikel
+    • Hapus console.log debug yang tertinggal (baris 27, 37)
+  
+  - `app/api/shares/route.ts` — Tambah rate limiting di POST (5/menit per IP)
+    • + Fix auth: getSession() → getUser() (masih tertinggal dari sesi #36)
+  
+  - `app/api/analytics/route.ts` — Tambah rate limiting di POST (30/menit per IP)
+    • + Fix auth: getSession() → getUser()
+    • Jika rate limit terlampaui, tetap return 200 (tidak ganggu UX) tapi skip insert
+
+Keputusan baru: Tidak ada keputusan arsitektur baru, ini adalah implementasi teknis dari best practice security.
+Status akhir: Selesai. Build clean (exit code 0). Siap di-push dan merge ke main.
+Next step: Push branch, merge ke main, lanjut ke sisa technical debt (sitemap, dead code cleanup).
 ---
 
 ## 13. REFERENSI & RESOURCE

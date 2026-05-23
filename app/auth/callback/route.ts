@@ -12,7 +12,10 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
   
   // Tangkap parameter 'next' dari URL, jika tidak ada, gunakan default '/dashboard'
-  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
+  // Validasi untuk mencegah open redirect attack (C-02)
+  const rawNext = requestUrl.searchParams.get('next') ?? '/dashboard'
+  // Hanya izinkan path yang dimulai dengan / dan bukan protocol-relative URL (//)
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
   const origin = requestUrl.origin
 
   if (code) {

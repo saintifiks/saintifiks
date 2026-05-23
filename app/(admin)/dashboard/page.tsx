@@ -95,6 +95,13 @@ export default async function DashboardPage() {
               Review Koreksi
             </Link>
 
+            <Link
+              href="/dashboard/opinions"
+              className="font-helvetica text-sm border border-accent-blue/40 text-accent-blue px-5 py-2.5 hover:bg-accent-blue hover:text-white transition-all duration-150"
+            >
+              Moderasi Opinions
+            </Link>
+
             <form action={handleSignOut}>
               <button
                 type="submit"

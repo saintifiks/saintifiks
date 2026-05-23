@@ -78,34 +78,45 @@ export default function Navbar() {
           Saintifiks
         </Link>
 
-        {/* Tombol Masuk / Keluar — hanya tampil di halaman publik */}
-        {!loading && !isHalamanAdmin && (
-          isLoggedIn ? (
-            <button
-              onClick={handleKeluar}
-              aria-label="Keluar"
-              className="transition-colors duration-150 hover:opacity-80"
-            >
-              <span className="inline-flex h-9 w-9 items-center justify-center border border-primary-dark/10 bg-primary-dark text-primary-light transition-all duration-150 rotate-45">
-                <span className="font-libre text-xl font-bold -rotate-45 leading-none">
-                  {userInitial || 'U'}
-                </span>
-              </span>
-            </button>
-          ) : (
-            <button
-              onClick={handleMasuk}
-              disabled={isLoggingIn}
-              className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 disabled:opacity-50 flex items-center gap-1.5"
-            >
-              {isLoggingIn ? (
-                <>Membuka Google...</>
-              ) : (
-                <>Masuk</>
-              )}
-            </button>
-          )
-        )}
+        {/* Navigasi tengah + kanan */}
+        <div className="flex items-center gap-5">
+          {/* Tombol Masuk / Keluar — hanya tampil di halaman publik */}
+          {!loading && !isHalamanAdmin && (
+            isLoggedIn ? (
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/akun"
+                  aria-label="Akun saya"
+                  className="transition-opacity duration-150 hover:opacity-80"
+                >
+                  <span className="inline-flex h-9 w-9 items-center justify-center border border-primary-dark/10 bg-primary-dark text-primary-light transition-all duration-150 rotate-45">
+                    <span className="font-libre text-xl font-bold -rotate-45 leading-none">
+                      {userInitial || 'U'}
+                    </span>
+                  </span>
+                </Link>
+                <button
+                  onClick={handleKeluar}
+                  className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150"
+                >
+                  Keluar
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleMasuk}
+                disabled={isLoggingIn}
+                className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isLoggingIn ? (
+                  <>Membuka Google...</>
+                ) : (
+                  <>Masuk</>
+                )}
+              </button>
+            )
+          )}
+        </div>
 
       </div>
     </nav>

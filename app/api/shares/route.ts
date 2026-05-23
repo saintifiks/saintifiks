@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 
 // GET /api/shares?articleId=xxx - Ambil jumlah share per platform
 // POST /api/shares - Catat share baru (harus login)
@@ -60,12 +61,27 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // [RATE LIMITING] Cegah abuse share — maks 5 per menit per IP
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(
+      `shares:${clientIP}`,
+      RATE_LIMITS.shares.limit,
+      RATE_LIMITS.shares.windowMs
+    )
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Terlalu banyak share. Silakan tunggu sebentar.' },
+        { status: 429 }
+      )
+    }
+
     const supabase = await createClient()
     
-    // Cek session user
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session?.user) {
+    // Cek auth user — getUser() memverifikasi token ke server Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
       return NextResponse.json(
         { error: 'Harus login untuk mencatat share' },
         { status: 401 }
@@ -94,7 +110,7 @@ export async function POST(request: NextRequest) {
       .from('shares')
       .insert({
         article_id,
-        user_id: session.user.id,
+        user_id: user.id,
         platform,
       })
       .select()
