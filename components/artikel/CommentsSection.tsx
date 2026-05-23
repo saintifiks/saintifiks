@@ -1,7 +1,9 @@
 'use client'
 
+// [PERUBAHAN SESI #32] — Refactor ke bottom sheet: CommentButton (icon+count) + bottom sheet konten
+
 import { useState, useEffect } from 'react'
-import { MessageCircle, Send, Loader2, User } from 'lucide-react'
+import { MessageCircle, Send, Loader2, User, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 type Comment = {
@@ -19,22 +21,19 @@ type CommentsSectionProps = {
 
 export default function CommentsSection({ articleId }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingComments, setIsLoadingComments] = useState(true)
   const [newComment, setNewComment] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
-  const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
   const supabase = createClient()
 
   // Fetch comments dan cek login status
   useEffect(() => {
     async function init() {
-      // Fetch comments
       try {
         const res = await fetch(`/api/comments?articleId=${articleId}`)
-        // [FIX] Cek content-type dan status sebelum parse JSON
         const contentType = res.headers.get('content-type')
         if (res.ok && contentType?.includes('application/json')) {
           const data = await res.json()
@@ -45,9 +44,8 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
       } catch (error) {
         console.error('Error fetching comments:', error)
       }
-      setIsLoading(false)
+      setIsLoadingComments(false)
 
-      // Cek session
       try {
         const { data: { session } } = await supabase.auth.getSession()
         setUserId(session?.user?.id || null)
@@ -59,13 +57,30 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
     init()
   }, [articleId, supabase])
 
+  // Kunci scroll body saat bottom sheet terbuka
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
+
   // Submit komentar
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!newComment.trim()) return
 
     if (!userId) {
-      setIsLoginPromptOpen(true)
+      const origin = window.location.origin
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          queryParams: { prompt: 'select_account' },
+          redirectTo: `${origin}${window.location.pathname}`,
+        },
+      })
       return
     }
 
@@ -83,7 +98,6 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
 
       if (res.ok) {
         const data = await res.json()
-        // Tambah komentar baru ke list
         setComments([data.comment, ...comments])
         setNewComment('')
       }
@@ -103,162 +117,165 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
     })
   }
 
-  // Tampilkan 3 komentar pertama saja jika belum expanded
-  const displayedComments = isExpanded ? comments : comments.slice(0, 3)
-
   return (
-    <div className="mt-16 pt-8 border-t border-primary-dark/10">
-      {/* Header dengan icon dan count */}
-      <div className="flex items-center gap-3 mb-6">
-        <MessageCircle size={24} className="text-primary-dark/70" />
-        <h3 className="font-libre text-2xl font-bold text-primary-dark">
-          Komentar
-        </h3>
-        <span className="font-helvetica text-sm text-primary-dark/50 bg-primary-dark/5 px-3 py-1">
-          {comments.length}
-        </span>
-      </div>
+    <>
+      {/* Icon trigger — dirender di dalam toolbar kanan oleh ArticleInteractions */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="flex flex-col items-center gap-1 text-primary-dark/60 hover:text-primary-dark transition-colors duration-150"
+        aria-label="Buka komentar"
+        title="Komentar"
+      >
+        <div className="flex items-center justify-center w-10 h-10 rounded-full border border-primary-dark/30 hover:border-primary-dark transition-colors duration-150">
+          <MessageCircle size={18} />
+        </div>
+        {!isLoadingComments && (
+          <span className="font-helvetica text-xs text-primary-dark/50">
+            {comments.length}
+          </span>
+        )}
+      </button>
 
-      {/* Form komentar */}
-      <form onSubmit={handleSubmit} className="mb-8">
-        <div className="border border-primary-dark/15 focus-within:border-primary-dark transition-colors">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder={userId ? 'Tulis komentar Anda...' : 'Masuk untuk menulis komentar'}
-            disabled={!userId || isSubmitting}
-            className="w-full h-24 font-helvetica p-4 resize-none focus:outline-none disabled:bg-primary-dark/5"
+      {/* Bottom Sheet Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Komentar"
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-primary-dark/40"
+            onClick={() => setIsOpen(false)}
           />
-          <div className="flex items-center justify-between px-4 py-2 border-t border-primary-dark/10">
-            <p className="font-helvetica text-xs text-primary-dark/40">
-              {userId ? 'Komentar akan dipublikasikan' : 'Login dengan Google untuk berkomentar'}
-            </p>
-            <button
-              type="submit"
-              disabled={!newComment.trim() || isSubmitting}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-dark text-primary-light font-helvetica text-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  Mengirim...
-                </>
-              ) : (
-                <>
-                  <Send size={14} />
-                  Kirim
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </form>
 
-      {/* Daftar komentar */}
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-primary-dark/10 animate-pulse" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-32 bg-primary-dark/10 animate-pulse" />
-                <div className="h-16 w-full bg-primary-dark/10 animate-pulse" />
-              </div>
+          {/* Sheet */}
+          <div className="relative bg-primary-light w-full max-h-[85vh] flex flex-col rounded-t-2xl shadow-2xl">
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-primary-dark/20 rounded-full" />
             </div>
-          ))}
-        </div>
-      ) : comments.length === 0 ? (
-        <div className="text-center py-12 border border-primary-dark/10 bg-primary-dark/5">
-          <MessageCircle size={32} className="mx-auto mb-3 text-primary-dark/30" />
-          <p className="font-helvetica text-sm text-primary-dark/50">
-            Belum ada komentar. Jadilah yang pertama!
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {displayedComments.map((comment) => (
-            <div key={comment.id} className="flex gap-4">
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                {comment.user_avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={comment.user_avatar}
-                    alt={comment.user_name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-primary-dark/10 flex items-center justify-center">
-                    <User size={16} className="text-primary-dark/50" />
-                  </div>
-                )}
-              </div>
 
-              {/* Konten komentar */}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-helvetica font-medium text-sm text-primary-dark">
-                    {comment.user_name}
-                  </span>
-                  <span className="font-helvetica text-xs text-primary-dark/40">
-                    {formatDate(comment.created_at)}
-                  </span>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-primary-dark/10">
+              <div className="flex items-center gap-2">
+                <h3 className="font-libre text-lg font-bold text-primary-dark">Komentar</h3>
+                <span className="font-helvetica text-xs text-primary-dark/50 bg-primary-dark/5 px-2 py-0.5">
+                  {comments.length}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 hover:bg-primary-dark/10 rounded-full transition-colors"
+                aria-label="Tutup"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {isLoadingComments ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-3">
+                      <div className="w-9 h-9 rounded-full bg-primary-dark/10 animate-pulse flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-28 bg-primary-dark/10 animate-pulse" />
+                        <div className="h-12 w-full bg-primary-dark/10 animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <p className="font-helvetica text-sm text-primary-dark/80 leading-relaxed">
-                  {comment.content}
-                </p>
-              </div>
+              ) : comments.length === 0 ? (
+                <div className="text-center py-10">
+                  <MessageCircle size={28} className="mx-auto mb-3 text-primary-dark/20" />
+                  <p className="font-helvetica text-sm text-primary-dark/40">
+                    Belum ada komentar. Jadilah yang pertama!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {comments.map((comment) => (
+                    <div key={comment.id} className="flex gap-3">
+                      <div className="flex-shrink-0">
+                        {comment.user_avatar ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={comment.user_avatar}
+                            alt={comment.user_name}
+                            className="w-9 h-9 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-primary-dark/10 flex items-center justify-center">
+                            <User size={14} className="text-primary-dark/50" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-helvetica font-medium text-sm text-primary-dark">
+                            {comment.user_name}
+                          </span>
+                          <span className="font-helvetica text-xs text-primary-dark/40">
+                            {formatDate(comment.created_at)}
+                          </span>
+                        </div>
+                        <p className="font-helvetica text-sm text-primary-dark/80 leading-relaxed">
+                          {comment.content}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
 
-          {/* Tombol "Lihat semua" jika ada lebih dari 3 komentar */}
-          {comments.length > 3 && !isExpanded && (
-            <button
-              onClick={() => setIsExpanded(true)}
-              className="w-full py-3 border border-primary-dark/20 font-helvetica text-sm text-primary-dark/70 hover:bg-primary-dark/5 transition-colors"
-            >
-              Lihat {comments.length - 3} komentar lainnya
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Modal login prompt */}
-      {isLoginPromptOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary-dark/50 p-4">
-          <div className="bg-primary-light max-w-sm w-full p-6 border border-primary-dark/20">
-            <h4 className="font-libre text-lg font-bold text-primary-dark mb-2">
-              Login Diperlukan
-            </h4>
-            <p className="font-helvetica text-sm text-primary-dark/70 mb-4">
-              Silakan login dengan Google untuk menulis komentar.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setIsLoginPromptOpen(false)}
-                className="flex-1 py-2 border border-primary-dark/30 font-helvetica text-sm hover:bg-primary-dark/5 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={async () => {
-                  const origin = window.location.origin
-                  await supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: {
-                      queryParams: { prompt: 'select_account' },
-                      redirectTo: `${origin}${window.location.pathname}`,
-                    },
-                  })
-                }}
-                className="flex-1 py-2 bg-primary-dark text-primary-light font-helvetica text-sm hover:opacity-90 transition-opacity"
-              >
-                Login
-              </button>
+            {/* Form komentar — pinned di bawah */}
+            <div className="border-t border-primary-dark/10 px-5 py-4">
+              <form onSubmit={handleSubmit}>
+                <div className="flex gap-3 items-end">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder={userId ? 'Tulis komentar...' : 'Login untuk berkomentar'}
+                    disabled={isSubmitting}
+                    rows={2}
+                    className="flex-1 font-helvetica text-sm p-3 border border-primary-dark/15 focus:border-primary-dark focus:outline-none resize-none transition-colors"
+                  />
+                  <button
+                    type={userId ? 'submit' : 'button'}
+                    onClick={!userId ? async () => {
+                      const origin = window.location.origin
+                      await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                          queryParams: { prompt: 'select_account' },
+                          redirectTo: `${origin}${window.location.pathname}`,
+                        },
+                      })
+                    } : undefined}
+                    disabled={userId ? (!newComment.trim() || isSubmitting) : false}
+                    className="flex items-center justify-center w-10 h-10 bg-primary-dark text-primary-light hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Send size={16} />
+                    )}
+                  </button>
+                </div>
+                {!userId && (
+                  <p className="font-helvetica text-xs text-primary-dark/40 mt-2">
+                    Login dengan Google untuk berkomentar
+                  </p>
+                )}
+              </form>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

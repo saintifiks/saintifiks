@@ -1,7 +1,7 @@
 'use client'
 
-// Komponen LikeButton — tombol suka artikel dengan optimistic update dan count
-// [PERUBAHAN SESI #30] — Semua operasi likes via API server-side (admin client, bypass RLS)
+// Komponen LikeButton — tombol suka artikel, icon only
+// [PERUBAHAN SESI #32] — Hapus tampilan count, pertahankan pencatatan likes di DB
 
 import { useState, useEffect, useMemo } from 'react'
 import { Heart, Loader2 } from 'lucide-react'
@@ -17,7 +17,6 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [likeCount, setLikeCount] = useState(0)
   
   const pathname = usePathname()
   const supabase = useMemo(() => createClient(), [])
@@ -25,17 +24,8 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
   useEffect(() => {
     async function checkInitialState() {
       try {
-        // Fetch count dan status like secara paralel
-        const [countRes, statusRes] = await Promise.all([
-          fetch(`/api/likes/count?articleId=${articleId}`, { cache: 'no-store', credentials: 'include' }),
-          fetch(`/api/likes?articleId=${articleId}`, { cache: 'no-store', credentials: 'include' }),
-        ])
-
-        if (countRes.ok) {
-          const data = await countRes.json()
-          setLikeCount(data.count || 0)
-        }
-
+        // Fetch status like user (apakah sudah like atau belum)
+        const statusRes = await fetch(`/api/likes?articleId=${articleId}`, { cache: 'no-store', credentials: 'include' })
         if (statusRes.ok) {
           const data = await statusRes.json()
           setIsLiked(data.isLiked || false)
@@ -73,9 +63,8 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       return
     }
 
-    // Optimistic update hanya untuk isLiked (UX responsif), count menunggu server
+    // Optimistic update untuk isLiked (UX responsif)
     const previousState = isLiked
-    const previousCount = likeCount
     setIsLiked(!previousState)
 
     if (!previousState) {
@@ -104,52 +93,36 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
       if (!res.ok) {
         // Rollback jika gagal
         setIsLiked(previousState)
-        setLikeCount(previousCount)
-      } else {
-        const data = await res.json()
-        if (typeof data.count === 'number') {
-          setLikeCount(data.count)
-        }
       }
     } catch (err) {
       console.error('Error toggling like:', err)
       setIsLiked(previousState)
-      setLikeCount(previousCount)
     }
   }
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 border border-primary-dark/10 bg-primary-dark/5 animate-pulse rounded-full"></div>
-        <div className="h-4 w-16 bg-primary-dark/10 animate-pulse"></div>
-      </div>
+      <div className="h-10 w-10 border border-primary-dark/10 bg-primary-dark/5 animate-pulse rounded-full" />
     )
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <button
-        onClick={handleLikeClick}
-        disabled={isLoggingIn}
-        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-150 ${
-          isLiked 
-            ? 'bg-accent-red text-primary-light' 
-            : 'bg-transparent border border-primary-dark/30 text-primary-dark hover:border-accent-red hover:text-accent-red'
-        } disabled:opacity-50`}
-        aria-label={isLiked ? 'Batalkan suka' : 'Sukai artikel'}
-        title={isLiked ? 'Telah disukai' : 'Sukai artikel'}
-      >
-        {isLoggingIn ? (
-          <Loader2 size={18} className="animate-spin" />
-        ) : (
-          <Heart size={18} className={isLiked ? 'fill-current' : ''} />
-        )}
-      </button>
-      
-      <span className="font-helvetica text-sm text-primary-dark/70">
-        {likeCount > 0 ? `${likeCount} suka` : 'Jadilah yang pertama menyukai'}
-      </span>
-    </div>
+    <button
+      onClick={handleLikeClick}
+      disabled={isLoggingIn}
+      className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-150 ${
+        isLiked 
+          ? 'bg-accent-red text-primary-light' 
+          : 'bg-transparent border border-primary-dark/30 text-primary-dark hover:border-accent-red hover:text-accent-red'
+      } disabled:opacity-50`}
+      aria-label={isLiked ? 'Batalkan suka' : 'Sukai artikel'}
+      title={isLiked ? 'Telah disukai' : 'Sukai artikel'}
+    >
+      {isLoggingIn ? (
+        <Loader2 size={18} className="animate-spin" />
+      ) : (
+        <Heart size={18} className={isLiked ? 'fill-current' : ''} />
+      )}
+    </button>
   )
 }
