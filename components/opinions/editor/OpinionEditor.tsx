@@ -4,11 +4,9 @@
 // Split panel: textarea (kiri/atas) + live preview (kanan/bawah)
 // Mobile: tab switch antara Editor dan Preview
 
-import { useState, useRef, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import EditorToolbar from './EditorToolbar'
-import EditorTextarea from './EditorTextarea'
-import OpinionPreview from './OpinionPreview'
+import TipTapEditor from './TipTapEditor'
 import TableWizard from './TableWizard'
 import ImageModal from './ImageModal'
 import ChartWizard from './ChartWizard'
@@ -49,7 +47,6 @@ export default function OpinionEditor({
   const [coverImageUrl, setCoverImageUrl] = useState(initialCoverImageUrl)
   const [charts, setCharts] = useState<ChartConfig[]>(initialCharts)
   const [status, setStatus] = useState(initialStatus)
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor')
 
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -60,31 +57,16 @@ export default function OpinionEditor({
   const [showImageModal, setShowImageModal] = useState(false)
   const [showChartWizard, setShowChartWizard] = useState(false)
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  // Saat TableWizard/ImageModal insert konten, sisipkan di posisi cursor
-  const handleToolbarInsert = useCallback((text: string) => {
-    const ta = textareaRef.current
-    if (!ta) {
-      setContent((prev) => prev + text)
-      return
-    }
-    const start = ta.selectionStart
-    const end = ta.selectionEnd
-    const newContent = content.substring(0, start) + text + content.substring(end)
-    setContent(newContent)
-    setTimeout(() => {
-      ta.focus()
-      const newPos = start + text.length
-      ta.setSelectionRange(newPos, newPos)
-    }, 0)
-  }, [content])
-
-  // Saat ChartWizard selesai — insert placeholder + simpan config chart
-  function handleChartInsert(placeholderMarkdown: string, chartId: string, config: object) {
-    // Tambahkan chart config ke state lokal (akan di-sync ke DB saat save)
+  // Saat ChartWizard selesai — simpan config chart ke state lokal
+  // Insert placeholder ke TipTap dilakukan via window event 'tiptap:insert-chart' di ChartWizard
+  function handleChartInsert(chartId: string, config: object) {
     setCharts((prev) => [...prev, { chart_id: chartId, config }])
-    handleToolbarInsert(placeholderMarkdown)
+  }
+
+  // Saat TableWizard/ImageModal insert teks Markdown — append ke content state
+  // TipTapEditor akan menerima perubahan content via prop initialContent
+  function handleToolbarInsert(text: string) {
+    setContent((prev) => prev + text)
   }
 
   async function saveArticle(): Promise<string | null> {
@@ -277,25 +259,6 @@ export default function OpinionEditor({
           </div>
         </div>
 
-        {/* Tab switch mobile */}
-        <div className="flex border-t border-primary-dark/10 lg:hidden">
-          <button
-            onClick={() => setActiveTab('editor')}
-            className={`flex-1 font-helvetica text-xs uppercase tracking-widest py-2 transition-colors duration-150 ${
-              activeTab === 'editor' ? 'bg-primary-dark text-primary-light' : 'text-primary-dark/40'
-            }`}
-          >
-            Editor
-          </button>
-          <button
-            onClick={() => setActiveTab('preview')}
-            className={`flex-1 font-helvetica text-xs uppercase tracking-widest py-2 transition-colors duration-150 ${
-              activeTab === 'preview' ? 'bg-primary-dark text-primary-light' : 'text-primary-dark/40'
-            }`}
-          >
-            Preview
-          </button>
-        </div>
       </div>
 
       {/* Error mobile */}
@@ -306,10 +269,10 @@ export default function OpinionEditor({
       )}
 
       {/* Body editor */}
-      <div className="flex-1 flex flex-col lg:flex-row max-w-screen-xl mx-auto w-full">
+      <div className="flex-1 flex flex-col max-w-screen-xl mx-auto w-full">
 
-        {/* Panel kiri: metadata + editor */}
-        <div className={`flex-1 flex flex-col border-r border-primary-dark/10 ${activeTab === 'preview' ? 'hidden lg:flex' : 'flex'}`}>
+        {/* Area editor: metadata + TipTap */}
+        <div className="flex-1 flex flex-col">
 
           {/* Metadata artikel */}
           <div className="px-6 pt-6 pb-4 border-b border-primary-dark/10 space-y-3">
@@ -358,24 +321,14 @@ export default function OpinionEditor({
             </details>
           </div>
 
-          {/* Toolbar */}
-          <EditorToolbar
-            textareaRef={textareaRef}
-            onContentChange={setContent}
+          {/* TipTap WYSIWYG Editor — toolbar + area tulis terintegrasi */}
+          <TipTapEditor
+            initialContent={content}
+            onChange={setContent}
             onOpenTableWizard={() => setShowTableWizard(true)}
             onOpenImageModal={() => setShowImageModal(true)}
             onOpenChartWizard={() => setShowChartWizard(true)}
           />
-
-          {/* Textarea */}
-          <div className="flex-1">
-            <EditorTextarea
-              ref={textareaRef}
-              value={content}
-              onChange={setContent}
-              placeholder="Mulai menulis artikel kamu di sini...&#10;&#10;Gunakan Markdown untuk format teks. Toolbar di atas membantu menyisipkan format umum."
-            />
-          </div>
 
           {/* Karakter counter */}
           <div className="px-6 py-2 border-t border-primary-dark/10">
@@ -383,14 +336,6 @@ export default function OpinionEditor({
               {content.length.toLocaleString('id-ID')} / 50.000 karakter
             </span>
           </div>
-        </div>
-
-        {/* Panel kanan: preview */}
-        <div className={`lg:w-[45%] xl:w-[40%] overflow-y-auto ${activeTab === 'editor' ? 'hidden lg:block' : 'block'}`}>
-          <div className="sticky top-0 bg-primary-dark/[0.03] border-b border-primary-dark/10 px-6 py-2">
-            <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Preview</span>
-          </div>
-          <OpinionPreview content={content} charts={charts} />
         </div>
 
       </div>
