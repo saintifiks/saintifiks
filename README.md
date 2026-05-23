@@ -465,12 +465,13 @@ CREATE TRIGGER articles_updated_at
 │   │   ├── trend.ts
 │   │   ├── types.ts
 │   │   └── yahoo.ts
-│   └── supabase/
-│       ├── client.ts                     ← Browser client (anon key)
-│       ├── server.ts                     ← Server client (anon key, with cookies)
-│       ├── admin.ts                      ← Server-only admin client (service_role key) — HANYA UNTUK API ROUTES
-│       └── remark/
-│           └── remarkCallout.ts
+│   ├── supabase/
+│   │   ├── client.ts                     ← Browser client (anon key)
+│   │   ├── server.ts                     ← Server client (anon key, with cookies)
+│   │   ├── admin.ts                      ← Server-only admin client (service_role key)
+│   │   └── remark/
+│   │       └── remarkCallout.ts
+│   └── rate-limit.ts                     ← In-memory rate limiting helper untuk API routes
 │
 ├── .github/workflows/backup.yml
 ├── next.config.mjs
@@ -574,6 +575,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Perbaikan UX Login Google OAuth (account chooser + loading feedback)
 - [x] **Security audit fixes — getUser() vs getSession(), middleware, security headers** ← 24-05-2026
 - [x] **Custom 404 page dan global error boundary** ← 24-05-2026
+- [x] **Rate limiting di API routes — proteksi abuse dengan in-memory store** ← 24-05-2026
 
 ### Post-launch — Beranda & konteks data
 - [x] Widget indeks beranda (fetch otomatis, tanpa hardcode)
@@ -928,6 +930,80 @@ Format pengisian:
                                  dan situs memang tidak dirancang untuk dark mode);
                                  filter CSS manual (tidak mengatasi root cause).
 
+[23-05-2026] KEPUTUSAN: Opinions Platform — platform opini pengguna terpisah dari sistem editorial
+             ALASAN: Memungkinkan pembaca terpilih mempublikasikan artikel opini tanpa mengubah
+                     sistem editorial yang sudah stabil. Dipisahkan secara penuh — tabel DB sendiri,
+                     komponen sendiri, URL sendiri — agar tidak ada risiko kontaminasi ke konten redaksi.
+             KEPUTUSAN TURUNAN:
+               (1) Moderasi Opsi C: artikel opini publish langsung tanpa review — admin bisa takedown.
+               (2) Username permanen setelah dibuat; display_name bisa diubah kapan saja.
+               (3) Slug terkunci (slug_locked=true) setelah artikel pertama kali dipublish.
+               (4) Status artikel: draft | published | hidden.
+               (5) OpinionContentRenderer adalah Server Component BARU — salinan logika ArticleRenderer
+                   tapi terpisah total. ArticleRenderer.tsx TIDAK BOLEH disentuh.
+               (6) Editor: Markdown + toolbar visual (dua panel textarea + live preview).
+                   Preview (OpinionPreview.tsx) adalah Client Component karena digunakan dalam editor.
+               (7) Analitik per penulis dijamin via RLS — setiap penulis hanya bisa membaca data miliknya.
+               (8) Like opinions menggunakan admin client (service_role) untuk bypass RLS — pola sama
+                   dengan sistem likes editorial (keputusan [22-05-2026]).
+             CATATAN IMPLEMENTASI:
+               - 6 tabel baru: user_profiles, opinion_articles, opinion_article_charts,
+                 article_reports, opinion_likes, opinion_analytics_events. RLS aktif di semua.
+               - Storage bucket baru: opinions-gambar (public read, auth write, max 5MB).
+               - 14 API endpoints baru di /api/opinions/, /api/opinion-charts/, /api/admin/opinions/,
+                 /api/user-profiles/.
+               - URL artikel opini: /opinions/[username]/[slug]
+               - URL profil penulis: /penulis/[username]
+               - Dashboard penulis: /akun
+               - Editor tulis baru: /akun/tulis
+               - Editor edit: /akun/artikel/[id]/edit
+               - Moderasi admin: /dashboard/opinions
+             FILE YANG TIDAK BOLEH DISENTUH (tetap berlaku):
+               ArticleRenderer.tsx, ChartBlock.tsx, LikeButton.tsx, CorrectionSection.tsx,
+               app/artikel/[slug]/page.tsx, app/api/analytics/route.ts,
+               app/api/keep-alive/route.ts, lib/indices/, components/widgets/,
+               app/(admin)/dashboard/artikel/
+             ALTERNATIF DITOLAK: Menyatukan dengan sistem editorial (terlalu berisiko merusak
+                                 konten redaksi yang sudah stabil); moderasi pre-publish (menambah
+                                 bottleneck tanpa benefit proporsional di fase awal).
+
+[24-05-2026] KEPUTUSAN: Homepage tab [Saintifiks | Opinions] — dua konten setara di satu halaman
+             ALASAN: Opinions harus berbobot setara dengan konten redaksi — tidak boleh ada
+                     superioritas intelektual antara konten redaksi dan opini pembaca. Tab dua arah
+                     di bawah header beranda adalah cara paling jujur mengekspresikan kesetaraan ini
+                     tanpa mengubah struktur navigasi yang sudah ada.
+             CATATAN IMPLEMENTASI:
+               - Dibuat `components/layout/HomepageTabs.tsx` — Client Component, handle state tab.
+               - Tab sticky `top-[93px]` = IndexStrip (h-9=36px) + Navbar (py-5+text-lg=57px).
+               - Background tab solid `bg-primary-light` agar konten tidak "menembus" saat scroll.
+               - Tab aktif: `border-b-2 border-primary-dark`. Tab non-aktif: `text-primary-dark/40`.
+               - `app/page.tsx` dimodifikasi: fetch paralel `Promise.all` untuk editorial + opinions.
+               - `revalidate` turun dari 3600 → 300 agar sinkron dengan `/opinions`.
+               - `app/page.tsx` dihapus dari daftar file yang tidak boleh disentuh (konfirmasi
+                 pemilik [24-05-2026]).
+             ALTERNATIF DITOLAK: Section opinions di bawah editorial (menempatkan opinions sebagai
+                                 konten sekunder); dua halaman terpisah tanpa hubungan di beranda
+                                 (opinions tidak terlihat untuk pengunjung baru).
+
+[24-05-2026] KEPUTUSAN: Exception library baru — TipTap WYSIWYG untuk editor opinions
+             ALASAN: Editor split panel (textarea kiri + preview kanan) menampilkan sintaks Markdown
+                     mentah (##, **, |||, --) yang mengganggu pengalaman menulis. Penulis seharusnya
+                     fokus pada konten, bukan markup. TipTap + tiptap-markdown memungkinkan WYSIWYG
+                     penuh: penulis melihat hasil render langsung, Markdown tersimpan di background.
+             PACKAGE YANG DITAMBAHKAN:
+               - `@tiptap/react` — core WYSIWYG editor, React-first
+               - `@tiptap/starter-kit` — ekstensi dasar (bold, italic, heading, list, dll)
+               - `tiptap-markdown` — konversi WYSIWYG ↔ Markdown (community, gratis)
+             CATATAN IMPLEMENTASI:
+               - `EditorTextarea.tsx` dan `EditorToolbar.tsx` tidak lagi digunakan oleh OpinionEditor.
+               - Custom Node extension untuk `{{chart:id}}` placeholder — dirender sebagai chip/badge
+                 di editor, dikembalikan ke string asli saat ekspor ke Markdown via renderText().
+               - Output ke DB tetap Markdown — `OpinionContentRenderer.tsx` tidak perlu diubah.
+               - `OpinionPreview.tsx` (live preview lama) tidak lagi digunakan — WYSIWYG menggantikannya.
+             ALTERNATIF DITOLAK: Membangun WYSIWYG sendiri tanpa library (terlalu kompleks, banyak
+                                 edge case pada sinkronisasi kursor); Milkdown (kurang mature,
+                                 custom node lebih sulit).
+
 [23-05-2026] KEPUTUSAN: Toolbar interaksi artikel — icon-only dengan bottom sheet
              ALASAN: Tampilan lama (teks + tombol besar) memakan ruang horizontal dan menyebabkan
                      elemen saling tumpuk di mobile. Like count publik dihapus dari UI untuk
@@ -1201,6 +1277,117 @@ Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Toolbar interaksi artik
 Status akhir: Selesai. Di-push ke feature/interaction-ui-redesign, siap di-review via Vercel Preview.
 Next step: Review visual di Vercel Preview URL → merge ke main jika approved.
 ---
+
+[23-05-2026] SESI #33
+Branch: feature/opinions-platform
+Tujuan sesi: Implementasi Opinions Platform — platform opini pengguna terpisah dari sistem editorial redaksi Saintifiks.
+Yang dikerjakan:
+  [DATABASE & STORAGE]
+  - 6 tabel baru di Supabase (dijalankan manual via SQL Editor oleh pemilik):
+    • `user_profiles` — profil penulis opini (username permanen, display_name, bio, avatar_url)
+    • `opinion_articles` — artikel opini (title, content, slug, status, slug_locked, published_at)
+    • `opinion_article_charts` — chart config per artikel opini
+    • `article_reports` — laporan pelanggaran dari pembaca
+    • `opinion_likes` — likes artikel opini (terpisah dari likes editorial)
+    • `opinion_analytics_events` — analitik mandiri per artikel opini (page_view, scroll depth)
+  - RLS policy aktif di semua 6 tabel.
+  - Storage bucket baru: `opinions-gambar` (public read, auth write, max 5MB, JPEG/PNG/WebP/GIF).
+  - Environment variable baru: `ADMIN_EMAIL=saintifiks@gmail.com` (ditambah di .env.local dan Vercel).
+
+  [API ROUTES — 14 endpoint baru]
+  - `lib/admin-check.ts` — helper verifikasi admin via ADMIN_EMAIL env var
+  - `/api/user-profiles` — GET/POST/PATCH profil penulis
+  - `/api/user-profiles/[username]` — GET profil publik + daftar artikel
+  - `/api/opinions` — GET semua artikel milik user, POST buat draft baru (slug auto-generate)
+  - `/api/opinions/[id]` — GET detail artikel, PATCH update, DELETE (hanya draft)
+  - `/api/opinions/[id]/publish` — POST publish, DELETE tarik ke draft
+  - `/api/opinions/[id]/like` — GET status like, POST tambah like, DELETE unlike
+  - `/api/opinions/[id]/report` — POST laporkan artikel
+  - `/api/opinion-charts` — POST buat chart config
+  - `/api/opinion-charts/[id]` — PATCH update, DELETE hapus chart config
+  - `/api/admin/opinions` — GET semua artikel untuk moderasi admin
+  - `/api/admin/opinions/[id]/hide` — POST hide artikel, DELETE restore
+  - `/api/admin/opinions/reports` — GET semua laporan, PATCH mark reviewed
+  - `/api/opinions/analytics/event` — POST kirim analytics event dari client
+  - `/api/opinions/analytics/summary` — GET tren views 7 hari + statistik per artikel
+
+  [KOMPONEN — 18 file baru di components/opinions/]
+  - Read-only: `OpinionLabel`, `AuthorByline`, `OpinionCard`, `OpinionLikeButton`, `ReportButton`
+  - Render konten: `OpinionContentRenderer` (Server Component, salinan logika ArticleRenderer)
+  - Analitik: `OpinionAnalyticsTracker` (Client Component, tracking page_view + scroll depth)
+  - Dashboard: `OpinionAnalyticsDashboard`, `AkunClient`, `OpinionsModeratorClient`
+  - Editor: `UsernameSetup`, `EditorToolbar`, `EditorTextarea`, `TableWizard`, `ImageModal`,
+    `ChartWizard`, `OpinionPreview`, `OpinionEditorPage`, `OpinionEditor`
+
+  [HALAMAN — 7 halaman baru]
+  - `/opinions` — daftar artikel opini publik (ISR 5 menit)
+  - `/opinions/[username]/[slug]` — halaman artikel opini individual
+  - `/penulis/[username]` — halaman profil publik penulis
+  - `/akun` — dashboard penulis (daftar artikel + analitik)
+  - `/akun/tulis` — editor tulis artikel baru
+  - `/akun/artikel/[id]/edit` — editor edit artikel existing
+  - `/dashboard/opinions` — halaman moderasi admin
+
+  [MODIFIKASI FILE EXISTING]
+  - `components/layout/Navbar.tsx` — tambah link "Opinions" + link avatar ke /akun
+  - `app/(admin)/dashboard/page.tsx` — tambah tombol "Moderasi Opinions"
+
+  [HELPERS]
+  - `lib/editor-helpers.ts` — insertAtCursor, insertFootnote, generateMarkdownTable
+
+Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Opinions Platform — platform opini pengguna terpisah dari sistem editorial".
+Status akhir: Selesai (80%). Build clean (exit code 0, 44 file baru). Di-push ke feature/opinions-platform dan di-merge ke main oleh pemilik.
+Next step: Test end-to-end flow (registrasi username → tulis → publish → like → laporan → moderasi). Catatan dari pemilik: masih ada beberapa hal yang perlu disempurnakan — akan disampaikan di sesi berikutnya.
+---
+
+[24-05-2026] SESI #34
+Branch: feature/homepage-opinions-tab
+Tujuan sesi: Implementasi homepage tab [Saintifiks | Opinions] — menempatkan konten opinions setara dengan konten redaksi di halaman beranda.
+Yang dikerjakan:
+  [FILE BARU]
+  - `components/layout/HomepageTabs.tsx` — Client Component baru untuk tab navigasi homepage.
+    Menampilkan daftar artikel editorial (tab Saintifiks) dan daftar opinions (tab Opinions).
+    Tab sticky top-[93px], background solid primary-light, underline indicator untuk tab aktif.
+
+  [FILE DIMODIFIKASI]
+  - `app/page.tsx` — ditambah import HomepageTabs, fetch paralel Promise.all untuk editorial +
+    opinions, mapping OpinionItem, revalidate 3600→300. Section konten lama diganti HomepageTabs.
+
+Keputusan baru: Lihat Seksi 11 — dua keputusan baru: "Homepage tab [Saintifiks | Opinions]" dan
+               "Exception library baru — TipTap WYSIWYG" (implementasi TipTap di sesi berikutnya).
+Status akhir: Selesai. Build clean (exit code 0). Di-push ke feature/homepage-opinions-tab, di-merge ke main oleh pemilik.
+Next step: Implementasi TipTap WYSIWYG — ganti EditorTextarea + EditorToolbar dengan TipTap + tiptap-markdown + custom node {{chart:id}}.
+---
+
+[24-05-2026] SESI #35
+Branch: feature/tiptap-wysiwyg-editor
+Tujuan sesi: Implementasi TipTap WYSIWYG editor — menggantikan split panel (textarea + live preview) dengan editor WYSIWYG.
+Yang dikerjakan:
+  [FILE BARU]
+  - `components/opinions/editor/TipTapEditor.tsx` — komponen TipTap utama.
+    StarterKit (bold, italic, heading H2/H3, blockquote, list, HR, code, codeBlock),
+    Markdown extension (tiptap-markdown) untuk konversi WYSIWYG ↔ Markdown,
+    Custom Node ChartPlaceholder untuk {{chart:id}} — dirender sebagai chip di editor,
+    dikembalikan ke string {{chart:id}} saat ekspor ke Markdown via renderText().
+    Toolbar terintegrasi di dalam TipTapEditor (bukan komponen terpisah), sticky.
+    Active state pada tombol toolbar (bold/italic/heading/blockquote/list) mengikuti posisi kursor.
+
+  [FILE DIMODIFIKASI]
+  - `components/opinions/editor/OpinionEditor.tsx` — cabut EditorTextarea + EditorToolbar + OpinionPreview,
+    pasang TipTapEditor. Hapus textareaRef, activeTab state, tab switch mobile, panel kanan preview.
+    handleChartInsert tidak lagi menerima placeholderMarkdown — ChartWizard dispatch window event.
+  - `components/opinions/editor/ChartWizard.tsx` — onInsert signature: dari (placeholder, chartId, config)
+    ke (chartId, config). Insert placeholder ke TipTap via window event 'tiptap:insert-chart'.
+
+  [PACKAGE BARU]
+  - @tiptap/react, @tiptap/starter-kit, tiptap-markdown (65 packages total, ~53KB bundle turun dari ~120KB)
+
+Keputusan baru: Tidak ada — sudah tercatat di Seksi 11 sesi #34.
+Status akhir: Selesai. Build clean (exit code 0). Bundle /akun/tulis turun 387KB → 334KB.
+              Di-push ke feature/tiptap-wysiwyg-editor. Siap di-review sebelum merge.
+Next step: Test manual editor di /akun/tulis — coba bold, heading, insert chart, save draft, publish.
+           Jika ada temuan UX, perbaiki sebelum merge ke main.
+---
 ```
 Format:
 [TANGGAL] SESI #N
@@ -1213,6 +1400,35 @@ Next step: [apa yang harus dikerjakan di sesi berikutnya]
 ---
 ```
 
+---
+
+[24-05-2026] SESI #37 — RATE LIMITING IMPLEMENTATION
+Branch: feature/rate-limiting
+Tujuan sesi: Implementasi rate limiting di API routes untuk mencegah abuse dan proteksi quota (T-01, H-02)
+Yang dikerjakan:
+  - Dibuat `lib/rate-limit.ts` — Helper rate limiting in-memory dengan konfigurasi per endpoint.
+    • `checkRateLimit()` — Cek dan increment counter per identifier (IP-based)
+    • `getClientIP()` — Ekstrak IP dari x-forwarded-for header (Vercel/Cloudflare compatible)
+    • `RATE_LIMITS` — Konfigurasi: comments (5/min), likes (20/min), shares (5/min), analytics (30/min)
+  
+  - `app/api/comments/route.ts` — Tambah rate limiting di POST handler (5/menit per IP)
+    • Return 429 Too Many Requests jika limit terlampaui
+    • Sebelum cek auth — rate limit dulu untuk mencegah resource waste
+  
+  - `app/api/likes/route.ts` — Tambah rate limiting di POST dan DELETE (20/menit per IP, shared)
+    • Lebih longgar karena user bisa like/unlike banyak artikel
+    • Hapus console.log debug yang tertinggal (baris 27, 37)
+  
+  - `app/api/shares/route.ts` — Tambah rate limiting di POST (5/menit per IP)
+    • + Fix auth: getSession() → getUser() (masih tertinggal dari sesi #36)
+  
+  - `app/api/analytics/route.ts` — Tambah rate limiting di POST (30/menit per IP)
+    • + Fix auth: getSession() → getUser()
+    • Jika rate limit terlampaui, tetap return 200 (tidak ganggu UX) tapi skip insert
+
+Keputusan baru: Tidak ada keputusan arsitektur baru, ini adalah implementasi teknis dari best practice security.
+Status akhir: Selesai. Build clean (exit code 0). Siap di-push dan merge ke main.
+Next step: Push branch, merge ke main, lanjut ke sisa technical debt (sitemap, dead code cleanup).
 ---
 
 ## 13. REFERENSI & RESOURCE
