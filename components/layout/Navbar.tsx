@@ -80,20 +80,6 @@ export default function Navbar() {
 
         {/* Navigasi tengah + kanan */}
         <div className="flex items-center gap-5">
-          {/* Link Opinions — selalu tampil */}
-          {!isHalamanAdmin && (
-            <Link
-              href="/opinions"
-              className={`font-helvetica text-xs uppercase tracking-widest transition-colors duration-150 ${
-                pathname.startsWith('/opinions') || pathname.startsWith('/penulis')
-                  ? 'text-primary-dark'
-                  : 'text-primary-dark/40 hover:text-primary-dark'
-              }`}
-            >
-              Opinions
-            </Link>
-          )}
-
           {/* Tombol Masuk / Keluar — hanya tampil di halaman publik */}
           {!loading && !isHalamanAdmin && (
             isLoggedIn ? (
