@@ -11,20 +11,7 @@ import {
 import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 import ImageUpload from '@/components/artikel/ImageUpload'
-
-function buatSlug(judul: string): string {
-  return judul
-    .toLowerCase()
-    .replace(/[àáâäãåā]/g, 'a')
-    .replace(/[èéêëē]/g, 'e')
-    .replace(/[ìíîïī]/g, 'i')
-    .replace(/[òóôöõøō]/g, 'o')
-    .replace(/[ùúûüū]/g, 'u')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-}
+import { buatSlug } from '@/lib/slug'
 
 export default function EditArtikelPage() {
   const params = useParams()

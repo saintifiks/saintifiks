@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function Navbar() {
@@ -70,12 +71,12 @@ export default function Navbar() {
       <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
 
         {/* Brand — nama situs, link ke beranda */}
-        <a
+        <Link
           href="/"
           className="font-libre text-lg font-bold text-primary-dark hover:opacity-60 transition-opacity duration-150"
         >
           Saintifiks
-        </a>
+        </Link>
 
         {/* Tombol Masuk / Keluar — hanya tampil di halaman publik */}
         {!loading && !isHalamanAdmin && (
