@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 
 // GET /api/comments?articleId=xxx - Ambil komentar publik
 // POST /api/comments - Tambah komentar (harus login)
@@ -56,6 +57,21 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // [RATE LIMITING] Cegah spam komentar — maks 5 per menit per IP
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(
+      `comments:${clientIP}`,
+      RATE_LIMITS.comments.limit,
+      RATE_LIMITS.comments.windowMs
+    )
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Terlalu banyak komentar. Silakan tunggu sebentar.' },
+        { status: 429 }
+      )
+    }
+
     const supabase = await createClient()
     
     // Cek auth user — getUser() memverifikasi token ke server Supabase

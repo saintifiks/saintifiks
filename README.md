@@ -459,11 +459,13 @@ CREATE TRIGGER articles_updated_at
 │   │   ├── trend.ts
 │   │   ├── types.ts
 │   │   └── yahoo.ts
-│   └── supabase/
-│       ├── client.ts
-│       ├── server.ts
-│       └── remark/
-│           └── remarkCallout.ts
+│   ├── supabase/
+│   │   ├── client.ts                     ← Browser client (anon key)
+│   │   ├── server.ts                     ← Server client (anon key, with cookies)
+│   │   ├── admin.ts                      ← Server-only admin client (service_role key)
+│   │   └── remark/
+│   │       └── remarkCallout.ts
+│   └── rate-limit.ts                     ← In-memory rate limiting helper untuk API routes
 │
 ├── .github/workflows/backup.yml
 ├── next.config.mjs
@@ -533,6 +535,9 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Mekanisme koreksi artikel (publik)
 - [x] Performance audit
 - [x] Perbaikan UX Login Google OAuth (account chooser + loading feedback)
+- [x] **Security audit fixes — getUser() vs getSession(), middleware, security headers** ← 24-05-2026
+- [x] **Custom 404 page dan global error boundary** ← 24-05-2026
+- [x] **Rate limiting di API routes — proteksi abuse dengan in-memory store** ← 24-05-2026
 
 ### Post-launch — Beranda & konteks data
 - [x] Widget indeks beranda (fetch otomatis, tanpa hardcode)
@@ -1266,6 +1271,35 @@ Next step: [apa yang harus dikerjakan di sesi berikutnya]
 ---
 ```
 
+---
+
+[24-05-2026] SESI #37 — RATE LIMITING IMPLEMENTATION
+Branch: feature/rate-limiting
+Tujuan sesi: Implementasi rate limiting di API routes untuk mencegah abuse dan proteksi quota (T-01, H-02)
+Yang dikerjakan:
+  - Dibuat `lib/rate-limit.ts` — Helper rate limiting in-memory dengan konfigurasi per endpoint.
+    • `checkRateLimit()` — Cek dan increment counter per identifier (IP-based)
+    • `getClientIP()` — Ekstrak IP dari x-forwarded-for header (Vercel/Cloudflare compatible)
+    • `RATE_LIMITS` — Konfigurasi: comments (5/min), likes (20/min), shares (5/min), analytics (30/min)
+  
+  - `app/api/comments/route.ts` — Tambah rate limiting di POST handler (5/menit per IP)
+    • Return 429 Too Many Requests jika limit terlampaui
+    • Sebelum cek auth — rate limit dulu untuk mencegah resource waste
+  
+  - `app/api/likes/route.ts` — Tambah rate limiting di POST dan DELETE (20/menit per IP, shared)
+    • Lebih longgar karena user bisa like/unlike banyak artikel
+    • Hapus console.log debug yang tertinggal (baris 27, 37)
+  
+  - `app/api/shares/route.ts` — Tambah rate limiting di POST (5/menit per IP)
+    • + Fix auth: getSession() → getUser() (masih tertinggal dari sesi #36)
+  
+  - `app/api/analytics/route.ts` — Tambah rate limiting di POST (30/menit per IP)
+    • + Fix auth: getSession() → getUser()
+    • Jika rate limit terlampaui, tetap return 200 (tidak ganggu UX) tapi skip insert
+
+Keputusan baru: Tidak ada keputusan arsitektur baru, ini adalah implementasi teknis dari best practice security.
+Status akhir: Selesai. Build clean (exit code 0). Siap di-push dan merge ke main.
+Next step: Push branch, merge ke main, lanjut ke sisa technical debt (sitemap, dead code cleanup).
 ---
 
 ## 13. REFERENSI & RESOURCE
