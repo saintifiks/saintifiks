@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 
 // GET /api/comments?articleId=xxx - Ambil komentar publik
 // POST /api/comments - Tambah komentar (harus login)
@@ -56,12 +57,28 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // [RATE LIMITING] Cegah spam komentar — maks 5 per menit per IP
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(
+      `comments:${clientIP}`,
+      RATE_LIMITS.comments.limit,
+      RATE_LIMITS.comments.windowMs
+    )
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Terlalu banyak komentar. Silakan tunggu sebentar.' },
+        { status: 429 }
+      )
+    }
+
     const supabase = await createClient()
     
-    // Cek session user
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session?.user) {
+    // Cek auth user — getUser() memverifikasi token ke server Supabase
+    // Jangan pakai getSession() karena tidak memvalidasi token (hanya baca cookie)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
       return NextResponse.json(
         { error: 'Harus login untuk mengirim komentar' },
         { status: 401 }
@@ -83,7 +100,7 @@ export async function POST(request: NextRequest) {
       .from('comments')
       .insert({
         article_id,
-        user_id: session.user.id,
+        user_id: user.id,
         content: content.trim(),
       })
       .select('id, content, created_at, user_id')

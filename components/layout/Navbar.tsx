@@ -71,12 +71,12 @@ export default function Navbar() {
       <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
 
         {/* Brand — nama situs, link ke beranda */}
-        <a
+        <Link
           href="/"
           className="font-libre text-lg font-bold text-primary-dark hover:opacity-60 transition-opacity duration-150"
         >
           Saintifiks
-        </a>
+        </Link>
 
         {/* Navigasi tengah + kanan */}
         <div className="flex items-center gap-5">

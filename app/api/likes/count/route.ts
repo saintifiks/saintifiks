@@ -17,17 +17,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    console.log('[/api/likes/count] SERVICE_ROLE_KEY ada?', !!serviceKey, '| prefix:', serviceKey?.substring(0, 20))
-
     const supabase = createAdminClient()
 
     const { count, error } = await supabase
       .from('likes')
       .select('*', { count: 'exact', head: true })
       .eq('article_id', articleId)
-
-    console.log('[/api/likes/count] articleId:', articleId, '| count:', count, '| error:', JSON.stringify(error))
 
     if (error) {
       console.error('Error fetching likes count:', error)
