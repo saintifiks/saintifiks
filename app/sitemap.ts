@@ -49,5 +49,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  return [...staticPages, ...articleUrls]
+  // Fetch published opinions articles
+  const { data: opinions, error: opinionsError } = await supabase
+    .from('opinion_articles')
+    .select('slug, updated_at, user_profiles!opinion_articles_author_id_fkey(username)')
+    .eq('status', 'published')
+    .order('updated_at', { ascending: false })
+
+  if (opinionsError) {
+    console.error('[Sitemap] Error fetching opinions:', opinionsError)
+    return [...staticPages, ...articleUrls]
+  }
+
+  const opinionUrls: MetadataRoute.Sitemap = (opinions || [])
+    .filter((o) => {
+      const profile = Array.isArray(o.user_profiles) ? o.user_profiles[0] : o.user_profiles
+      return profile && (profile as { username: string }).username
+    })
+    .map((o) => {
+      const profile = Array.isArray(o.user_profiles) ? o.user_profiles[0] : o.user_profiles
+      const username = (profile as { username: string }).username
+      return {
+        url: `${baseUrl}/opinions/${username}/${o.slug}`,
+        lastModified: new Date(o.updated_at),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }
+    })
+
+  return [...staticPages, ...articleUrls, ...opinionUrls]
 }

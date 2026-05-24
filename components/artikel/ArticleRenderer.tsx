@@ -6,6 +6,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import dynamic from 'next/dynamic'
 import remarkCallout from '@/lib/supabase/remark/remarkCallout'
 
@@ -28,6 +29,21 @@ const CALLOUT_CONFIG: Record<string, { label: string; borderClass: string; bgCla
   tip:       { label: 'Tips',      borderClass: 'border-green-600',    bgClass: 'bg-green-50',       labelClass: 'text-green-700'    },
 }
 
+// Custom sanitize schema: extend defaultSchema untuk izinkan class, id, dan data-* attributes
+// Diperlukan agar chart placeholder (div.saintifiks-chart#id) dan callout (data-callout-type)
+// tidak dihapus oleh sanitizer — sambil tetap memblokir script/event handlers berbahaya
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    '*': [...(defaultSchema.attributes?.['*'] ?? []), 'className', 'id'],
+    div: [...(defaultSchema.attributes?.['div'] ?? []), 'className', 'id', 'dataCalloutType'],
+    blockquote: [...(defaultSchema.attributes?.['blockquote'] ?? []), 'dataCalloutType'],
+    code: [...(defaultSchema.attributes?.['code'] ?? []), 'className'],
+    span: [...(defaultSchema.attributes?.['span'] ?? []), 'className'],
+  },
+}
+
 export default function ArticleRenderer({ content, charts }: ArticleRendererProps) {
   // Regex Replacement: Mengubah token AI menjadi HTML statis block-level sebelum diproses parser
   const processedContent = content.replace(
@@ -39,7 +55,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
     <div className="article-content prose prose-lg max-w-none font-libre text-primary-dark">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath, remarkCallout]}
-        rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex, rehypeHighlight]}
         components={{
           h1: ({ children }) => <h1 className="font-libre text-3xl font-bold text-primary-dark mt-12 mb-6 leading-tight">{children}</h1>,
           h2: ({ children }) => <h2 className="font-libre text-2xl font-bold text-primary-dark mt-10 mb-4 leading-tight">{children}</h2>,

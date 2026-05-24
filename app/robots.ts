@@ -12,6 +12,7 @@ export default function robots(): MetadataRoute.Robots {
         '/api/',          // API routes (bukan untuk indexing)
         '/login',         // Halaman login
         '/akun/tulis',    // Halaman tulis opini
+        '/akun/artikel/', // Halaman edit artikel individual
       ],
     },
     sitemap: `${baseUrl}/sitemap.xml`,

@@ -4,26 +4,10 @@
 // DELETE — menghapus artikel (hanya draft)
 
 import { NextRequest, NextResponse } from 'next/server'
+import { generateSlug } from '@/lib/slug'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
-
-// Generate slug dari judul artikel
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[àáâãäå]/g, 'a')
-    .replace(/[èéêë]/g, 'e')
-    .replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o')
-    .replace(/[ùúûü]/g, 'u')
-    .replace(/[ñ]/g, 'n')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .substring(0, 100)
-}
 
 // GET — detail artikel + chart configs
 export async function GET(

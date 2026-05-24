@@ -9,6 +9,13 @@ import { NextResponse } from 'next/server'
 const CRON_SECRET = process.env.CRON_SECRET
 
 export async function GET(request: Request) {
+  // Guard: jika CRON_SECRET tidak di-set di env vars, tolak semua request
+  // Ini mencegah "Bearer undefined" loophole dan memaksa konfigurasi yang benar
+  if (!CRON_SECRET) {
+    console.error('[Keep-Alive] CRON_SECRET tidak di-set di environment variables!')
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  }
+
   // Verifikasi bahwa yang memanggil adalah Vercel Cron (bukan orang random)
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${CRON_SECRET}`) {

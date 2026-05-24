@@ -169,7 +169,7 @@ export default function TipTapEditor({
     editor.isActive(type, attrs)
 
   const btnClass = (active: boolean) =>
-    `flex items-center justify-center w-8 h-8 rounded transition-colors duration-100 ${
+    `flex items-center justify-center w-8 h-8 rounded transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
       active
         ? 'bg-primary-dark text-primary-light'
         : 'text-primary-dark/50 hover:text-primary-dark hover:bg-primary-dark/5'

@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,19 @@ const VALID_EVENTS = ['page_view', 'scroll_25', 'scroll_50', 'scroll_75', 'scrol
 
 export async function POST(request: NextRequest) {
   try {
+    // [RATE LIMITING] Cegah abuse analytics opinions — maks 30 per menit per IP
+    // Return 200 agar tidak ganggu UX pembaca — sama seperti /api/analytics
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(
+      `opinions_analytics:${clientIP}`,
+      RATE_LIMITS.analytics.limit,
+      RATE_LIMITS.analytics.windowMs
+    )
+
+    if (!rateLimit.success) {
+      return NextResponse.json({ success: true })
+    }
+
     const body = await request.json()
     const opinionArticleId = typeof body.opinion_article_id === 'string' ? body.opinion_article_id.trim() : ''
     const eventType = typeof body.event_type === 'string' ? body.event_type.trim() : ''
