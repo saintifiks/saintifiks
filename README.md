@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 1.3 | Status: Live | Terakhir diperbarui: 2026-05-25
+> Versi: 1.4 | Status: Live | Terakhir diperbarui: 2026-05-25
+>
+> Perubahan v1.4: Penambahan library (rehype-sanitize, json5, TipTap) ke Seksi 5; formatting konsisten di Seksi 11; cleanup file legacy
 
 ---
 
@@ -123,7 +125,9 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 | Auth pembaca | Supabase Auth + Google OAuth | Login via Google; tidak perlu buat akun baru; Supabase menangani seluruh flow; saat pengguna login, tombol keluar digantikan ikon belah ketupat dengan huruf inisial nama |
 | Editor artikel admin | Markdown teks biasa | Resolved — lihat Seksi 11 untuk alasan lengkap |
 | Konten format | Markdown dengan chart placeholder | `{{chart:chart-id}}` — Next.js parsing dan render keduanya |
-| Markdown renderer | react-markdown + remark-gfm + remark-math + rehype-katex + rehype-highlight | Tabel GFM, formula LaTeX, syntax highlighting — ekosistem standar, client-side |
+| Markdown renderer | react-markdown + remark-gfm + remark-math + rehype-katex + rehype-highlight + rehype-raw + rehype-sanitize | Tabel GFM, formula LaTeX, syntax highlighting, XSS protection — ekosistem standar, client-side |
+| JSON parser toleran | json5 | Parser JSON yang menoleransi cacat sintaks dari output AI (trailing comma, unquoted keys) untuk config chart |
+| WYSIWYG editor (Opinions) | @tiptap/react + @tiptap/starter-kit + tiptap-markdown | Editor visual untuk platform Opinions dengan output Markdown — lihat Seksi 11 |
 
 ### Batasan Free Tier yang Harus Diperhatikan
 
@@ -713,6 +717,7 @@ Format pengisian:
 [Pra-dev] KEPUTUSAN: Cron job keep-alive adalah implementasi hari pertama
            ALASAN: Supabase free tier hibernasi setelah 7 hari tidak aktif; kehilangan database adalah risiko eksistensial untuk proyek
            CATATAN IMPLEMENTASI: Vercel Cron Job yang query ringan ke endpoint /api/keep-alive setiap 3 hari
+
 [19-05-2026] KEPUTUSAN: File kode yang mengandung tag <a wajib dibuat via artifact download
              ALASAN: Browser Claude merender tag <a sebagai HTML sungguhan saat copy-paste,
              sehingga tag itu hilang dari kode sebelum sampai ke file. Ini menyebabkan
@@ -722,6 +727,7 @@ Format pengisian:
              Jangan pernah instruksikan copy-paste kode JSX yang mengandung <a dari chat.
              ALTERNATIF DITOLAK: Copy-paste dari chat (terbukti gagal), PowerShell Set-Content
              here-string (terbukti juga memakan tag <a dalam kondisi tertentu)
+
 [20-05-2026] KEPUTUSAN: Navbar diubah dari Server Component menjadi Client Component
              ALASAN: Perlu mengecek status sesi login pembaca secara real-time untuk
              menampilkan tombol Masuk/Keluar yang sesuai. Server Component tidak bisa
@@ -731,11 +737,13 @@ Format pengisian:
              Setelah Keluar, pembaca diarahkan ke beranda (/). Tombol Masuk meneruskan
              URL halaman saat ini via parameter ?next= agar pembaca kembali ke artikel
              yang sedang dibaca setelah OAuth selesai.
+
 [20-05-2026] KEPUTUSAN: Menggunakan `queryParams: { prompt: 'select_account' }` pada signInWithOAuth
              ALASAN: Meningkatkan transparansi dan kejelasan saat login Google, terutama ketika browser hanya punya satu akun. Memberi 
              pengalaman yang lebih sesuai ekspektasi pengguna modern (account chooser).
              ALTERNATIF DITOLAK: prompt langsung di options (TypeScript error) dan tidak menggunakan prompt sama sekali (UX kurang jelas)
              CATATAN IMPLEMENTASI: Diterapkan di Navbar.tsx dan LikeButton.tsx untuk konsistensi seluruh flow login pembaca.
+
 [20-05-2026] KEPUTUSAN: Advanced Markdown Renderer menggunakan remark-gfm + remark-math
                         + rehype-katex + rehype-highlight
              ALASAN: Library ini adalah ekosistem standar untuk fitur tabel GFM, formula
@@ -858,45 +866,53 @@ Format pengisian:
                            Tidak ada library tambahan — hanya window.scrollTo(0,0).
              ALTERNATIF DITOLAK: CSS scroll-behavior (tidak bisa dikontrol per navigasi);
                                  solusi di masing-masing page.tsx (duplikasi, tidak terpusat).
+
 [22-05-2026] KEPUTUSAN: Social Interaction Icons menggunakan lucide-react
              ALASAN: Keperluan icon yang konsisten dan modern untuk Like (Heart), Share (Share2),
                      dan Correction (AlertCircle). lucide-react adalah library icon yang ringan,
                      tree-shakeable, dan actively maintained.
              CATATAN IMPLEMENTASI: Tidak menambah dependency berat — bundle hanya include icon yang digunakan.
              ALTERNATIF DITOLAK: SVG manual (maintenance burden tinggi), react-icons (bundle lebih besar).
+
 [22-05-2026] KEPUTUSAN: ShareButton dengan html-to-image untuk Instagram Story
              ALASAN: Kebutuhan generate gambar 1080x1920 secara client-side untuk dibagikan ke
                      Instagram Story tanpa perlu server-side rendering atau storage.
              CATATAN IMPLEMENTASI: html-to-image ringan, output PNG/Canvas, tidak perlu server.
              ALTERNATIF DITOLAK: html2canvas (lebih berat), puppeteer SSR (quota mahal).
+
 [22-05-2026] KEPUTUSAN: Comments Section — privacy-first dengan nama "Pembaca"
              ALASAN: Menghindari expose data pribadi user (real name/avatar) dari auth.users.
                      Tabel auth.users tidak bisa di-join via API dengan anon key.
              CATATAN IMPLEMENTASI: Display "Pembaca" untuk semua komentar. Simpan user_id di DB
                      untuk moderasi/admin purposes saja.
              ALTERNATIF DITOLAK: Join ke auth.users (tidak bisa dengan anon key), expose real name.
+
 [22-05-2026] KEPUTUSAN: ArticleInteractions sebagai Client Component wrapper
              ALASAN: Mengisolasi seluruh section interaksi (Like, Share, Comments) dalam satu
                      Client Component agar error di satu bagian tidak merusak artikel.
              CATATAN IMPLEMENTASI: Wrapper memanggil LikeButton, ShareButton, CommentsSection, CorrectionSection.
              ALTERNATIF DITOLAK: Masing-masing di page.tsx (error satu komponen = crash seluruh halaman).
+
 [22-05-2026] KEPUTUSAN: Supabase query `.maybeSingle()` bukan `.single()` untuk likes
              ALASAN: `.single()` throw error 406 jika 0 rows (user belum like). `.maybeSingle()`
                      return `null` gracefully — lebih aman untuk client-side check.
              CATATAN IMPLEMENTASI: Dipakai di LikeButton.tsx untuk cek status like user.
              ALTERNATIF DITOLAK: `.single()` dengan try-catch (lebih verbose, tidak idiomatic).
+
 [22-05-2026] KEPUTUSAN: Error handling dengan try-catch di Client Components
              ALASAN: Mencegah satu error (misal: API fail, network issue) menghancurkan seluruh UI.
                      User tetap bisa baca artikel meski fitur interaksi error.
              CATATAN IMPLEMENTASI: Wrap Supabase calls dan fetch dengan try-catch, log error ke console,
                      fallback UI jika perlu.
              ALTERNATIF DITOLAK: Error boundary React (lebih kompleks), biarkan crash (UX buruk).
+
 [22-05-2026] KEPUTUSAN: ISR revalidate = 3600 untuk halaman artikel
              ALASAN: Hemat Supabase quota dengan cache 1 jam. Artikel jarang berubah setelah publish.
                      Koreksi dan interaksi tetap real-time via Client Components.
              CATATAN IMPLEMENTASI: `export const revalidate = 3600` di page.tsx. Jika urgent update,
                      redeploy manual via Vercel dashboard.
              ALTERNATIF DITOLAK: `dynamic = 'force-dynamic'` (boros quota, tidak perlu untuk artikel static).
+
 [22-05-2026] KEPUTUSAN: Semua operasi likes via API server-side (admin client, bypass RLS)
              ALASAN: Insert langsung dari client (anon key) dan count via server anon key
                      keduanya terblokir RLS — likes user lain tidak terbaca, insert bisa gagal.
