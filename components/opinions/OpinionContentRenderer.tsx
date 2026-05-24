@@ -10,6 +10,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
+import rehypeSanitize from 'rehype-sanitize'
 import dynamic from 'next/dynamic'
 import remarkCallout from '@/lib/supabase/remark/remarkCallout'
 
@@ -43,7 +44,7 @@ export default function OpinionContentRenderer({ content, charts }: OpinionConte
     <div className="article-content prose prose-lg max-w-none font-libre text-primary-dark">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath, remarkCallout]}
-        rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeKatex, rehypeHighlight]}
         components={{
           h1: ({ children }) => <h1 className="font-libre text-3xl font-bold text-primary-dark mt-12 mb-6 leading-tight">{children}</h1>,
           h2: ({ children }) => <h2 className="font-libre text-2xl font-bold text-primary-dark mt-10 mb-4 leading-tight">{children}</h2>,
