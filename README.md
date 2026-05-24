@@ -1,7 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 1.4 | Status: Live | Terakhir diperbarui: 2026-05-25
+> Versi: 1.5 | Status: Live | Terakhir diperbarui: 2026-05-25
 >
-> Perubahan v1.4: Penambahan library (rehype-sanitize, json5, TipTap) ke Seksi 5; formatting konsisten di Seksi 11; cleanup file legacy
+> Perubahan v1.5: Comprehensive Security & Tech Debt Audit — rate limiting opinions analytics, rehype-sanitize di ArticleRenderer, CRON_SECRET guard, Navbar useMemo+onAuthStateChange, avatar URL validation, generateSlug DRY refactor, KaTeX CSS scope, sitemap opinions, robots disallow, TipTap focus-visible, debug cleanup
 
 ---
 
@@ -128,6 +128,7 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 | Markdown renderer | react-markdown + remark-gfm + remark-math + rehype-katex + rehype-highlight + rehype-raw + rehype-sanitize | Tabel GFM, formula LaTeX, syntax highlighting, XSS protection — ekosistem standar, client-side |
 | JSON parser toleran | json5 | Parser JSON yang menoleransi cacat sintaks dari output AI (trailing comma, unquoted keys) untuk config chart |
 | WYSIWYG editor (Opinions) | @tiptap/react + @tiptap/starter-kit + tiptap-markdown | Editor visual untuk platform Opinions dengan output Markdown — lihat Seksi 11 |
+| Rate limiting | In-memory Map (lib/rate-limit.ts) | IP-based rate limiting per endpoint; trade-off: tidak persisten antar serverless invocation — acceptable untuk free tier |
 
 ### Batasan Free Tier yang Harus Diperhatikan
 
@@ -405,6 +406,7 @@ CREATE TRIGGER articles_updated_at
 │   ├── not-found.tsx                     ← Custom 404 page (bukan default Next.js)
 │   ├── error.tsx                         ← Global error boundary
 │   ├── artikel/
+│   │   ├── layout.tsx                    ← KaTeX + highlight.js CSS (hanya dimuat di halaman artikel)
 │   │   └── [slug]/
 │   │       └── page.tsx                  ← Halaman artikel publik
 │   ├── (admin)/
@@ -421,8 +423,14 @@ CREATE TRIGGER articles_updated_at
 │   │       └── route.ts                  ← OAuth callback dengan validasi redirect
 │   ├── login/
 │   │   └── page.tsx
-│   ├── sitemap.ts                        ← Dynamic sitemap untuk SEO (ISR 24h)
-│   ├── robots.ts                         ← Robots.txt konfigurasi crawler
+│   ├── sitemap.ts                        ← Dynamic sitemap untuk SEO (ISR 24h) — mencakup editorial + opinions
+│   ├── robots.ts                         ← Robots.txt konfigurasi crawler (disallow: admin, api, login, akun/tulis, akun/artikel/)
+│   ├── opinions/
+│   │   ├── layout.tsx                    ← KaTeX + highlight.js CSS (hanya dimuat di halaman opinions)
+│   │   ├── page.tsx                      ← Daftar artikel opini publik
+│   │   └── [username]/
+│   │       └── [slug]/
+│   │           └── page.tsx              ← Halaman artikel opini individual (generateMetadata lengkap)
 │   └── api/
 │       ├── analytics/
 │       │   └── route.ts                  ← POST analytics events (gunakan getUser() bukan getSession())
@@ -436,8 +444,28 @@ CREATE TRIGGER articles_updated_at
 │       │   └── route.ts                  ← POST tracking share (gunakan getUser() bukan getSession())
 │       ├── indices/
 │       │   └── route.ts                  ← Polling data strip indeks (force-dynamic)
-│       └── keep-alive/
-│           └── route.ts                  ← Cron job mencegah hibernasi Supabase
+│       ├── keep-alive/
+│       │   └── route.ts                  ← Cron job mencegah hibernasi Supabase (CRON_SECRET guard)
+│       ├── opinions/
+│       │   ├── route.ts                  ← GET daftar artikel user, POST buat draft
+│       │   ├── analytics/
+│       │   │   ├── event/route.ts        ← POST analytics event (rate limited 30/min)
+│       │   │   └── summary/route.ts      ← GET statistik per artikel
+│       │   └── [id]/
+│       │       ├── route.ts              ← GET/PATCH/DELETE artikel
+│       │       ├── publish/route.ts      ← POST publish, DELETE tarik ke draft
+│       │       ├── like/route.ts         ← GET/POST/DELETE like opinions
+│       │       └── report/route.ts       ← POST laporkan artikel
+│       ├── opinion-charts/
+│       │   └── [id]/route.ts             ← PATCH/DELETE chart config
+│       ├── admin/
+│       │   └── opinions/
+│       │       ├── route.ts              ← GET semua artikel untuk moderasi
+│       │       ├── reports/route.ts      ← GET laporan, PATCH mark reviewed
+│       │       └── [id]/hide/route.ts    ← POST hide, DELETE restore
+│       └── user-profiles/
+│           ├── route.ts                  ← GET/POST/PATCH profil penulis
+│           └── [username]/route.ts       ← GET profil publik + daftar artikel
 │
 ├── components/
 │   ├── layout/
@@ -459,6 +487,24 @@ CREATE TRIGGER articles_updated_at
 │   │   ├── ShareButton.tsx
 │   │   ├── CommentsSection.tsx
 │   │   └── ImageUpload.tsx
+│   ├── opinions/
+│   │   ├── OpinionContentRenderer.tsx    ← Server Component — render Markdown opinions (rehypeRaw+Sanitize+KaTeX)
+│   │   ├── OpinionLabel.tsx              ← Badge "Opinions"
+│   │   ├── AuthorByline.tsx              ← Byline penulis + tanggal
+│   │   ├── OpinionCard.tsx               ← Card preview artikel di listing
+│   │   ├── OpinionLikeButton.tsx         ← Like button untuk opinions
+│   │   ├── ReportButton.tsx              ← Tombol lapor konten
+│   │   ├── OpinionAnalyticsTracker.tsx   ← Analytics tracker per artikel opinions
+│   │   ├── OpinionAnalyticsDashboard.tsx ← Dashboard analitik penulis
+│   │   ├── AkunClient.tsx                ← Dashboard utama penulis (/akun)
+│   │   ├── OpinionsModeratorClient.tsx   ← UI moderasi admin
+│   │   └── editor/
+│   │       ├── TipTapEditor.tsx          ← WYSIWYG utama (StarterKit+Markdown+ChartPlaceholder)
+│   │       ├── OpinionEditor.tsx         ← Wrapper editor + save/publish logic
+│   │       ├── ChartWizard.tsx           ← Wizard insert chart ke editor
+│   │       ├── ImageModal.tsx            ← Modal upload gambar
+│   │       ├── TableWizard.tsx           ← Wizard insert tabel Markdown
+│   │       └── UsernameSetup.tsx         ← Form setup username pertama kali
 │   └── analytics/
 │       └── AnalyticsTracker.tsx
 │
@@ -493,7 +539,7 @@ CREATE TRIGGER articles_updated_at
 
 | File/Folder | Alasan |
 |-------------|--------|
-| `ArticleRenderer.tsx` | Server Component murni — perubahan bisa merusak performa atau parsing Markdown |
+| `ArticleRenderer.tsx` | Server Component murni — sentuh hanya untuk perbaikan kritis yang terverifikasi |
 | `ChartBlock.tsx` | SSR/Client boundary sudah di-tune — risiko crash |
 | `LikeButton.tsx` | Sistem likes sudah fix 3 kali — sangat sensitif terhadap RLS |
 | `CorrectionSection.tsx` | Bagian dari interaksi artikel yang sudah stabil |
@@ -510,6 +556,7 @@ Terdapat 3 jenis Supabase client — **jangan pernah salah pakai**:
 
 1. **`lib/supabase/client.ts`** → Browser/Client Component (anon key)
    - Gunakan di: `'use client'` components
+   - **Wajib:** bungkus dalam `useMemo(() => createClient(), [])` — jangan panggil langsung di body komponen
    - Jangan gunakan untuk: Operasi likes (terblokir RLS)
 
 2. **`lib/supabase/server.ts`** → Server Component & API routes (anon key with cookie handling)
@@ -717,6 +764,8 @@ Format pengisian:
 [Pra-dev] KEPUTUSAN: Cron job keep-alive adalah implementasi hari pertama
            ALASAN: Supabase free tier hibernasi setelah 7 hari tidak aktif; kehilangan database adalah risiko eksistensial untuk proyek
            CATATAN IMPLEMENTASI: Vercel Cron Job yang query ringan ke endpoint /api/keep-alive setiap 3 hari
+           PERHATIAN KRITIS: CRON_SECRET env var WAJIB di-set di Vercel dashboard. Jika tidak, route handler
+           akan return 500 (bukan bypass) — database tidak akan di-ping dan bisa hibernate.
 
 [19-05-2026] KEPUTUSAN: File kode yang mengandung tag <a wajib dibuat via artifact download
              ALASAN: Browser Claude merender tag <a sebagai HTML sungguhan saat copy-paste,
@@ -751,8 +800,9 @@ Format pengisian:
                      tidak bergantung layanan pihak ketiga; bundle naik ~130KB (KaTeX ~100KB,
                      highlight.js ~30KB) — masih dalam batas aman free tier Vercel
              ALTERNATIF DITOLAK: Prism.js (lebih besar), MathJax (lebih berat dari KaTeX)
-             CATATAN IMPLEMENTASI: CSS KaTeX dan highlight.js diimport di app/layout.tsx
-                                   setelah globals.css
+             CATATAN IMPLEMENTASI: CSS KaTeX dan highlight.js diimport di app/artikel/layout.tsx
+                                   dan app/opinions/layout.tsx — TIDAK di root layout.tsx.
+                                   Ini menghemat ~70KB per load halaman non-artikel (beranda, akun, dll).
 
 [20-05-2026] KEPUTUSAN: Callout box didefer — tidak diimplementasikan di Sesi #17
              ALASAN: Dua masalah teknis fundamental: (1) react-markdown v10 tidak lagi
@@ -1524,10 +1574,61 @@ Branch: feature/complete-audit-cleanup
 Ringkasan: Sitemap, robots.txt, slug refactor, navbar Link fix
 Status: Selesai & merged — lihat detail di baris 1293 dokumen ini.
 
-[25-05-2026] SESI #39 — XSS PROTECTION (REHYPE-SANITIZE)  
+[25-05-2026] SESI #39 — XSS PROTECTION (REHYPE-SANITIZE)
 Branch: feature/rehype-sanitize
 Ringkasan: Install rehype-sanitize untuk proteksi XSS konten Opinions
 Status: Selesai & merged — lihat detail di baris 1328 dokumen ini.
+
+[25-05-2026] SESI #40 — COMPREHENSIVE SECURITY & TECH DEBT AUDIT
+Branch: feature/audit-fixes
+Tujuan sesi: Menyelesaikan semua temuan dari laporan audit komprehensif Saintifiks.
+Yang dikerjakan:
+  [KEAMANAN — KRITIS]
+  - `app/api/opinions/analytics/event/route.ts` — Tambah rate limiting (30/min per IP)
+    • Import checkRateLimit, getClientIP, RATE_LIMITS dari lib/rate-limit
+    • Return 200 jika rate limit terlampaui (tidak ganggu UX) — konsisten dengan /api/analytics
+  - `components/artikel/ArticleRenderer.tsx` — Tambah rehype-sanitize dengan custom schema
+    • Import rehypeSanitize, defaultSchema dari rehype-sanitize
+    • Custom sanitizeSchema: izinkan className, id, dataCalloutType pada div/blockquote
+    • Pipeline: rehypeRaw → [rehypeSanitize, sanitizeSchema] → rehypeKatex → rehypeHighlight
+    • Ini adalah defense-in-depth — chart placeholder dan callout tetap berfungsi
+  - `app/api/keep-alive/route.ts` — Fix CRON_SECRET guard
+    • Jika CRON_SECRET tidak di-set → return 500 (bukan bypass via "Bearer undefined")
+    • console.error eksplisit untuk alert misconfiguration
+
+  [KEAMANAN — SEDANG]
+  - `components/layout/Navbar.tsx` — Fix dua inkonsistensi kebijakan auth:
+    • createClient() dibungkus useMemo(() => createClient(), []) — cegah re-instantiation
+    • getSession() diganti onAuthStateChange() — lebih reliabel, deteksi login/logout real-time,
+      termasuk dari tab lain. Subscription di-cleanup di return function useEffect.
+  - `app/api/user-profiles/route.ts` — Validasi URL avatar_url:
+    • URL yang tidak dimulai https:// ditolak dengan error 400
+    • Mencegah javascript: URI dan data: URI sebagai vektor XSS
+
+  [TECH DEBT — SEDANG]
+  - `app/api/opinions/route.ts` — Hapus local generateSlug(), import dari lib/slug.ts
+  - `app/api/opinions/[id]/route.ts` — Hapus local generateSlug(), import dari lib/slug.ts
+  - `app/layout.tsx` — Hapus import KaTeX dan highlight.js CSS (dipindah ke sub-layout)
+  - `app/artikel/layout.tsx` — BARU — layout khusus halaman artikel, muat KaTeX + highlight.js
+  - `app/opinions/layout.tsx` — BARU — layout khusus halaman opinions, muat KaTeX + highlight.js
+  - `app/sitemap.ts` — Tambah fetch opinion_articles published dengan join user_profiles
+    • URL opinions: /opinions/[username]/[slug], priority 0.7
+  - `app/robots.ts` — Tambah /akun/artikel/ ke disallow list
+
+  [TECH DEBT — RENDAH]
+  - `lib/supabase/client.ts` — Hapus blok console.error debug (env var check)
+  - `components/opinions/editor/TipTapEditor.tsx` — Tambah focus-visible:ring-2 ke btnClass
+    • Keyboard accessibility untuk toolbar buttons
+
+Keputusan baru:
+  - Rate limiting opinions analytics: pola sama dengan /api/analytics (return 200 jika rate limit)
+  - rehype-sanitize di ArticleRenderer: defense-in-depth dengan custom schema (izinkan class/id)
+  - KaTeX/highlight.js CSS di-scope ke sub-layout (tidak di root) — hemat ~70KB per non-artikel page
+  - onAuthStateChange menggantikan getSession() di Navbar — lebih reliable untuk real-time auth state
+  - CRON_SECRET guard eksplisit — fail-safe jika env var tidak dikonfigurasi
+
+Status akhir: Selesai. Build clean. Semua 12 item audit diselesaikan.
+Next step: Push branch, merge ke main. Verifikasi CRON_SECRET di Vercel dashboard.
 ---
 
 ## 13. REFERENSI & RESOURCE

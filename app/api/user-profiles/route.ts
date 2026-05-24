@@ -170,7 +170,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (typeof body.avatar_url === 'string') {
-      updates.avatar_url = body.avatar_url.trim()
+      const avatarUrl = body.avatar_url.trim()
+      // Validasi URL: hanya izinkan https:// — blokir javascript:, data:, dan protocol-relative
+      if (avatarUrl && !avatarUrl.startsWith('https://')) {
+        return NextResponse.json({ error: 'URL avatar harus menggunakan HTTPS' }, { status: 400 })
+      }
+      updates.avatar_url = avatarUrl || null
     }
 
     if (Object.keys(updates).length === 0) {
