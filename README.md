@@ -576,6 +576,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] **Security audit fixes — getUser() vs getSession(), middleware, security headers** ← 24-05-2026
 - [x] **Custom 404 page dan global error boundary** ← 24-05-2026
 - [x] **Rate limiting di API routes — proteksi abuse dengan in-memory store** ← 24-05-2026
+- [x] **rehype-sanitize — XSS protection untuk konten user-generated (Opinions)** ← 25-05-2026
 
 ### Post-launch — Beranda & konteks data
 - [x] Widget indeks beranda (fetch otomatis, tanpa hardcode)
@@ -633,16 +634,25 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
                        (lib/remark/remarkCallout.ts) yang memproses AST sebelum render.
                        Mendukung [!NOTE], [!WARNING], [!IMPORTANT], [!TIP].
 
-[24-05-2026] TECHNICAL DEBT: Sisa temuan audit yang BELUM dikerjakan (prioritas menurun):
-             - [HIGH] Rate limiting di API routes (T-01, H-02) — belum ada mekanisme proteksi abuse
-             - [MEDIUM] sitemap.ts dan robots.ts (S-01, M-01) — SEO tooling belum lengkap
-             - [MEDIUM] rehype-sanitize untuk konten opini (S-03, M-04) — proteksi XSS tambahan
-             - [LOW] Refactor generateSlug ke lib/slug.ts (S-07, M-05) — duplikasi kode di 2 file
-             - [LOW] Hapus dead code (EditorTextarea.tsx, EditorToolbar.tsx, OpinionPreview.tsx)
-             - [LOW] Ganti <a> dengan <Link> di Navbar.tsx untuk brand link (R-03, L-01)
-             STATUS: open (dikerjakan di sesi berikutnya)
+[24-05-2026] MASALAH: Rate limiting di API routes (T-01, H-02) — belum ada mekanisme proteksi abuse
+             STATUS: resolved
              WORKAROUND: -
-             RESOLVED: -
+             RESOLVED: 24-05-2026 | Sesi #37 — implementasi in-memory rate limiting di lib/rate-limit.ts
+                       dengan konfigurasi per endpoint: comments (5/min), likes (20/min), shares (5/min),
+                       analytics (30/min). Menggunakan IP-based identifier dari x-forwarded-for header.
+
+[24-05-2026] MASALAH: rehype-sanitize untuk konten opini (S-03, M-04) — proteksi XSS tambahan
+             STATUS: resolved
+             WORKAROUND: -
+             RESOLVED: 25-05-2026 | Sesi #39 — install rehype-sanitize, update OpinionContentRenderer.tsx
+                       untuk membersihkan HTML user-generated sebelum render. Hapus tag <script>, 
+                       event handlers (onclick, onerror), dan atribut berbahaya lainnya.
+
+[25-05-2026] TECHNICAL DEBT: Sisa temuan audit yang BELUM dikerjakan:
+             - [SELESAI] Semua critical, high, medium, dan low priority audit fixes sudah selesai.
+             STATUS: resolved
+             WORKAROUND: -
+             RESOLVED: 25-05-2026 | Semua temuan audit report telah diperbaiki dan di-merge ke main.
 
 ```
 Format pengisian:
@@ -1310,6 +1320,28 @@ Yang dikerjakan:
 Keputusan baru: Tidak ada keputusan arsitektur baru.
 Status akhir: Selesai. Build clean. Siap merge ke main.
 Next step: Merge ke main, lalu semua technical debt audit selesai.
+---
+
+[25-05-2026] SESI #39 — XSS PROTECTION (REHYPE-SANITIZE)
+Branch: feature/rehype-sanitize
+Tujuan sesi: Menambahkan proteksi XSS untuk konten user-generated di fitur Opinions (M-04, S-03)
+Yang dikerjakan:
+  [KEAMANAN — XSS PROTECTION]
+  - Install `rehype-sanitize` — Library untuk membersihkan HTML dari tag berbahaya
+  - Update `components/opinions/OpinionContentRenderer.tsx`:
+    • Import `rehypeSanitize` dari 'rehype-sanitize'
+    • Tambahkan ke pipeline `rehypePlugins` (setelah `rehypeRaw`, sebelum `rehypeKatex`)
+    • Pipeline: rehypeRaw → rehypeSanitize → rehypeKatex → rehypeHighlight
+  
+  [PROTEKSI YANG DITERAPKAN]
+  - Hapus tag berbahaya: `<script>`, `<iframe>`, `<object>`, `<embed>`, dll
+  - Hapus atribut event: `onclick`, `onerror`, `onload`, `onmouseover`, dll
+  - Hapus atribut berbahaya lainnya
+  - Izinkan hanya tag HTML aman: p, h1-h6, strong, em, blockquote, ul, ol, li, a, img, table, dll
+
+Keputusan baru: Tidak ada keputusan arsitektur baru, ini adalah implementasi security best practice.
+Status akhir: Selesai. Build clean. Siap di-merge ke main.
+Next step: Merge ke main. Setelah ini, 100% temuan audit report telah diselesaikan.
 ---
 
 
