@@ -1,5 +1,5 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 1.0 | Status: Live | Terakhir diperbarui: 2026-05-24
+> Versi: 1.3 | Status: Live | Terakhir diperbarui: 2026-05-25
 
 ---
 
@@ -417,6 +417,8 @@ CREATE TRIGGER articles_updated_at
 │   │       └── route.ts                  ← OAuth callback dengan validasi redirect
 │   ├── login/
 │   │   └── page.tsx
+│   ├── sitemap.ts                        ← Dynamic sitemap untuk SEO (ISR 24h)
+│   ├── robots.ts                         ← Robots.txt konfigurasi crawler
 │   └── api/
 │       ├── analytics/
 │       │   └── route.ts                  ← POST analytics events (gunakan getUser() bukan getSession())
@@ -471,6 +473,7 @@ CREATE TRIGGER articles_updated_at
 │   │   ├── admin.ts                      ← Server-only admin client (service_role key)
 │   │   └── remark/
 │   │       └── remarkCallout.ts
+│   ├── slug.ts                           ← Centralized slug generation (DRY principle)
 │   └── rate-limit.ts                     ← In-memory rate limiting helper untuk API routes
 │
 ├── .github/workflows/backup.yml
