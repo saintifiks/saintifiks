@@ -60,11 +60,11 @@ export default async function OpinionsPage({
       const authorIds = Array.from(new Set(articles.map((a) => a.author_id).filter(Boolean)))
       const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('id, username, display_name, avatar_url')
-        .in('id', authorIds)
+        .select('user_id, username, display_name, avatar_url')
+        .in('user_id', authorIds)
       if (profiles) {
         for (const p of profiles) {
-          profileMap[p.id] = { username: p.username, display_name: p.display_name, avatar_url: p.avatar_url }
+          profileMap[p.user_id] = { username: p.username, display_name: p.display_name, avatar_url: p.avatar_url }
         }
       }
     }
