@@ -161,16 +161,15 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
   useImperativeHandle(ref, () => ({
     insertMarkdown(markdown: string) {
       if (!editor) return
-      // Insert sebagai teks mentah Markdown — tiptap-markdown akan parse saat setContent
-      // Cara paling aman: ambil konten saat ini, append, lalu setContent ulang
-      const mdStorage = ((editor.storage as unknown) as Record<string, unknown>)['markdown'] as MarkdownStorage | undefined
-      const current = mdStorage?.getMarkdown() ?? ''
-      editor.commands.setContent(current + markdown)
-      // Trigger onChange agar state parent sync
-      const updated = (((editor.storage as unknown) as Record<string, unknown>)['markdown'] as MarkdownStorage | undefined)?.getMarkdown() ?? ''
-      onChange(updated)
+      // Tambahkan konten Markdown baru di akhir dokumen
+      // insertContentAt(doc.content.size) = posisi paling akhir prosemirror doc
+      editor.chain()
+        .focus()
+        .insertContentAt(editor.state.doc.content.size, markdown)
+        .run()
+      // onChange akan terpanggil otomatis via onUpdate handler di useEditor
     },
-  }), [editor, onChange])
+  }), [editor])
 
   // Expose ke parent via window event — ChartWizard akan dispatch event ini
   useEffect(() => {
