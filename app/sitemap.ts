@@ -52,7 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch published opinions articles
   const { data: opinions, error: opinionsError } = await supabase
     .from('opinion_articles')
-    .select('slug, updated_at, user_profiles!opinion_articles_author_id_fkey(username)')
+    .select('slug, updated_at, author_id')
     .eq('status', 'published')
     .order('updated_at', { ascending: false })
 
@@ -61,14 +61,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [...staticPages, ...articleUrls]
   }
 
+  // Fetch profil penulis secara terpisah
+  const sitemapProfileMap: Record<string, string> = {}
+  if (opinions && opinions.length > 0) {
+    const authorIds = Array.from(new Set(opinions.map((o) => o.author_id).filter(Boolean)))
+    const { data: profiles } = await supabase
+      .from('user_profiles')
+      .select('user_id, username')
+      .in('user_id', authorIds)
+    if (profiles) {
+      for (const p of profiles) {
+        sitemapProfileMap[p.user_id] = p.username
+      }
+    }
+  }
+
   const opinionUrls: MetadataRoute.Sitemap = (opinions || [])
-    .filter((o) => {
-      const profile = Array.isArray(o.user_profiles) ? o.user_profiles[0] : o.user_profiles
-      return profile && (profile as { username: string }).username
-    })
+    .filter((o) => sitemapProfileMap[o.author_id])
     .map((o) => {
-      const profile = Array.isArray(o.user_profiles) ? o.user_profiles[0] : o.user_profiles
-      const username = (profile as { username: string }).username
+      const username = sitemapProfileMap[o.author_id]
       return {
         url: `${baseUrl}/opinions/${username}/${o.slug}`,
         lastModified: new Date(o.updated_at),

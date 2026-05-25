@@ -66,11 +66,7 @@ export default async function BerandaPage() {
         .order('published_at', { ascending: false }),
       supabase
         .from('opinion_articles')
-        .select(`
-          id, title, slug, excerpt, cover_image_url, published_at, author_id,
-          user_profiles(username, display_name, avatar_url),
-          opinion_likes!opinion_likes_opinion_article_id_fkey(count)
-        `)
+        .select('id, title, slug, excerpt, cover_image_url, published_at, author_id')
         .eq('status', 'published')
         .order('published_at', { ascending: false })
         .limit(20),
@@ -81,22 +77,34 @@ export default async function BerandaPage() {
 
   const daftarArtikel: Article[] = articles ?? []
 
+  // Fetch profil penulis opinions secara terpisah
+  const opinionProfileMap: Record<string, { username: string; display_name: string; avatar_url: string | null }> = {}
+  if (opinions && opinions.length > 0) {
+    const authorIds = Array.from(new Set(opinions.map((a) => a.author_id).filter(Boolean)))
+    const { data: profiles } = await supabase
+      .from('user_profiles')
+      .select('user_id, username, display_name, avatar_url')
+      .in('user_id', authorIds)
+    if (profiles) {
+      for (const p of profiles) {
+        opinionProfileMap[p.user_id] = { username: p.username, display_name: p.display_name, avatar_url: p.avatar_url }
+      }
+    }
+  }
+
   const daftarOpinions: OpinionItem[] = (opinions ?? []).map((a) => {
-    const profile = Array.isArray(a.user_profiles) ? a.user_profiles[0] : a.user_profiles
-    const likeCount = Array.isArray(a.opinion_likes)
-      ? (a.opinion_likes[0] as { count: number })?.count ?? 0
-      : 0
+    const profile = opinionProfileMap[a.author_id] ?? null
     return {
       id: a.id,
       title: a.title,
       slug: a.slug,
       excerpt: a.excerpt ?? null,
-      cover_image_url: (a as { cover_image_url?: string | null }).cover_image_url ?? null,
+      cover_image_url: a.cover_image_url ?? null,
       published_at: a.published_at as string,
-      like_count: likeCount,
-      username: (profile as { username: string } | null)?.username ?? '',
-      display_name: (profile as { display_name: string } | null)?.display_name ?? 'Penulis',
-      avatar_url: (profile as { avatar_url?: string | null } | null)?.avatar_url ?? null,
+      like_count: 0,
+      username: profile?.username ?? '',
+      display_name: profile?.display_name ?? 'Penulis',
+      avatar_url: profile?.avatar_url ?? null,
     }
   })
 
