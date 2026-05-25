@@ -8,6 +8,10 @@ import { useEffect, useCallback, useImperativeHandle, forwardRef } from 'react'
 import { useEditor, EditorContent, Extension, Node, mergeAttributes } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown, type MarkdownStorage } from 'tiptap-markdown'
+import { Table } from '@tiptap/extension-table'
+import { TableRow } from '@tiptap/extension-table-row'
+import { TableHeader } from '@tiptap/extension-table-header'
+import { TableCell } from '@tiptap/extension-table-cell'
 import {
   Bold, Italic, Heading2, Heading3, Quote,
   List, ListOrdered, Minus, Table as TableIcon,
@@ -31,8 +35,8 @@ const ChartPlaceholder = Node.create({
     return [{ tag: 'div[data-chart-placeholder]' }]
   },
 
-  renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { 'data-chart-placeholder': '' })]
+  renderHTML({ node, HTMLAttributes }) {
+    return ['div', mergeAttributes(HTMLAttributes, { 'data-chart-placeholder': '' }), `📊 ${node.attrs.chartId}`]
   },
 
   renderText({ node }) {
@@ -87,6 +91,10 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
         transformPastedText: true,
         transformCopiedText: false,
       }),
+      Table.configure({ resizable: false }),
+      TableRow,
+      TableHeader,
+      TableCell,
       ChartPlaceholder,
       PreventSaveShortcut,
     ],
@@ -126,6 +134,11 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
           '[&_div[data-chart-placeholder]]:px-2.5 [&_div[data-chart-placeholder]]:py-1 [&_div[data-chart-placeholder]]:rounded',
           '[&_div[data-chart-placeholder]]:my-2 [&_div[data-chart-placeholder]]:cursor-default',
           '[&_div[data-chart-placeholder]]:select-none',
+          // Tabel GFM — tampilan grid di editor
+          '[&_table]:w-full [&_table]:border-collapse [&_table]:my-4 [&_table]:text-sm',
+          '[&_th]:border [&_th]:border-primary-dark/20 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:bg-primary-dark/5',
+          '[&_td]:border [&_td]:border-primary-dark/20 [&_td]:px-3 [&_td]:py-2',
+          '[&_tr:hover>td]:bg-primary-dark/[0.02]',
         ].join(' '),
       },
     },
@@ -199,8 +212,8 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
 
   return (
     <div className="flex flex-col flex-1">
-      {/* Toolbar — sticky tepat di bawah header editor (56px), bg solid agar tidak transparan saat scroll */}
-      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-primary-dark/10 bg-primary-light sticky top-14 z-20">
+      {/* Toolbar — sticky tepat di bawah header editor (top-[56px] = tinggi OpinionEditor header sticky top-0). Jika tinggi header berubah, sesuaikan nilai ini manual. */}
+      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-primary-dark/10 bg-primary-light sticky top-[56px] z-20">
 
         <button type="button" title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={btnClass(isActive('bold'))}>
           <Bold size={15} />
@@ -256,7 +269,10 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
 
       {/* Area tulis WYSIWYG — wrapper relative agar placeholder tidak keluar dari area editor */}
       <div className="relative flex-1 bg-white">
-        {!editor.getText() && !editor.isFocused && (
+        {(() => {
+          const isEmpty = editor.state.doc.textContent === '' && editor.state.doc.childCount <= 1
+          return isEmpty && !editor.isFocused
+        })() && (
           <p className="absolute top-0 left-0 pointer-events-none px-6 py-6 font-libre text-base text-primary-dark/25 select-none">
             {placeholder}
           </p>
