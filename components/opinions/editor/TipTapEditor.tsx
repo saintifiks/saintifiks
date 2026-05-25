@@ -161,13 +161,14 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
   useImperativeHandle(ref, () => ({
     insertMarkdown(markdown: string) {
       if (!editor) return
-      // Tambahkan konten Markdown baru di akhir dokumen
-      // insertContentAt(doc.content.size) = posisi paling akhir prosemirror doc
-      editor.chain()
-        .focus()
-        .insertContentAt(editor.state.doc.content.size, markdown)
-        .run()
-      // onChange akan terpanggil otomatis via onUpdate handler di useEditor
+      // tiptap-markdown: setContent() secara otomatis memparse string sebagai Markdown
+      // Ambil konten saat ini, gabungkan dengan markdown baru, set ulang, lalu fokus ke akhir
+      const mdStorage = ((editor.storage as unknown) as Record<string, unknown>)['markdown'] as MarkdownStorage | undefined
+      const current = mdStorage?.getMarkdown() ?? ''
+      const combined = current.trimEnd() + '\n\n' + markdown.trim()
+      editor.commands.setContent(combined)
+      // Pindahkan kursor ke akhir dokumen setelah insert
+      editor.commands.focus('end')
     },
   }), [editor])
 

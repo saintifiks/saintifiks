@@ -1,12 +1,13 @@
 // Halaman daftar artikel opinions — Server Component
-// ISR revalidate 300 detik (5 menit)
+// force-dynamic agar selalu fresh — tidak pakai ISR cache
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import OpinionCard from '@/components/opinions/OpinionCard'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Opinions — Saintifiks',
@@ -27,7 +28,14 @@ export default async function OpinionsPage({
 }: {
   searchParams: SearchParams
 }) {
-  const supabase = createAdminClient()
+  // Admin client untuk bypass RLS — fallback ke server client jika service key tidak tersedia
+  let supabase
+  try {
+    supabase = createAdminClient()
+  } catch {
+    console.error('[opinions/page] Admin client gagal, fallback ke server client')
+    supabase = await createClient()
+  }
   const page = Math.max(1, parseInt(searchParams?.page ?? '1', 10))
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
