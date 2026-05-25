@@ -111,7 +111,7 @@ export default async function BerandaPage() {
   return (
     <main className="min-h-screen bg-primary-light">
       {/* Header beranda — logo, nama brand, dan tagline */}
-      <header className="border-b border-primary-dark/10 py-16 px-6">
+      <header className="border-b border-border-subtle py-16 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <div className="mx-auto mb-8 h-24 w-24 sm:h-28 sm:w-28">
             <svg
@@ -131,7 +131,7 @@ export default async function BerandaPage() {
           <h1 className="font-libre text-5xl font-bold text-primary-dark tracking-tight sm:text-6xl">
             Saintifiks
           </h1>
-          <p className="font-helvetica mx-auto mt-4 max-w-xl text-primary-dark/70 text-lg leading-relaxed sm:text-xl">
+          <p className="font-helvetica mx-auto mt-4 max-w-xl text-text-secondary text-lg leading-relaxed sm:text-xl">
             Mereka punya narasi, kami punya angka.
           </p>
         </div>

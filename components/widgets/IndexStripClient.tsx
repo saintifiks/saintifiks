@@ -21,14 +21,14 @@ function TickerItem({ item }: { item: IndexItem }) {
 
   return (
     <div
-      className="flex shrink-0 items-center gap-1.5 border-r border-primary-light/15 px-4 last:border-r-0"
+      className="flex shrink-0 items-center gap-1.5 px-4 hover:bg-primary-light/[0.08] transition-colors duration-[120ms] cursor-default"
       title={tooltip}
     >
-      <dt className="font-helvetica text-[10px] uppercase tracking-widest text-primary-light/50 whitespace-nowrap">
+      <dt className="font-helvetica text-[11px] uppercase tracking-[0.1em] text-primary-light/50 whitespace-nowrap">
         {item.label}
       </dt>
       <TrendIcon trend={item.trend} trendWindow={item.trendWindow} />
-      <dd className="font-libre text-xs font-bold tabular-nums text-primary-light whitespace-nowrap m-0">
+      <dd className="font-helvetica text-sm font-semibold tabular-nums text-primary-light whitespace-nowrap m-0">
         {value}
       </dd>
     </div>
@@ -80,8 +80,13 @@ export default function IndexStripClient({
     >
       <div className="index-ticker-scroll overflow-x-auto overscroll-x-contain">
         <dl className="flex h-9 min-w-max items-center px-2 sm:px-4">
-          {items.map((item) => (
-            <TickerItem key={item.id} item={item} />
+          {items.map((item, i) => (
+            <span key={item.id} className="flex items-center">
+              {i > 0 && (
+                <span className="text-primary-light/30 text-xs select-none" aria-hidden>&middot;</span>
+              )}
+              <TickerItem item={item} />
+            </span>
           ))}
         </dl>
       </div>

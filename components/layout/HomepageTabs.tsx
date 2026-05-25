@@ -44,7 +44,7 @@ export default function HomepageTabs({ articles, opinions }: Props) {
   return (
     <>
       {/* Tab navigation — statis, ikut scroll ke atas bersama header */}
-      <div className="border-b border-primary-dark/10">
+      <div className="border-b border-border-subtle">
         <div className="max-w-2xl mx-auto px-6">
           <div className="flex items-center justify-center">
             <button
@@ -79,23 +79,23 @@ export default function HomepageTabs({ articles, opinions }: Props) {
               Belum ada artikel yang dipublikasikan.
             </p>
           ) : (
-            <ul className="divide-y divide-primary-dark/10">
+            <ul>
               {articles.map((artikel) => (
-                <li key={artikel.id} className="py-10">
+                <li key={artikel.id} className="py-6 border-b border-border-subtle last:border-b-0">
                   <a href={`/artikel/${artikel.slug}`} className="group block">
                     {artikel.published_at && (
                       <time
                         dateTime={artikel.published_at}
-                        className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest"
+                        className="font-helvetica text-sm text-text-secondary"
                       >
                         {formatTanggal(artikel.published_at)}
                       </time>
                     )}
-                    <h2 className="font-libre text-2xl font-bold text-primary-dark mt-2 group-hover:opacity-60 transition-opacity duration-150">
+                    <h2 className="font-libre text-2xl font-bold text-[#1A1A1A] mt-2 group-hover:text-accent-blue transition-colors duration-[120ms]">
                       {artikel.title}
                     </h2>
                     {artikel.excerpt && (
-                      <p className="font-helvetica text-base text-primary-dark/70 mt-2 leading-relaxed">
+                      <p className="font-libre text-article-body text-text-secondary mt-2 line-clamp-2">
                         {artikel.excerpt}
                       </p>
                     )}
@@ -138,7 +138,7 @@ export default function HomepageTabs({ articles, opinions }: Props) {
                   likeCount={item.like_count}
                 />
               ))}
-              <div className="mt-8 pt-6 border-t border-primary-dark/10 text-center">
+              <div className="mt-8 pt-6 border-t border-border-subtle text-center">
                 <Link
                   href="/opinions"
                   className="font-helvetica text-sm text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 uppercase tracking-widest"
