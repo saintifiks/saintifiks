@@ -45,16 +45,7 @@ export default async function OpinionsPage({
   try {
     const result = await supabase
       .from('opinion_articles')
-      .select(`
-        id,
-        title,
-        slug,
-        excerpt,
-        cover_image_url,
-        published_at,
-        author_id,
-        user_profiles(username, display_name, avatar_url)
-      `, { count: 'exact' })
+      .select('id, title, slug, excerpt, cover_image_url, published_at, author_id', { count: 'exact' })
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .range(from, to)
@@ -69,9 +60,6 @@ export default async function OpinionsPage({
   }
 
   const items = (articles ?? []).map((a) => {
-    const profile = Array.isArray(a.user_profiles) ? a.user_profiles[0] : a.user_profiles
-    const likeCount = 0
-
     return {
       id: a.id,
       title: a.title,
@@ -79,10 +67,10 @@ export default async function OpinionsPage({
       excerpt: a.excerpt,
       cover_image_url: a.cover_image_url,
       published_at: a.published_at,
-      like_count: likeCount,
-      username: (profile as { username: string } | null)?.username ?? '',
-      display_name: (profile as { display_name: string } | null)?.display_name ?? 'Penulis',
-      avatar_url: (profile as { avatar_url?: string | null } | null)?.avatar_url ?? null,
+      like_count: 0,
+      username: '',
+      display_name: 'Penulis',
+      avatar_url: null,
     }
   })
 
