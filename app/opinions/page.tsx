@@ -42,6 +42,7 @@ export default async function OpinionsPage({
 
   let articles = null
   let count = 0
+  const profileMap: Record<string, { username: string; display_name: string; avatar_url: string | null }> = {}
   try {
     const result = await supabase
       .from('opinion_articles')
@@ -51,15 +52,28 @@ export default async function OpinionsPage({
       .range(from, to)
     articles = result.data
     count = result.count ?? 0
-    console.log('[opinions/page] count:', count, 'error:', result.error?.message ?? null)
     if (result.error) {
       console.error('[opinions/page] Error:', result.error.message)
+    }
+
+    if (articles && articles.length > 0) {
+      const authorIds = Array.from(new Set(articles.map((a) => a.author_id).filter(Boolean)))
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('id, username, display_name, avatar_url')
+        .in('id', authorIds)
+      if (profiles) {
+        for (const p of profiles) {
+          profileMap[p.id] = { username: p.username, display_name: p.display_name, avatar_url: p.avatar_url }
+        }
+      }
     }
   } catch (err) {
     console.error('[opinions/page] Query exception:', err)
   }
 
   const items = (articles ?? []).map((a) => {
+    const profile = profileMap[a.author_id] ?? null
     return {
       id: a.id,
       title: a.title,
@@ -68,9 +82,9 @@ export default async function OpinionsPage({
       cover_image_url: a.cover_image_url,
       published_at: a.published_at,
       like_count: 0,
-      username: '',
-      display_name: 'Penulis',
-      avatar_url: null,
+      username: profile?.username ?? '',
+      display_name: profile?.display_name ?? 'Penulis',
+      avatar_url: profile?.avatar_url ?? null,
     }
   })
 
