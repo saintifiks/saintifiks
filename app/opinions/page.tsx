@@ -51,7 +51,7 @@ export default async function OpinionsPage({
       published_at,
       author_id,
       user_profiles(username, display_name, avatar_url),
-      opinion_likes(count)
+      opinion_likes!opinion_likes_opinion_article_id_fkey(count)
     `, { count: 'exact' })
     .eq('status', 'published')
     .order('published_at', { ascending: false })

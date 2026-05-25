@@ -55,7 +55,7 @@ export async function GET(
           excerpt,
           cover_image_url,
           published_at,
-          opinion_likes(count)
+          opinion_likes!opinion_likes_opinion_article_id_fkey(count)
         `)
         .eq('author_id', profileWithId.user_id)
         .eq('status', 'published')

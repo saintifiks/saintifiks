@@ -56,7 +56,7 @@ export default async function PenulisPage({ params }: PageProps) {
       excerpt,
       cover_image_url,
       published_at,
-      opinion_likes(count)
+      opinion_likes!opinion_likes_opinion_article_id_fkey(count)
     `)
     .eq('author_id', profile.user_id)
     .eq('status', 'published')
@@ -70,9 +70,7 @@ export default async function PenulisPage({ params }: PageProps) {
     excerpt: a.excerpt,
     cover_image_url: a.cover_image_url,
     published_at: a.published_at,
-    like_count: Array.isArray(a.opinion_likes)
-      ? (a.opinion_likes[0] as { count: number })?.count ?? 0
-      : 0,
+    like_count: Array.isArray(a.opinion_likes) ? (a.opinion_likes[0] as { count: number })?.count ?? 0 : 0,
   }))
 
   return (
