@@ -40,33 +40,37 @@ export default async function OpinionsPage({
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
-  const { data: articles, error, count } = await supabase
-    .from('opinion_articles')
-    .select(`
-      id,
-      title,
-      slug,
-      excerpt,
-      cover_image_url,
-      published_at,
-      author_id,
-      user_profiles(username, display_name, avatar_url),
-      opinion_likes!opinion_likes_opinion_article_id_fkey(count)
-    `, { count: 'exact' })
-    .eq('status', 'published')
-    .order('published_at', { ascending: false })
-    .range(from, to)
-
-  console.log('[opinions/page] count:', count, 'error:', error?.message ?? null)
-  if (error) {
-    console.error('[opinions/page] Error:', error.message)
+  let articles = null
+  let count = 0
+  try {
+    const result = await supabase
+      .from('opinion_articles')
+      .select(`
+        id,
+        title,
+        slug,
+        excerpt,
+        cover_image_url,
+        published_at,
+        author_id,
+        user_profiles(username, display_name, avatar_url)
+      `, { count: 'exact' })
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+      .range(from, to)
+    articles = result.data
+    count = result.count ?? 0
+    console.log('[opinions/page] count:', count, 'error:', result.error?.message ?? null)
+    if (result.error) {
+      console.error('[opinions/page] Error:', result.error.message)
+    }
+  } catch (err) {
+    console.error('[opinions/page] Query exception:', err)
   }
 
   const items = (articles ?? []).map((a) => {
     const profile = Array.isArray(a.user_profiles) ? a.user_profiles[0] : a.user_profiles
-    const likeCount = Array.isArray(a.opinion_likes)
-      ? (a.opinion_likes[0] as { count: number })?.count ?? 0
-      : 0
+    const likeCount = 0
 
     return {
       id: a.id,
