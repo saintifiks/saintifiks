@@ -10,6 +10,8 @@ import AuthorByline from '@/components/opinions/AuthorByline'
 import OpinionLikeButton from '@/components/opinions/OpinionLikeButton'
 import ReportButton from '@/components/opinions/ReportButton'
 import OpinionAnalyticsTracker from '@/components/opinions/OpinionAnalyticsTracker'
+import OpinionShareButton from '@/components/opinions/OpinionShareButton'
+import OpinionCorrectionSection from '@/components/opinions/OpinionCorrectionSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -79,6 +81,14 @@ export default async function OpinionArticlePage({ params }: PageProps) {
     .select('chart_id, config')
     .eq('opinion_article_id', article.id)
 
+  // Ambil koreksi yang sudah disetujui untuk artikel ini
+  const { data: corrections } = await supabase
+    .from('opinion_corrections')
+    .select('id, original_text, corrected_text, explanation, created_at')
+    .eq('opinion_article_id', article.id)
+    .eq('status', 'approved')
+    .order('created_at', { ascending: true })
+
   return (
     <main className="min-h-screen bg-primary-light">
 
@@ -121,10 +131,23 @@ export default async function OpinionArticlePage({ params }: PageProps) {
           charts={charts ?? []}
         />
 
-        {/* Footer artikel: like + laporan */}
+        {/* Footer artikel: koreksi rata kiri, like + share + laporan rata kanan */}
         <div className="mt-16 pt-8 border-t border-primary-dark/10 flex items-center justify-between">
-          <OpinionLikeButton articleId={article.id} />
-          <ReportButton articleId={article.id} />
+          <OpinionCorrectionSection
+            articleId={article.id}
+            corrections={corrections ?? []}
+          />
+          <div className="flex items-center gap-2">
+            <OpinionLikeButton articleId={article.id} />
+            <OpinionShareButton
+              articleId={article.id}
+              articleTitle={article.title}
+              articleExcerpt={article.excerpt}
+              articleSlug={params.slug}
+              authorDisplayName={profile.display_name}
+            />
+            <ReportButton articleId={article.id} />
+          </div>
         </div>
 
       </article>
