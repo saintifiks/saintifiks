@@ -295,21 +295,14 @@ export default function OpinionShareButton({
               </svg>
             </div>
 
-            {/* Konten utama */}
-            <div className="z-10 text-center max-w-4xl">
-              {/* Badge Opinions */}
-              <div className="flex justify-center mb-10">
-                <span className="font-helvetica text-sm tracking-[0.25em] uppercase text-primary-light/50 border border-primary-light/20 px-4 py-1.5">
-                  Opinions
-                </span>
-              </div>
-
+            {/* Konten utama — lebar penuh mengikuti ShareButton editorial */}
+            <div className="z-10 text-center">
               {/* Quote mark */}
               <p className="text-primary-light/20 text-9xl leading-none mb-8">&ldquo;</p>
 
-              {/* Judul */}
+              {/* Judul — ukuran identik dengan ShareButton editorial */}
               <h1
-                className="text-primary-light text-6xl leading-tight font-bold mb-10"
+                className="text-primary-light text-6xl leading-tight font-bold mb-12"
                 style={{
                   display: '-webkit-box',
                   WebkitLineClamp: 5,
@@ -321,14 +314,21 @@ export default function OpinionShareButton({
               </h1>
 
               {/* Nama penulis — perbedaan utama dari artikel editorial */}
-              <p className="font-helvetica text-2xl text-primary-light/60 mb-6">
+              <p className="font-helvetica text-2xl text-primary-light/60 mb-4">
                 oleh <span className="text-primary-light font-medium">{authorDisplayName}</span>
               </p>
+
+              {/* Badge Opinions — di bawah nama penulis */}
+              <div className="flex justify-center mb-10">
+                <span className="font-helvetica text-sm tracking-[0.25em] uppercase text-primary-light/50 border border-primary-light/20 px-4 py-1.5">
+                  Opinions · Saintifiks
+                </span>
+              </div>
 
               {/* Excerpt jika ada */}
               {articleExcerpt && (
                 <p
-                  className="text-primary-light/50 text-xl leading-relaxed mb-16 max-w-3xl mx-auto"
+                  className="text-primary-light/70 text-2xl leading-relaxed mb-16 max-w-3xl mx-auto"
                   style={{
                     display: '-webkit-box',
                     WebkitLineClamp: 3,

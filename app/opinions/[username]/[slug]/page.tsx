@@ -12,6 +12,7 @@ import ReportButton from '@/components/opinions/ReportButton'
 import OpinionAnalyticsTracker from '@/components/opinions/OpinionAnalyticsTracker'
 import OpinionShareButton from '@/components/opinions/OpinionShareButton'
 import OpinionCorrectionSection from '@/components/opinions/OpinionCorrectionSection'
+import OpinionCommentsSection from '@/components/opinions/OpinionCommentsSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -139,6 +140,7 @@ export default async function OpinionArticlePage({ params }: PageProps) {
           />
           <div className="flex items-center gap-2">
             <OpinionLikeButton articleId={article.id} />
+            <OpinionCommentsSection articleId={article.id} />
             <OpinionShareButton
               articleId={article.id}
               articleTitle={article.title}
