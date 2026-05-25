@@ -1,7 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 1.6 | Status: Live | Terakhir diperbarui: 2026-05-25
+> Versi: 1.7 | Status: Live | Terakhir diperbarui: 2026-05-25
 >
-> Perubahan v1.6: Fix opinions page visibility — root cause: PostgREST join user_profiles gagal karena PK tabel adalah user_id bukan id; solusi: query 2 tahap (articles → profiles terpisah); sitemap dan beranda diperbaiki dengan pola yang sama; force-dynamic menggantikan ISR revalidate=300 di opinions/page.tsx
+> Perubahan v1.7: Editor Opinions Improvements — TipTap table extensions (tabel GFM dirender sebagai grid), chart chip label informatif, placeholder isEmpty fix, sticky toolbar top eksplisit
 
 ---
 
@@ -649,6 +649,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Widget indeks dipindah ke atas Navbar (via `ConditionalIndexStrip` di `layout.tsx`)
 - [x] Scroll otomatis ke paling atas saat navigasi halaman (via `ScrollToTop` di `layout.tsx`)
 - [x] **Fix opinions page visibility — query 2 tahap untuk menghindari PostgREST join failure** ← 25-05-2026
+- [x] **Editor improvements — tabel GFM grid di editor, chart chip label, placeholder fix, toolbar top eksplisit** ← 25-05-2026
 
 ---
 
@@ -728,6 +729,21 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
              STATUS: open
              WORKAROUND: Angka 0 tidak ditampilkan di UI (kondisi likeCount > 0)
              RESOLVED: -
+
+[25-05-2026] MASALAH: Tabel GFM di editor TipTap tidak dirender sebagai grid — teks pipe | muncul mentah di area WYSIWYG.
+             STATUS: resolved
+             WORKAROUND: -
+             RESOLVED: 25-05-2026 | Sesi #42 — install 4 package @tiptap/extension-table* v3.23.6, tambah ke extensions di TipTapEditor.tsx.
+
+[25-05-2026] MASALAH: Chart placeholder chip kosong — tidak ada label, penulis tidak bisa membedakan antar chart jika ada lebih dari satu.
+             STATUS: resolved
+             WORKAROUND: -
+             RESOLVED: 25-05-2026 | Sesi #42 — renderHTML() di ChartPlaceholder diubah agar menampilkan teks '📊 {chartId}'.
+
+[25-05-2026] MASALAH: Placeholder "Mulai menulis..." tumpang tindih dengan chart placeholder node (editor berisi chart tapi tidak ada teks).
+             STATUS: resolved
+             WORKAROUND: -
+             RESOLVED: 25-05-2026 | Sesi #42 — kondisi diganti menjadi isEmpty: doc.textContent === '' && doc.childCount <= 1.
 
 ```
 Format pengisian:
@@ -1180,6 +1196,36 @@ Format pengisian:
                4. Map articles → gabung dengan profileMap[a.author_id]
                File yang menggunakan pola ini: app/opinions/page.tsx, app/page.tsx, app/sitemap.ts
              ALTERNATIF DITOLAK: PostgREST join inline (gagal silent), menambah FK di DB (perlu migrasi, risiko)
+
+[25-05-2026] KEPUTUSAN: TipTap table extensions untuk tabel GFM di editor
+             ALASAN: tiptap-markdown (community library) tidak mendukung parsing tabel GFM secara native.
+                     Tanpa @tiptap/extension-table*, karakter pipa | muncul mentah di editor WYSIWYG.
+                     Install 4 package table extensions memungkinkan TipTap merender tabel sebagai grid.
+                     Output ke DB tetap Markdown string via insertMarkdown() → onChange(combined).
+             PACKAGE YANG DITAMBAHKAN:
+                     - @tiptap/extension-table@3.23.6 — Table.configure({ resizable: false })
+                     - @tiptap/extension-table-row@3.23.6
+                     - @tiptap/extension-table-header@3.23.6
+                     - @tiptap/extension-table-cell@3.23.6
+             BUNDLE IMPACT: +15 kB di /akun/tulis dan /akun/artikel/[id]/edit (349 kB, sebelumnya 334 kB)
+             CATATAN: resizable: false — resize handle memerlukan CSS tambahan, tidak diperlukan.
+                      CSS tabel via Tailwind arbitrary selector di editorProps.attributes.class.
+             ALTERNATIF DITOLAK: html: true + pre-processing Markdown → mengubah kebijakan keamanan
+                                 html: false di Markdown.configure(), memerlukan audit HTML ke DB.
+
+[25-05-2026] KEPUTUSAN: Chart chip label — renderHTML() menampilkan '📊 {chartId}'
+             ALASAN: Chip kosong tidak informatif jika ada lebih dari satu chart di artikel.
+                     renderText() yang menghasilkan {{chart:chartId}} tidak disentuh — output ke DB benar.
+             CATATAN: Hanya renderHTML() yang diubah. renderText() tetap utuh.
+             ALTERNATIF DITOLAK: CSS ::before (tidak bisa inject nilai dinamis dari node.attrs).
+
+[25-05-2026] KEPUTUSAN: Placeholder isEmpty berbasis childCount, bukan getText()
+             ALASAN: editor.getText() mengembalikan '' meski editor berisi chart placeholder node
+                     (node bertipe atom, tidak punya textContent). Akibatnya placeholder muncul
+                     tumpang tindih di atas chip chart.
+                     Kondisi benar: isEmpty = doc.textContent === '' && doc.childCount <= 1.
+             CATATAN: Diimplementasikan sebagai IIFE inline di JSX agar tidak menambah state baru.
+             ALTERNATIF DITOLAK: editor.isEmpty dari TipTap (tidak memperhitungkan atom nodes).
 ```
 
 ---
@@ -1529,6 +1575,36 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — satu keputusan baru: "Query user_profiles dilakukan terpisah — bukan via PostgREST join inline".
 Status akhir: Selesai. Build clean. Di-merge ke main. /opinions menampilkan artikel dengan nama penulis yang benar dan link artikel tidak 404.
 Next step: (Opsional) kembalikan like_count di kartu list dengan query terpisah ke opinion_likes.
+
+[25-05-2026] SESI #42 — EDITOR OPINIONS IMPROVEMENTS
+Branch: feature/editor-improvements
+Tujuan sesi: Memperbaiki 4 masalah tampilan dan UX di editor TipTap Opinions.
+Yang dikerjakan:
+  [MASALAH 1 — TABEL GFM DI EDITOR]
+  - Install 4 package: @tiptap/extension-table, @tiptap/extension-table-row,
+    @tiptap/extension-table-header, @tiptap/extension-table-cell (semua v3.23.6).
+  - Tambah ke extensions: Table.configure({ resizable: false }), TableRow, TableHeader, TableCell.
+  - CSS tabel ditambahkan di editorProps.attributes.class via Tailwind arbitrary selector.
+  - Output ke DB tetap Markdown — insertMarkdown() → onChange(combined) tidak diubah.
+
+  [MASALAH 2 — CHART CHIP LABEL]
+  - renderHTML() di ChartPlaceholder: dari tanpa child → child '📊 {chartId}'.
+  - renderText() tidak disentuh — output ke DB tetap {{chart:chartId}}.
+
+  [MASALAH 3 — PLACEHOLDER OVERLAP]
+  - !editor.getText() diganti: isEmpty = doc.textContent === '' && doc.childCount <= 1.
+  - Mencegah placeholder muncul tumpang tindih saat editor berisi chart node tanpa teks.
+
+  [MASALAH 4 — STICKY TOOLBAR]
+  - sticky top-14 → sticky top-[56px] eksplisit. Komentar ditambahkan: jika tinggi
+    header OpinionEditor berubah, nilai ini perlu disesuaikan manual.
+
+**Keputusan baru: Lihat Seksi 11 — tiga keputusan baru: TipTap table extensions,
+               chart chip label, placeholder isEmpty.**
+**Status akhir: Selesai. TypeScript bersih. ESLint 0 error baru. Build exit code 0.
+              Bundle /akun/tulis: 349 kB (naik 15 kB dari 4 package table).**
+**Next step: Merge ke main setelah test manual di /akun/tulis.**
+---
 ---
 
 ## 13. REFERENSI & RESOURCE
