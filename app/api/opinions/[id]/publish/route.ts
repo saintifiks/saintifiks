@@ -3,6 +3,7 @@
 // DELETE — jadikan draft kembali (published → draft)
 
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -87,6 +88,9 @@ export async function POST(
       console.error('[opinions/[id]/publish POST] Error:', error.message)
       return NextResponse.json({ error: 'Gagal mempublish artikel' }, { status: 500 })
     }
+
+    // Bust ISR cache agar artikel langsung muncul di halaman /opinions
+    revalidatePath('/opinions')
 
     return NextResponse.json({ article: updated })
   } catch (err) {

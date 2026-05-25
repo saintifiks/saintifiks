@@ -4,7 +4,7 @@
 // Penulis melihat hasil render langsung (bold, heading, list, dll), bukan sintaks Markdown mentah
 // Output ke DB tetap Markdown — konversi dilakukan oleh tiptap-markdown
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useImperativeHandle, forwardRef } from 'react'
 import { useEditor, EditorContent, Extension, Node, mergeAttributes } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown, type MarkdownStorage } from 'tiptap-markdown'
@@ -50,6 +50,10 @@ const PreventSaveShortcut = Extension.create({
   },
 })
 
+export type TipTapEditorHandle = {
+  insertMarkdown: (markdown: string) => void
+}
+
 type TipTapEditorProps = {
   initialContent: string
   onChange: (markdown: string) => void
@@ -59,14 +63,14 @@ type TipTapEditorProps = {
   placeholder?: string
 }
 
-export default function TipTapEditor({
+const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function TipTapEditor({
   initialContent,
   onChange,
   onOpenTableWizard,
   onOpenImageModal,
   onOpenChartWizard,
   placeholder = 'Mulai menulis artikel kamu di sini...',
-}: TipTapEditorProps) {
+}: TipTapEditorProps, ref) {
 
   const editor = useEditor({
     extensions: [
@@ -93,9 +97,9 @@ export default function TipTapEditor({
           'min-h-[500px] px-6 py-6 focus:outline-none',
           // Tipografi konten — sesuai design system Saintifiks
           'font-libre text-primary-dark leading-relaxed',
-          // Heading
-          '[&>h2]:font-libre [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-3',
-          '[&>h3]:font-libre [&>h3]:text-xl [&>h3]:font-bold [&>h3]:mt-6 [&>h3]:mb-2',
+          // Heading — H2 lebih besar dari H3, keduanya jelas berbeda dari teks biasa
+          '[&>h2]:font-libre [&>h2]:text-3xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-3',
+          '[&>h3]:font-libre [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-primary-dark/70 [&>h3]:mt-6 [&>h3]:mb-2',
           // Paragraf
           '[&>p]:font-libre [&>p]:text-base [&>p]:leading-relaxed [&>p]:mb-4',
           // Bold & italic
@@ -153,6 +157,21 @@ export default function TipTapEditor({
     }).run()
   }, [editor])
 
+  // Expose insertMarkdown ke parent via ref — digunakan oleh TableWizard dan ImageModal
+  useImperativeHandle(ref, () => ({
+    insertMarkdown(markdown: string) {
+      if (!editor) return
+      // Insert sebagai teks mentah Markdown — tiptap-markdown akan parse saat setContent
+      // Cara paling aman: ambil konten saat ini, append, lalu setContent ulang
+      const mdStorage = ((editor.storage as unknown) as Record<string, unknown>)['markdown'] as MarkdownStorage | undefined
+      const current = mdStorage?.getMarkdown() ?? ''
+      editor.commands.setContent(current + markdown)
+      // Trigger onChange agar state parent sync
+      const updated = (((editor.storage as unknown) as Record<string, unknown>)['markdown'] as MarkdownStorage | undefined)?.getMarkdown() ?? ''
+      onChange(updated)
+    },
+  }), [editor, onChange])
+
   // Expose ke parent via window event — ChartWizard akan dispatch event ini
   useEffect(() => {
     function handleChartInsert(e: Event) {
@@ -164,6 +183,7 @@ export default function TipTapEditor({
   }, [insertChartPlaceholder])
 
   if (!editor) return null
+
 
   const isActive = (type: string, attrs?: Record<string, unknown>) =>
     editor.isActive(type, attrs)
@@ -177,8 +197,8 @@ export default function TipTapEditor({
 
   return (
     <div className="flex flex-col flex-1">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-primary-dark/10 bg-primary-dark/[0.02] sticky top-[var(--editor-header-h,112px)] z-20">
+      {/* Toolbar — sticky tepat di bawah header editor (56px), bg solid agar tidak transparan saat scroll */}
+      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-primary-dark/10 bg-primary-light sticky top-14 z-20">
 
         <button type="button" title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={btnClass(isActive('bold'))}>
           <Bold size={15} />
@@ -232,13 +252,17 @@ export default function TipTapEditor({
 
       </div>
 
-      {/* Area tulis WYSIWYG */}
-      {!editor.getText() && !editor.isFocused && (
-        <p className="absolute pointer-events-none px-6 py-6 font-libre text-base text-primary-dark/25 select-none">
-          {placeholder}
-        </p>
-      )}
-      <EditorContent editor={editor} className="flex-1 bg-white" />
+      {/* Area tulis WYSIWYG — wrapper relative agar placeholder tidak keluar dari area editor */}
+      <div className="relative flex-1 bg-white">
+        {!editor.getText() && !editor.isFocused && (
+          <p className="absolute top-0 left-0 pointer-events-none px-6 py-6 font-libre text-base text-primary-dark/25 select-none">
+            {placeholder}
+          </p>
+        )}
+        <EditorContent editor={editor} className="h-full" />
+      </div>
     </div>
   )
-}
+})
+
+export default TipTapEditor

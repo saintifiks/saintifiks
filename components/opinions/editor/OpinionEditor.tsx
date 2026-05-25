@@ -4,9 +4,9 @@
 // Split panel: textarea (kiri/atas) + live preview (kanan/bawah)
 // Mobile: tab switch antara Editor dan Preview
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import TipTapEditor from './TipTapEditor'
+import TipTapEditor, { type TipTapEditorHandle } from './TipTapEditor'
 import TableWizard from './TableWizard'
 import ImageModal from './ImageModal'
 import ChartWizard from './ChartWizard'
@@ -57,16 +57,22 @@ export default function OpinionEditor({
   const [showImageModal, setShowImageModal] = useState(false)
   const [showChartWizard, setShowChartWizard] = useState(false)
 
+  const editorRef = useRef<TipTapEditorHandle>(null)
+
   // Saat ChartWizard selesai — simpan config chart ke state lokal
   // Insert placeholder ke TipTap dilakukan via window event 'tiptap:insert-chart' di ChartWizard
   function handleChartInsert(chartId: string, config: object) {
     setCharts((prev) => [...prev, { chart_id: chartId, config }])
   }
 
-  // Saat TableWizard/ImageModal insert teks Markdown — append ke content state
-  // TipTapEditor akan menerima perubahan content via prop initialContent
+  // Saat TableWizard/ImageModal insert teks Markdown — kirim langsung ke TipTap via ref
+  // Ini lebih andal dari append ke state karena TipTap sudah aktif saat wizard dibuka
   function handleToolbarInsert(text: string) {
-    setContent((prev) => prev + text)
+    if (editorRef.current) {
+      editorRef.current.insertMarkdown(text)
+    } else {
+      setContent((prev) => prev + text)
+    }
   }
 
   async function saveArticle(): Promise<string | null> {
@@ -323,6 +329,7 @@ export default function OpinionEditor({
 
           {/* TipTap WYSIWYG Editor — toolbar + area tulis terintegrasi */}
           <TipTapEditor
+            ref={editorRef}
             initialContent={content}
             onChange={setContent}
             onOpenTableWizard={() => setShowTableWizard(true)}
