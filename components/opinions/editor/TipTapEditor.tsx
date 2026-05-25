@@ -161,16 +161,18 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
   useImperativeHandle(ref, () => ({
     insertMarkdown(markdown: string) {
       if (!editor) return
-      // tiptap-markdown: setContent() secara otomatis memparse string sebagai Markdown
-      // Ambil konten saat ini, gabungkan dengan markdown baru, set ulang, lalu fokus ke akhir
+      // Ambil Markdown saat ini via storage serializer
       const mdStorage = ((editor.storage as unknown) as Record<string, unknown>)['markdown'] as MarkdownStorage | undefined
       const current = mdStorage?.getMarkdown() ?? ''
       const combined = current.trimEnd() + '\n\n' + markdown.trim()
+      // setContent agar TipTap state update (untuk tampilan di editor)
       editor.commands.setContent(combined)
-      // Pindahkan kursor ke akhir dokumen setelah insert
       editor.commands.focus('end')
+      // Panggil onChange dengan string Markdown asli (bukan hasil re-serialisasi TipTap)
+      // Ini penting untuk tabel GFM — TipTap tanpa Table extension tidak bisa re-serialize tabel
+      onChange(combined)
     },
-  }), [editor])
+  }), [editor, onChange])
 
   // Expose ke parent via window event — ChartWizard akan dispatch event ini
   useEffect(() => {
