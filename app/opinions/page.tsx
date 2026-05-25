@@ -50,13 +50,14 @@ export default async function OpinionsPage({
       cover_image_url,
       published_at,
       author_id,
-      user_profiles!opinion_articles_author_id_fkey(username, display_name, avatar_url),
+      user_profiles(username, display_name, avatar_url),
       opinion_likes(count)
     `, { count: 'exact' })
     .eq('status', 'published')
     .order('published_at', { ascending: false })
     .range(from, to)
 
+  console.log('[opinions/page] count:', count, 'error:', error?.message ?? null)
   if (error) {
     console.error('[opinions/page] Error:', error.message)
   }
