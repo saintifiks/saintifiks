@@ -1,7 +1,7 @@
 // Halaman daftar artikel opinions — Server Component
 // ISR revalidate 300 detik (5 menit)
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import OpinionCard from '@/components/opinions/OpinionCard'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -27,7 +27,7 @@ export default async function OpinionsPage({
 }: {
   searchParams: SearchParams
 }) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const page = Math.max(1, parseInt(searchParams?.page ?? '1', 10))
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1

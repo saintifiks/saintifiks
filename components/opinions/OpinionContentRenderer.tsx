@@ -10,7 +10,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
-import rehypeSanitize from 'rehype-sanitize'
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import dynamic from 'next/dynamic'
 import remarkCallout from '@/lib/supabase/remark/remarkCallout'
 
@@ -24,6 +24,20 @@ const ChartBlock = dynamic(() => import('@/components/artikel/ChartBlock'), {
 type OpinionContentRendererProps = {
   content: string
   charts: { chart_id: string; config: string | object }[]
+}
+
+// Custom sanitize schema: identik dengan ArticleRenderer — izinkan class, id, dan data-* attributes
+// agar div.saintifiks-chart dan callout tidak dihapus sanitizer
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    '*': [...(defaultSchema.attributes?.['*'] ?? []), 'className', 'id'],
+    div: [...(defaultSchema.attributes?.['div'] ?? []), 'className', 'id', 'dataCalloutType'],
+    blockquote: [...(defaultSchema.attributes?.['blockquote'] ?? []), 'dataCalloutType'],
+    code: [...(defaultSchema.attributes?.['code'] ?? []), 'className'],
+    span: [...(defaultSchema.attributes?.['span'] ?? []), 'className'],
+  },
 }
 
 const CALLOUT_CONFIG: Record<string, { label: string; borderClass: string; bgClass: string; labelClass: string }> = {
@@ -44,7 +58,7 @@ export default function OpinionContentRenderer({ content, charts }: OpinionConte
     <div className="article-content prose prose-lg max-w-none font-libre text-primary-dark">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath, remarkCallout]}
-        rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex, rehypeHighlight]}
         components={{
           h1: ({ children }) => <h1 className="font-libre text-3xl font-bold text-primary-dark mt-12 mb-6 leading-tight">{children}</h1>,
           h2: ({ children }) => <h2 className="font-libre text-2xl font-bold text-primary-dark mt-10 mb-4 leading-tight">{children}</h2>,
