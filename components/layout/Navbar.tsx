@@ -66,13 +66,13 @@ export default function Navbar() {
     pathname.startsWith('/dashboard') || pathname === '/login'
 
   return (
-    <nav className="border-b border-primary-dark/10 bg-primary-light">
+    <nav className="border-b border-primary-dark/10 bg-primary-light transition-[border-color] duration-150">
       <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
 
         {/* Brand — nama situs, link ke beranda */}
         <Link
           href="/"
-          className="font-libre text-lg font-bold text-primary-dark hover:opacity-60 transition-opacity duration-150"
+          className="font-libre text-xl font-bold text-primary-dark tracking-[-0.01em] hover:opacity-60 transition-opacity duration-150"
         >
           Saintifiks
         </Link>

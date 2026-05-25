@@ -6,6 +6,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 import ArticleInteractions from '@/components/artikel/ArticleInteractions'
+import ReadingProgress from '@/components/artikel/ReadingProgress'
 
 // [STABIL] Fitur social interaction sudah berjalan, hemat quota dengan cache 1 jam
 // Note: Koreksi dan interaksi (like/share/comment) tetap real-time via Client Components
@@ -147,37 +148,40 @@ export default async function ArtikelPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-primary-light">
-      <header className="border-b border-primary-dark/10 py-16 px-6">
-        <div className="max-w-2xl mx-auto">
+      <ReadingProgress />
+      <header className="border-b border-border-subtle py-16 px-6">
+        <div className="max-w-[72ch] mx-auto">
           <Link
             href="/"
-            className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest hover:text-primary-dark transition-colors duration-150"
+            className="font-helvetica text-sm text-accent-blue hover:opacity-70 transition-opacity duration-[120ms]"
           >
             &#8592; Saintifiks
           </Link>
 
-          {artikel.published_at && (
-            <time
-              dateTime={artikel.published_at}
-              className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mt-6"
-            >
-              {formatTanggal(artikel.published_at)}
-            </time>
-          )}
-
-          <h1 className="font-libre text-4xl font-bold text-primary-dark mt-3 leading-tight">
+          <h1 className="font-libre font-bold text-[#1A1A1A] mt-8 leading-[1.1] text-[clamp(32px,5vw,46px)] max-w-[72ch]">
             {artikel.title}
           </h1>
 
           {artikel.excerpt && (
-            <p className="font-helvetica text-base text-primary-dark/60 mt-4 leading-relaxed">
+            <p className="font-libre text-article-lead text-text-secondary mt-5 max-w-[68ch]">
               {artikel.excerpt}
             </p>
+          )}
+
+          {artikel.published_at && (
+            <div className="mt-8 pt-4 border-t border-border-subtle">
+              <time
+                dateTime={artikel.published_at}
+                className="font-helvetica text-sm text-text-secondary"
+              >
+                {formatTanggal(artikel.published_at)}
+              </time>
+            </div>
           )}
         </div>
       </header>
 
-      <article className="max-w-2xl mx-auto px-6 py-12">
+      <article className="max-w-[68ch] mx-auto px-6 py-12">
         <ArticleRenderer content={artikel.content} charts={charts} />
         
         {/* Section Interaksi — Client Component wrapper untuk menghindari cache */}
