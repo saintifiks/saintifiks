@@ -34,6 +34,7 @@ const CALLOUT_CONFIG: Record<string, { label: string; borderClass: string; bgCla
 // tidak dihapus oleh sanitizer — sambil tetap memblokir script/event handlers berbahaya
 const sanitizeSchema = {
   ...defaultSchema,
+  clobberPrefix: '',
   attributes: {
     ...defaultSchema.attributes,
     '*': [...(defaultSchema.attributes?.['*'] ?? []), 'className', 'id'],
