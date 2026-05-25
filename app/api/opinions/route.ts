@@ -31,7 +31,7 @@ export async function GET() {
         published_at,
         created_at,
         updated_at,
-        opinion_likes(count),
+        opinion_likes!opinion_likes_opinion_article_id_fkey(count),
         opinion_analytics_events(count)
       `)
       .eq('author_id', user.id)
