@@ -1,7 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 1.5 | Status: Live | Terakhir diperbarui: 2026-05-25
+> Versi: 1.6 | Status: Live | Terakhir diperbarui: 2026-05-25
 >
-> Perubahan v1.5: Comprehensive Security & Tech Debt Audit — rate limiting opinions analytics, rehype-sanitize di ArticleRenderer, CRON_SECRET guard, Navbar useMemo+onAuthStateChange, avatar URL validation, generateSlug DRY refactor, KaTeX CSS scope, sitemap opinions, robots disallow, TipTap focus-visible, debug cleanup
+> Perubahan v1.6: Fix opinions page visibility — root cause: PostgREST join user_profiles gagal karena PK tabel adalah user_id bukan id; solusi: query 2 tahap (articles → profiles terpisah); sitemap dan beranda diperbaiki dengan pola yang sama; force-dynamic menggantikan ISR revalidate=300 di opinions/page.tsx
 
 ---
 
@@ -374,6 +374,11 @@ CREATE TRIGGER articles_updated_at
   BEFORE UPDATE ON articles
   FOR EACH ROW
   EXECUTE PROCEDURE update_updated_at_column();
+
+**Catatan kritis user_profiles:** Primary key tabel user_profiles adalah `user_id` (bukan `id`).
+PostgREST join via `.select('user_profiles(kolom)')` gagal silent karena FK tidak terdaftar dengan benar.
+Solusi wajib: query user_profiles selalu dilakukan terpisah via `.in('user_id', authorIds)` — BUKAN via join inline di .select().
+Ini berlaku di semua halaman yang perlu data profil penulis.
 ```
 
 ---
@@ -643,6 +648,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Resolusi anomali pemutusan footnote via arsitektur single-pass render
 - [x] Widget indeks dipindah ke atas Navbar (via `ConditionalIndexStrip` di `layout.tsx`)
 - [x] Scroll otomatis ke paling atas saat navigasi halaman (via `ScrollToTop` di `layout.tsx`)
+- [x] **Fix opinions page visibility — query 2 tahap untuk menghindari PostgREST join failure** ← 25-05-2026
 
 ---
 
@@ -707,6 +713,21 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
              STATUS: resolved
              WORKAROUND: -
              RESOLVED: 25-05-2026 | Semua temuan audit report telah diperbaiki dan di-merge ke main.
+
+[25-05-2026] MASALAH: Halaman /opinions kosong — artikel published tidak muncul
+             STATUS: resolved
+             WORKAROUND: -
+             RESOLVED: 25-05-2026 | Sesi #41 — Root cause: PostgREST join user_profiles
+                       dalam .select() gagal silent karena PK tabel adalah user_id bukan id.
+                       Supabase tidak bisa resolve join tanpa FK eksplisit terdaftar.
+                       Fix: query 2 tahap — fetch opinion_articles dulu, lalu fetch user_profiles
+                       terpisah via .in('user_id', authorIds). Diterapkan di opinions/page.tsx,
+                       app/page.tsx, dan app/sitemap.ts.
+
+[25-05-2026] MASALAH: like_count di kartu artikel list (/opinions dan /) selalu 0
+             STATUS: open
+             WORKAROUND: Angka 0 tidak ditampilkan di UI (kondisi likeCount > 0)
+             RESOLVED: -
 
 ```
 Format pengisian:
@@ -1146,6 +1167,19 @@ Format pengisian:
                        components/artikel/ShareButton.tsx
                      - Pattern ini sudah diterapkan di LikeButton.tsx sejak Sesi #30
              ALTERNATIF DITOLAK: Biarkan tanpa useMemo (performance degradation, potential bugs)
+[25-05-2026] KEPUTUSAN: Query user_profiles dilakukan terpisah — bukan via PostgREST join inline
+             ALASAN: Tabel user_profiles menggunakan primary key kolom user_id (bukan id).
+                     PostgREST join via .select('user_profiles(kolom)') tanpa FK eksplisit
+                     terdaftar di Supabase gagal silent — query tidak error tapi return null/kosong.
+                     Akibatnya seluruh halaman opinions tampak kosong meski data ada di DB.
+             CATATAN IMPLEMENTASI:
+               Pola yang benar untuk semua halaman yang butuh data profil penulis:
+               1. Fetch opinion_articles dulu, ambil author_id
+               2. Fetch user_profiles terpisah: .from('user_profiles').select('user_id, ...').in('user_id', authorIds)
+               3. Build profileMap: Record<string, Profile> dengan key = user_id
+               4. Map articles → gabung dengan profileMap[a.author_id]
+               File yang menggunakan pola ini: app/opinions/page.tsx, app/page.tsx, app/sitemap.ts
+             ALTERNATIF DITOLAK: PostgREST join inline (gagal silent), menambah FK di DB (perlu migrasi, risiko)
 ```
 
 ---
@@ -1630,6 +1664,19 @@ Keputusan baru:
 Status akhir: Selesai. Build clean. Semua 12 item audit diselesaikan.
 Next step: Push branch, merge ke main. Verifikasi CRON_SECRET di Vercel dashboard.
 ---
+[25-05-2026] KEPUTUSAN: Query user_profiles dilakukan terpisah — bukan via PostgREST join inline
+             ALASAN: Tabel user_profiles menggunakan primary key kolom user_id (bukan id).
+                     PostgREST join via .select('user_profiles(kolom)') tanpa FK eksplisit
+                     terdaftar di Supabase gagal silent — query tidak error tapi return null/kosong.
+                     Akibatnya seluruh halaman opinions tampak kosong meski data ada di DB.
+             CATATAN IMPLEMENTASI:
+               Pola yang benar untuk semua halaman yang butuh data profil penulis:
+               1. Fetch opinion_articles dulu, ambil author_id
+               2. Fetch user_profiles terpisah: .from('user_profiles').select('user_id, ...').in('user_id', authorIds)
+               3. Build profileMap: Record<string, Profile> dengan key = user_id
+               4. Map articles → gabung dengan profileMap[a.author_id]
+               File yang menggunakan pola ini: app/opinions/page.tsx, app/page.tsx, app/sitemap.ts
+             ALTERNATIF DITOLAK: PostgREST join inline (gagal silent), menambah FK di DB (perlu migrasi, risiko)
 
 ## 13. REFERENSI & RESOURCE
 
