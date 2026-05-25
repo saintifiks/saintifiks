@@ -42,7 +42,7 @@ export default async function OpinionsPage({
 
   let articles = null
   let count = 0
-  let profileMap: Record<string, { username: string; display_name: string; avatar_url: string | null }> = {}
+  const profileMap: Record<string, { username: string; display_name: string; avatar_url: string | null }> = {}
   try {
     const result = await supabase
       .from('opinion_articles')
