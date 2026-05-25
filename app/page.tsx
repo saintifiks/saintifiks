@@ -68,7 +68,7 @@ export default async function BerandaPage() {
         .from('opinion_articles')
         .select(`
           id, title, slug, excerpt, cover_image_url, published_at, author_id,
-          user_profiles!opinion_articles_author_id_fkey(username, display_name, avatar_url),
+          user_profiles(username, display_name, avatar_url),
           opinion_likes(count)
         `)
         .eq('status', 'published')
