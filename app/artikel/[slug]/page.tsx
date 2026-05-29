@@ -1,4 +1,4 @@
-// [PERUBAHAN SESI #28] — Tambah ShareButton, CommentsSection, dan tata ulang layout interaksi
+// [PERBAIKAN V2] — Update ke Design System V2
 
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
@@ -8,7 +8,7 @@ import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 import ArticleInteractions from '@/components/artikel/ArticleInteractions'
 import ReadingProgress from '@/components/artikel/ReadingProgress'
 
-// [STABIL] Fitur social interaction sudah berjalan, hemat quota dengan cache 1 jam
+// [STABIL] Fitur social interaction sudah berjalan, hemat quota with cache 1 jam
 // Note: Koreksi dan interaksi (like/share/comment) tetap real-time via Client Components
 export const revalidate = 3600  // Cache 1 jam — artikel jarang berubah, quota efisien
 
@@ -147,32 +147,32 @@ export default async function ArtikelPage({ params }: Props) {
     }))
 
   return (
-    <main className="min-h-screen bg-primary-light">
+    <main className="min-h-screen bg-paper">
       <ReadingProgress />
-      <header className="border-b border-border-subtle py-16 px-6">
-        <div className="max-w-[72ch] mx-auto">
+      <header className="border-b border-ink/10 py-16 px-6">
+        <div className="max-w-content mx-auto">
           <Link
             href="/"
-            className="font-helvetica text-sm text-accent-blue hover:opacity-70 transition-opacity duration-[120ms]"
+            className="font-interface text-sm text-sea-deep hover:opacity-70 transition-opacity duration-[120ms]"
           >
             &#8592; Saintifiks
           </Link>
 
-          <h1 className="font-libre font-bold text-[#1A1A1A] mt-8 leading-[1.1] text-[clamp(32px,5vw,46px)] max-w-[72ch]">
+          <h1 className="font-display text-display-lg font-bold text-ink mt-8 leading-heading max-w-content">
             {artikel.title}
           </h1>
 
           {artikel.excerpt && (
-            <p className="font-libre text-article-lead text-text-secondary mt-5 max-w-[68ch]">
+            <p className="font-body text-body-lg text-warm-gray mt-5 max-w-content">
               {artikel.excerpt}
             </p>
           )}
 
           {artikel.published_at && (
-            <div className="mt-8 pt-4 border-t border-border-subtle">
+            <div className="mt-8 pt-4 border-t border-ink/10">
               <time
                 dateTime={artikel.published_at}
-                className="font-helvetica text-sm text-text-secondary"
+                className="font-interface text-meta text-warm-gray"
               >
                 {formatTanggal(artikel.published_at)}
               </time>
@@ -181,7 +181,7 @@ export default async function ArtikelPage({ params }: Props) {
         </div>
       </header>
 
-      <article className="max-w-[68ch] mx-auto px-6 py-12">
+      <article className="max-w-content mx-auto px-6 py-12">
         <ArticleRenderer content={artikel.content} charts={charts} />
         
         {/* Section Interaksi — Client Component wrapper untuk menghindari cache */}

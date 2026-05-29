@@ -13,7 +13,7 @@ import remarkCallout from '@/lib/supabase/remark/remarkCallout'
 const ChartBlock = dynamic(() => import('./ChartBlock'), {
   ssr: false,
   loading: () => (
-    <div className="my-10 w-full h-64 bg-primary-dark/5 animate-pulse border border-primary-dark/10" />
+    <div className="my-10 w-full h-64 bg-ink/5 animate-pulse border border-ink/10" />
   )
 })
 
@@ -23,10 +23,10 @@ type ArticleRendererProps = {
 }
 
 const CALLOUT_CONFIG: Record<string, { label: string; borderClass: string; bgClass: string; labelClass: string }> = {
-  note:      { label: 'Catatan',   borderClass: 'border-accent-blue',  bgClass: 'bg-accent-blue/5',  labelClass: 'text-accent-blue'  },
-  warning:   { label: 'Perhatian', borderClass: 'border-yellow-500',   bgClass: 'bg-yellow-50',      labelClass: 'text-yellow-700'   },
-  important: { label: 'Penting',   borderClass: 'border-accent-red',   bgClass: 'bg-accent-red/5',   labelClass: 'text-accent-red'   },
-  tip:       { label: 'Tips',      borderClass: 'border-green-600',    bgClass: 'bg-green-50',       labelClass: 'text-green-700'    },
+  note:      { label: 'Catatan',   borderClass: 'border-sea-deep',  bgClass: 'bg-sea-deep/5',  labelClass: 'text-sea-deep'  },
+  warning:   { label: 'Perhatian', borderClass: 'border-amber',     bgClass: 'bg-amber/5',     labelClass: 'text-amber'     },
+  important: { label: 'Penting',   borderClass: 'border-ink',       bgClass: 'bg-ink/5',       labelClass: 'text-ink'       },
+  tip:       { label: 'Tips',      borderClass: 'border-sea-deep',  bgClass: 'bg-sea-deep/5',  labelClass: 'text-sea-deep'  },
 }
 
 // Custom sanitize schema: extend defaultSchema untuk izinkan class, id, dan data-* attributes
@@ -53,27 +53,27 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
   )
 
   return (
-    <div className="article-content prose prose-lg max-w-none font-libre text-primary-dark">
+    <div className="article-body">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath, remarkCallout]}
         rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex, rehypeHighlight]}
         components={{
-          h1: ({ children }) => <h1 className="font-libre text-3xl font-bold text-primary-dark mt-12 mb-6 leading-tight">{children}</h1>,
-          h2: ({ children }) => <h2 className="font-libre text-2xl font-bold text-primary-dark mt-10 mb-4 leading-tight">{children}</h2>,
-          h3: ({ children }) => <h3 className="font-libre text-xl font-bold text-primary-dark mt-8 mb-3 leading-tight">{children}</h3>,
-          p: ({ children }) => <p className="font-libre text-lg leading-relaxed mb-6">{children}</p>,
+          h1: ({ children }) => <h1 className="font-body text-display-sm font-bold text-ink mt-12 mb-6 leading-heading">{children}</h1>,
+          h2: ({ children }) => <h2 className="font-body text-2xl font-bold text-ink mt-10 mb-4 leading-heading">{children}</h2>,
+          h3: ({ children }) => <h3 className="font-body text-xl font-bold text-ink mt-8 mb-3 leading-heading">{children}</h3>,
+          p: ({ children }) => <p className="font-body text-body-base leading-reading mb-6">{children}</p>,
           strong: ({ children }) => <strong className="font-bold">{children}</strong>,
           em: ({ children }) => <em className="italic">{children}</em>,
-          ul: ({ children }) => <ul className="font-libre text-lg mb-6 ml-6 list-disc space-y-2">{children}</ul>,
-          ol: ({ children }) => <ol className="font-libre text-lg mb-6 ml-6 list-decimal space-y-2">{children}</ol>,
+          ul: ({ children }) => <ul className="font-body text-body-base mb-6 ml-6 list-disc space-y-2">{children}</ul>,
+          ol: ({ children }) => <ol className="font-body text-body-base mb-6 ml-6 list-decimal space-y-2">{children}</ol>,
           li: ({ children }) => <li className="mb-1">{children}</li>,
           table: ({ children }) => (
-            <div className="my-8 overflow-x-auto border border-primary-dark/10 rounded">
-              <table className="min-w-full divide-y divide-primary-dark/10">{children}</table>
+            <div className="my-8 overflow-x-auto border border-ink/10 rounded">
+              <table className="min-w-full divide-y divide-ink/10">{children}</table>
             </div>
           ),
-          th: ({ children }) => <th className="px-4 py-3 bg-primary-dark/5 text-left font-medium border-b border-primary-dark/10">{children}</th>,
-          td: ({ children }) => <td className="px-4 py-3 border-b border-primary-dark/10">{children}</td>,
+          th: ({ children }) => <th className="px-4 py-3 bg-ink/5 text-left font-medium border-b border-ink/10 text-ink">{children}</th>,
+          td: ({ children }) => <td className="px-4 py-3 border-b border-ink/10 text-ink">{children}</td>,
           blockquote: ({ node, children }) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const calloutType = (node as any)?.properties?.['data-callout-type'] as string | undefined
@@ -82,10 +82,10 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
             if (config) {
               return (
                 <div className={`my-8 border-l-4 ${config.borderClass} ${config.bgClass} px-5 py-4 rounded-r`}>
-                  <p className={`font-helvetica font-bold text-xs uppercase tracking-widest mb-2 ${config.labelClass}`}>
+                  <p className={`font-mono font-bold text-xs uppercase tracking-widest mb-2 ${config.labelClass}`}>
                     {config.label}
                   </p>
-                  <div className="font-libre text-base text-primary-dark/90 [&>p]:mb-0 [&>p]:leading-relaxed">
+                  <div className="font-body text-body-sm text-ink/90 [&>p]:mb-0 [&>p]:leading-reading">
                     {children}
                   </div>
                 </div>
@@ -93,7 +93,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
             }
 
             return (
-              <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg">
+              <blockquote className="border-l-4 border-ink/30 pl-6 my-8 italic text-ink/80 font-body text-body-base">
                 {children}
               </blockquote>
             )
@@ -105,7 +105,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                 {children}
               </code>
             ) : (
-              <code className="font-mono text-sm bg-primary-dark/5 px-1.5 py-0.5 rounded" {...props}>
+              <code className="font-mono text-sm bg-ink/5 px-1.5 py-0.5 rounded text-ink">
                 {children}
               </code>
             )
@@ -122,7 +122,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                     alt={caption || ''}
                     width={800}
                     height={500}
-                    className="w-full rounded border border-primary-dark/10"
+                    className="w-full rounded border border-ink/10"
                     style={{ height: 'auto' }}
                   />
                 ) : (
@@ -130,11 +130,11 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                   <img
                     src={src}
                     alt={caption || ''}
-                    className="w-full rounded border border-primary-dark/10"
+                    className="w-full rounded border border-ink/10"
                   />
                 )}
                 {caption && (
-                  <figcaption className="text-center mt-3 text-sm text-primary-dark/60 font-helvetica">
+                  <figcaption className="text-center mt-3 text-sm text-warm-gray font-mono">
                     {caption}
                     {source && <span className="block text-xs mt-1">Sumber: {source}</span>}
                   </figcaption>
@@ -144,11 +144,11 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
           },
           a: ({ href, children }) => React.createElement('a', {
             href,
-            className: "text-accent-blue underline underline-offset-2 hover:opacity-70 transition-opacity duration-150",
+            className: "text-sea-deep underline underline-offset-2 hover:opacity-70 transition-opacity duration-150",
             target: href?.startsWith('http') ? '_blank' : undefined,
             rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
           }, children),
-          hr: () => <hr className="border-primary-dark/10 my-12" />,
+          hr: () => <hr className="border-ink/10 my-12" />,
           
           // Penukar Dinamis: Mencegat HTML div yang masuk dan menukarnya menjadi grafik React jika teridentifikasi
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
