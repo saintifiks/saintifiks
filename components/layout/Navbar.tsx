@@ -66,13 +66,13 @@ export default function Navbar() {
     pathname.startsWith('/dashboard') || pathname === '/login'
 
   return (
-    <nav className="border-b border-primary-dark/10 bg-primary-light transition-[border-color] duration-150">
+    <nav className="border-b border-ink/10 dark:border-paper/10 bg-paper dark:bg-night transition-[border-color] duration-150">
       <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
 
         {/* Brand — nama situs, link ke beranda */}
         <Link
           href="/"
-          className="font-libre text-xl font-bold text-primary-dark tracking-[-0.01em] hover:opacity-60 transition-opacity duration-150"
+          className="font-display text-xl font-bold text-ink dark:text-paper-night tracking-[0.04em] hover:opacity-60 transition-opacity duration-150"
         >
           Saintifiks
         </Link>
@@ -88,15 +88,15 @@ export default function Navbar() {
                   aria-label="Akun saya"
                   className="transition-opacity duration-150 hover:opacity-80"
                 >
-                  <span className="inline-flex h-9 w-9 items-center justify-center border border-primary-dark/10 bg-primary-dark text-primary-light transition-all duration-150 rotate-45">
-                    <span className="font-libre text-xl font-bold -rotate-45 leading-none">
+                  <span className="inline-flex h-9 w-9 items-center justify-center border border-ink/10 bg-ink text-paper dark:bg-paper dark:text-ink transition-all duration-150 rotate-45">
+                    <span className="font-display text-xl font-bold -rotate-45 leading-none">
                       {userInitial || 'U'}
                     </span>
                   </span>
                 </Link>
                 <button
                   onClick={handleKeluar}
-                  className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150"
+                  className="font-interface text-xs text-ink/40 dark:text-paper-night/40 hover:text-ink dark:hover:text-paper-night transition-colors duration-150"
                 >
                   Keluar
                 </button>
@@ -105,7 +105,7 @@ export default function Navbar() {
               <button
                 onClick={handleMasuk}
                 disabled={isLoggingIn}
-                className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 disabled:opacity-50 flex items-center gap-1.5"
+                className="font-interface text-xs text-ink/40 dark:text-paper-night/40 hover:text-ink dark:hover:text-paper-night transition-colors duration-150 disabled:opacity-50 flex items-center gap-1.5"
               >
                 {isLoggingIn ? (
                   <>Membuka Google...</>

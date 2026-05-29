@@ -44,25 +44,25 @@ export default function HomepageTabs({ articles, opinions }: Props) {
   return (
     <>
       {/* Tab navigation — statis, ikut scroll ke atas bersama header */}
-      <div className="border-b border-border-subtle">
+      <div className="border-b border-ink/10">
         <div className="max-w-2xl mx-auto px-6">
           <div className="flex items-center justify-center">
             <button
               onClick={() => setActiveTab('redaksi')}
-              className={`font-helvetica text-sm uppercase tracking-widest px-8 py-4 border-b-2 transition-all duration-150 ${
+              className={`font-mono text-kicker uppercase px-8 py-4 border-b-2 transition-all duration-150 ${
                 activeTab === 'redaksi'
-                  ? 'border-primary-dark text-primary-dark'
-                  : 'border-transparent text-primary-dark/40 hover:text-primary-dark/70'
+                  ? 'border-ink text-ink'
+                  : 'border-transparent text-warm-gray hover:text-ink'
               }`}
             >
               Saintifiks
             </button>
             <button
               onClick={() => setActiveTab('opinions')}
-              className={`font-helvetica text-sm uppercase tracking-widest px-8 py-4 border-b-2 transition-all duration-150 ${
+              className={`font-mono text-kicker uppercase px-8 py-4 border-b-2 transition-all duration-150 ${
                 activeTab === 'opinions'
-                  ? 'border-primary-dark text-primary-dark'
-                  : 'border-transparent text-primary-dark/40 hover:text-primary-dark/70'
+                  ? 'border-ink text-ink'
+                  : 'border-transparent text-warm-gray hover:text-ink'
               }`}
             >
               Opinions
@@ -75,27 +75,27 @@ export default function HomepageTabs({ articles, opinions }: Props) {
       {activeTab === 'redaksi' && (
         <section className="max-w-2xl mx-auto px-6 py-12">
           {articles.length === 0 ? (
-            <p className="font-helvetica text-sm text-primary-dark/40">
+            <p className="font-interface text-sm text-warm-gray">
               Belum ada artikel yang dipublikasikan.
             </p>
           ) : (
             <ul>
               {articles.map((artikel) => (
-                <li key={artikel.id} className="py-6 border-b border-border-subtle last:border-b-0">
+                <li key={artikel.id} className="py-6 border-b border-ink/10 last:border-b-0">
                   <a href={`/artikel/${artikel.slug}`} className="group block">
                     {artikel.published_at && (
                       <time
                         dateTime={artikel.published_at}
-                        className="font-helvetica text-sm text-text-secondary"
+                        className="font-interface text-meta text-warm-gray"
                       >
                         {formatTanggal(artikel.published_at)}
                       </time>
                     )}
-                    <h2 className="font-libre text-2xl font-bold text-[#1A1A1A] mt-2 group-hover:text-accent-blue transition-colors duration-[120ms]">
+                    <h2 className="font-display text-display-sm font-bold text-ink mt-2 group-hover:text-sea-deep transition-colors duration-[120ms]">
                       {artikel.title}
                     </h2>
                     {artikel.excerpt && (
-                      <p className="font-libre text-article-body text-text-secondary mt-2 line-clamp-2">
+                      <p className="font-body text-body-base text-warm-gray mt-2 line-clamp-2">
                         {artikel.excerpt}
                       </p>
                     )}
@@ -112,12 +112,12 @@ export default function HomepageTabs({ articles, opinions }: Props) {
         <section className="max-w-2xl mx-auto px-6 py-12">
           {opinions.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="font-helvetica text-sm text-primary-dark/40">
+              <p className="font-interface text-sm text-warm-gray">
                 Belum ada artikel opinions yang diterbitkan.
               </p>
               <Link
                 href="/akun/tulis"
-                className="font-helvetica text-sm text-accent-blue hover:opacity-70 transition-opacity duration-150 mt-4 inline-block"
+                className="font-interface text-sm text-sea-deep hover:opacity-70 transition-opacity duration-150 mt-4 inline-block"
               >
                 Tulis artikel pertama →
               </Link>
@@ -138,10 +138,10 @@ export default function HomepageTabs({ articles, opinions }: Props) {
                   likeCount={item.like_count}
                 />
               ))}
-              <div className="mt-8 pt-6 border-t border-border-subtle text-center">
+              <div className="mt-8 pt-6 border-t border-ink/10 text-center">
                 <Link
                   href="/opinions"
-                  className="font-helvetica text-sm text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 uppercase tracking-widest"
+                  className="font-mono text-kicker text-warm-gray hover:text-ink transition-colors duration-150 uppercase tracking-widest"
                 >
                   Semua opinions →
                 </Link>

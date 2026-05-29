@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Libre_Baskerville } from "next/font/google";
+import { Marcellus, Source_Serif_4, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -8,15 +8,42 @@ import IndexStrip from "@/components/widgets/IndexStrip";
 import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 
-// Load Libre Baskerville dari Google Fonts
-// weight 400 = regular, 700 = bold; style italic tersedia untuk body artikel
-const libreBaskerville = Libre_Baskerville({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-libre-baskerville",
-  display: "swap",
-});
+// Load Marcellus (display font) dari Google Fonts
+// Weight 400 = regular; Marcellus hanya memiliki weight 400
+const marcellus = Marcellus({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-display',
+  display: 'swap',
+})
+
+// Load Source Serif 4 (body font) dari Google Fonts
+// Weight 400 = regular, 600 = semi-bold; style italic tersedia untuk body artikel
+const sourceSerif4 = Source_Serif_4({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-body',
+  display: 'swap',
+})
+
+// Load IBM Plex Sans (interface font) dari Google Fonts
+// Weight 400 = regular, 500 = medium, 600 = semi-bold
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-interface',
+  display: 'swap',
+})
+
+// Load IBM Plex Mono (data/kicker/caption font) dari Google Fonts
+// Weight 400 = regular, 500 = medium
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   // metadataBase: fondasi agar og:image URL menjadi absolut
@@ -26,7 +53,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
   ),
-  colorScheme: "only light",
   title: "Saintifiks",
   description: "Media independen untuk pembaca yang peduli kualitas informasi publik.",
   // Default OG site-wide — halaman individual akan override ini
@@ -49,9 +75,9 @@ export default function RootLayout({
 }>) {
   return (
     // lang="id" karena seluruh konten dalam Bahasa Indonesia
-    // variable font Libre Baskerville ditaruh di <html> agar bisa diakses seluruh halaman
-    <html lang="id" className={libreBaskerville.variable} style={{ colorScheme: 'only light' }}>
-      <body className="bg-primary-light text-primary-dark font-helvetica antialiased">
+    // variable font Marcellus, Source Serif 4, IBM Plex Sans, IBM Plex Mono ditaruh di <html> agar bisa diakses seluruh halaman
+    <html lang="id" className={`${marcellus.variable} ${sourceSerif4.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
+      <body className="bg-paper text-ink font-interface antialiased">
         <AnalyticsTracker />
         <ScrollToTop />
 
