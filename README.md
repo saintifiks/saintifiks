@@ -1,8 +1,9 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 1.7 | Status: Live | Terakhir diperbarui: 2026-05-25
+> Versi: 2.0 | Status: Live | Terakhir diperbarui: [Isi dengan tanggal hari ini]
 >
-> Perubahan v1.7: Editor Opinions Improvements — TipTap table extensions (tabel GFM dirender sebagai grid), chart chip label informatif, placeholder isEmpty fix, sticky toolbar top eksplisit
+> Perubahan v2.0: Implementasi Visual System V2 (Tipografi 4-lapis, 10-token warna), Arsitektur Dark Mode murni via CSS Variables + prefers-color-scheme, dan pembatalan dokumen handover AI eksternal (Kiro/Cline).
 
+---
 ---
 
 ## ⚠️ INSTRUKSI WAJIB UNTUK AI YANG MEMBACA DOKUMEN INI
