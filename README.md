@@ -141,51 +141,43 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 
 ---
 
-## 5.1 DESIGN SYSTEM
+## 5.1 DESIGN SYSTEM (VISUAL SYSTEM V2)
 
-> Status: DITETAPKAN. Wajib diikuti di seluruh proyek tanpa pengecualian.
+> Status: DITETAPKAN (Hard Reset Arsitektur). Wajib diikuti di seluruh proyek tanpa pengecualian. Arsitektur ini menolak penggunaan static hex di Tailwind untuk properti yang merespons tema.
 
-### Tipografi
+### Tipografi (4 Lapis)
 
 | Peran | Font | Keterangan |
 |-------|------|------------|
-| Primary | Libre Baskerville | Serif — untuk body artikel, heading utama, identitas brand |
-| Secondary | Helvetica (fallback: Arial, sans-serif) | Sans-serif — untuk UI elemen, label, navigasi, metadata |
+| Display / Headline | Marcellus | Serif (Google Fonts) — untuk judul utama dan wordmark. Menggantikan rencana penggunaan font berbayar. |
+| Body Artikel | Source Serif 4 | Serif (Google Fonts) — dioptimasi untuk pembacaan teks panjang. |
+| Interface / UI | IBM Plex Sans | Sans-serif (Google Fonts) — untuk navigasi, tombol, metadata, label. |
+| Data / Kicker | IBM Plex Mono | Monospace (Google Fonts) — untuk elemen presisi: angka, kicker kategori, caption gambar. |
 
-**Cara implementasi:** Libre Baskerville di-load via Google Fonts di `layout.tsx`. Helvetica adalah system font, tidak perlu di-load. Semua konfigurasi font ada di `tailwind.config.ts`.
+**Cara implementasi:** Font dimuat via `next/font/google` di `app/layout.tsx`. Variabel font diinjeksikan ke `<body>` (misal: `--font-body`, `--font-interface`). `tailwind.config.ts` membaca variabel ini di objek `theme.fontFamily`.
 
-### Color Palette
+### Color Palette (10 Token CSS)
 
-| Token | Hex | Peran |
-|-------|-----|-------|
-| `primary-dark` | `#0D0D0D` | Warna utama — teks, background dark mode, elemen struktural |
-| `primary-light` | `#F5F4F0` | Warna utama — background halaman, surface terang |
-| `accent-red` | `#C90203` | Aksen — digunakan sangat sedikit (indikator turun di strip indeks, error state, highlight kritis) |
-| `accent-blue` | `#002EC7` | Aksen — digunakan sangat sedikit (link aktif, CTA spesifik, elemen interaktif tertentu) |
-| `accent-green` | `#5C8F6E` | Aksen — digunakan sangat sedikit (indikator naik di strip indeks beranda; hijau sage elegan, keputusan eksplisit 2026-05-21) |
+Sistem warna menggunakan CSS Variables di `:root` (`app/globals.css`) untuk memastikan *Single Source of Truth*. Tailwind dilarang keras menggunakan Hex statis untuk warna-warna ini.
 
-**Prinsip penggunaan warna:** 90% halaman adalah `#0D0D0D` dan `#F5F4F0`. Warna aksen muncul hanya untuk elemen yang benar-benar membutuhkan perhatian. Jangan menggunakan aksen untuk dekorasi.
+| Token Tailwind | CSS Variable | Peran Utama |
+|----------------|--------------|-------------|
+| `paper` | `--color-paper` | Background utama halaman (inversi di dark mode) |
+| `ink` | `--color-ink` | Teks utama artikel & UI (inversi di dark mode) |
+| `night` | `--color-night` | Background khusus dark mode |
+| `warm-gray` | `--color-warm-gray` | Teks sekunder, metadata, caption |
+| `sea-deep` | `--color-sea-deep` | Aksen primer, tautan interaktif, elemen aktif |
+| `amber` | `--color-amber` | Aksen sekunder (sangat terbatas) |
+| `data-gray` | `--color-data-gray` | Chart dan visualisasi data |
+| `trend-up` | `--color-trend-up` | Indikator naik (IndexStrip) — tidak diinversi |
+| `trend-down`| `--color-trend-down`| Indikator turun (IndexStrip) — tidak diinversi |
 
----
+### Arsitektur Dark Mode (Native OS)
 
-## 5.2 WORKFLOW PENULISAN & PUBLIKASI ARTIKEL
-
-> Ini adalah workflow pemilik proyek — harus dipahami AI untuk mendesain sistem admin yang sesuai.
-
-### Alur dari draft ke live:
-
-1. **Pemilik menulis draft** di tools luar (Obsidian, Notion, atau text editor apapun) dalam format Markdown.
-2. **Jika artikel membutuhkan visualisasi data** (chart ekonomi, grafik, dll): pemilik mendeskripsikan chart yang diinginkan kepada AI → AI menghasilkan Chart.js config JSON → pemilik menyimpan JSON tersebut.
-3. **Pemilik masuk ke admin panel** Saintifiks (hanya bisa diakses oleh akun pemilik).
-4. **Upload/paste konten Markdown** ke editor admin.
-5. **Jika ada chart:** tambahkan placeholder `{{chart:chart-id}}` di posisi yang tepat dalam artikel, lalu masukkan Chart.js config JSON ke field yang tersedia.
-6. **Preview artikel** sebelum publish untuk memastikan rendering benar.
-7. **Publish** — artikel live di situs.
-
-### Implikasi teknis dari workflow ini:
-- Admin panel harus memiliki field terpisah untuk: (a) konten Markdown, (b) Chart.js config JSON per chart, (c) metadata artikel.
-- Parser artikel di Next.js harus bisa mendeteksi `{{chart:chart-id}}`, mengambil config dari database `article_charts`, dan me-render Chart.js component di posisi tersebut.
-- Preview harus akurat — apa yang terlihat di preview harus identik dengan apa yang live.
+Sistem TIDAK menggunakan `dark:` class dari Tailwind untuk rendering struktur dasar, dan TIDAK memiliki tombol *toggle* manual.
+1. **Trigger:** Menggunakan media query murni `@media (prefers-color-scheme: dark)` di `app/globals.css`.
+2. **Mekanisme:** Saat OS masuk ke mode gelap, media query akan menimpa (overwrite) nilai CSS Variables di `:root`.
+3. **Integrasi Tailwind:** `tailwind.config.ts` murni memanggil `var(--color-...)`. Dengan demikian, elemen `<body className="bg-paper text-ink">` akan otomatis transisi menjadi gelap tanpa ada *clashing* spesifisitas CSS.
   ---
 
 ## 5.2.1 SINTAKS MARKDOWN YANG DIDUKUNG
@@ -650,6 +642,11 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Scroll otomatis ke paling atas saat navigasi halaman (via `ScrollToTop` di `layout.tsx`)
 - [x] **Fix opinions page visibility — query 2 tahap untuk menghindari PostgREST join failure** ← 25-05-2026
 - [x] **Editor improvements — tabel GFM grid di editor, chart chip label, placeholder fix, toolbar top eksplisit** ← 25-05-2026
+- [x] Hard reset arsitektur warna Tailwind + CSS Variables (Single Source of Truth).
+- [x] Migrasi 4-lapis tipografi via Google Fonts (Marcellus, Source Serif 4, IBM Plex Sans, IBM Plex Mono).
+- [x] Dark mode OS-level via `@media (prefers-color-scheme: dark)`.
+- [x] Komponen `ReadingProgressIndicator` di artikel.
+- [x] Pembatalan dokumen arsitektur turunan AI yang cacat (HANDOVER_CONTEXT.md, dsb).
 - [x] Pembersihan residu token V1 dan propagasi token V2 pada komponen interaktif (Koreksi, Komentar, Share) dan kartu artikel Opini.
 ---
 
@@ -744,7 +741,13 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
              STATUS: resolved
              WORKAROUND: -
              RESOLVED: 25-05-2026 | Sesi #42 — kondisi diganti menjadi isEmpty: doc.textContent === '' && doc.childCount <= 1.
-             
+
+[31-05-2026] MASALAH: Kegagalan Arsitektur Dark Mode (UI Tidak Terbaca)
+           STATUS: resolved
+           WORKAROUND: -
+           RESOLVED: [31-05-2026] | Root cause: Implementasi AI eksternal yang menempatkan warna Hex statis di dalam objek `colors` pada `tailwind.config.ts` (#F7F5F0) dan pada saat yang bersamaan mencoba membalikkan warna melalui `@media (prefers-color-scheme: dark)` di `globals.css`. Tailwind membajak spesifisitas CSS; teks merespons menjadi terang, tapi background terkunci pada mode terang.
+           Fix: Hard reset arsitektur. Hapus Hex statis dari Tailwind. Tailwind dipaksa hanya membaca `var(--color-paper)` dari CSS. Logika Dark Mode dikembalikan 100% ke kendali CSS murni.
+
 [31-05-2026] MASALAH: Pop-up interaktif (Koreksi, Komentar, Share) merender transparan, background textarea putih solid (merusak kontras Mode Gelap), dan judul artikel Opinions gagal berinversi.
            STATUS: resolved
            WORKAROUND: -
@@ -1230,6 +1233,16 @@ Format pengisian:
                      Kondisi benar: isEmpty = doc.textContent === '' && doc.childCount <= 1.
              CATATAN: Diimplementasikan sebagai IIFE inline di JSX agar tidak menambah state baru.
              ALTERNATIF DITOLAK: editor.isEmpty dari TipTap (tidak memperhitungkan atom nodes).
+
+[31-05-2026] KEPUTUSAN: Anulir Dokumen Eksternal AI (design.md, tasks.md, HANDOVER_CONTEXT.md, V2_HANDOVER_COMPREHENSIVE.md)
+           ALASAN: File-file tersebut dihasilkan dari auto-update AI tanpa validasi logis. Instruksi di dalamnya terbukti mendegradasi codebase (memunculkan benturan CSS vs Tailwind).
+           ATURAN: Hanya README.md (CONTEXT.md) ini yang menjadi sumber kebenaran teknis tunggal. Abaikan semua file berlabel "HANDOVER".
+
+[[Isi Tanggal Hari Ini]] KEPUTUSAN: Arsitektur Theming Berbasis CSS Variables (Bukan Tailwind Static Hex)
+           ALASAN: Tailwind yang dikonfigurasi dengan Hex statis akan mematikan utilitas CSS `prefers-color-scheme`. Untuk mempertahankan perpindahan tema yang dinamis dan native (OS level), Tailwind hanya boleh bertindak sebagai "pipa" yang menyalurkan `var(--color-...)`. Logika inversi warna diisolasi sepenuhnya di dalam `app/globals.css`.
+
+[[Isi Tanggal Hari Ini]] KEPUTUSAN: Penggunaan Marcellus Sebagai Font Display Utama & Pembatalan Canela
+           ALASAN: Rencana penggunaan font berbayar Canela dibatalkan. Marcellus ditetapkan sebagai font display default (Wordmark & Headline) via Google Fonts. Strategi fallback Playfair Display dihapus karena sistem kini sepenuhnya mengandalkan Google Fonts untuk keempat layer tipografi.
 ```
 
 ---
@@ -1608,6 +1621,20 @@ Yang dikerjakan:
 **Status akhir: Selesai. TypeScript bersih. ESLint 0 error baru. Build exit code 0.
               Bundle /akun/tulis: 349 kB (naik 15 kB dari 4 package table).**
 **Next step: Merge ke main setelah test manual di /akun/tulis.**
+---
+
+[31-06-2026] SESI #43 — HARD RESET ARSITEKTUR VISUAL SYSTEM V2
+Branch: main
+Tujuan sesi: Menghapus residu pekerjaan AI yang cacat dan merombak arsitektur Dark Mode agar berfungsi logis tanpa konflik spesifisitas.
+Yang dikerjakan:
+  - Repositori lokal disinkronkan secara absolut dengan branch `main` GitHub (git reset --hard, git clean -fd).
+  - Mengubah `tailwind.config.ts`: Seluruh Hex statis diganti menjadi pemanggilan CSS variable `var(--color-...)`.
+  - Mengubah `app/globals.css`: Penataan ulang struktur `:root` dan `@media (prefers-color-scheme: dark)` untuk inversi warna murni.
+  - Pembaruan dokumen CONTEXT.md (README.md) agar secara akurat mencerminkan spesifikasi V2 (Marcellus dkk) dan menolak dokumen handover/otomatisasi AI sebelumnya.
+Status akhir: Fondasi Theming (Dark Mode) sudah stabil dan logis.
+Next step: Lakukan perbaikan warna pada komponen Red Zone dan navigasi yang mungkin masih menggunakan token usang.
+---
+---
 
 [31-05-2026] SESI #45 — PEMBERSIHAN RESIDU TOKEN V1 & HARDCODE HEX KOMPONEN
 Branch: main
@@ -1618,8 +1645,6 @@ Yang dikerjakan:
   - Menghapus hardcode `text-[#1A1A1A]`, `text-text-secondary`, dan `border-border-subtle` pada `OpinionCard`, serta halaman dinamis opini/penulis, lalu menggantinya dengan token V2 (`text-ink`, `text-warm-gray`) agar mematuhi CSS Variables.
 Status akhir: Selesai. Seluruh komponen interaktif dan daftar artikel opini sekarang merespons transisi Mode Gelap secara akurat tanpa residu warna absolut.
 Next step: -
----
----
 ---
 
 ## 13. REFERENSI & RESOURCE
