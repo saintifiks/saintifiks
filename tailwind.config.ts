@@ -10,17 +10,17 @@ const config: Config = {
   theme: {
     extend: {
       // Saintifiks color palette V2
-      colors: {
-        paper:        { DEFAULT: '#F7F5F0', night: '#E8E4DC' },
-        ink:          { DEFAULT: '#1A1917', night: '#0F1620' },
-        night:        '#0F1620',
-        'warm-gray':  { DEFAULT: '#5A5750', night: '#8A8880' },
-        'sea-deep':   { DEFAULT: '#0B5263', light: '#3A9BB5' },
-        amber:        { DEFAULT: '#C8972A', night: '#E8B84B' },
-        'data-gray':  '#B8B4AE',
-        'trend-up':   '#5C8F6E',
-        'trend-down': '#C90203',
-      },
+       colors: {
+         paper:        { DEFAULT: '#F7F5F0', night: '#0F1620' },
+         ink:          { DEFAULT: '#1A1917', night: '#E8E4DC' },
+         night:        '#0F1620',
+         'warm-gray':  { DEFAULT: '#5A5750', night: '#8A8880' },
+         'sea-deep':   { DEFAULT: '#0B5263', light: '#3A9BB5' },
+         amber:        { DEFAULT: '#C8972A', night: '#E8B84B' },
+         'data-gray':  '#B8B4AE',
+         'trend-up':   '#5C8F6E',
+         'trend-down': '#C90203',
+       },
       // Font families V2
       fontFamily: {
         display:   ['Marcellus', 'var(--font-display)', 'Georgia', 'serif'],
