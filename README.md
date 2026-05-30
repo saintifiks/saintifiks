@@ -650,7 +650,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Scroll otomatis ke paling atas saat navigasi halaman (via `ScrollToTop` di `layout.tsx`)
 - [x] **Fix opinions page visibility — query 2 tahap untuk menghindari PostgREST join failure** ← 25-05-2026
 - [x] **Editor improvements — tabel GFM grid di editor, chart chip label, placeholder fix, toolbar top eksplisit** ← 25-05-2026
-
+- [x] Pembersihan residu token V1 dan propagasi token V2 pada komponen interaktif (Koreksi, Komentar, Share) dan kartu artikel Opini.
 ---
 
 ## 10. MASALAH YANG DIKETAHUI
@@ -744,7 +744,11 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
              STATUS: resolved
              WORKAROUND: -
              RESOLVED: 25-05-2026 | Sesi #42 — kondisi diganti menjadi isEmpty: doc.textContent === '' && doc.childCount <= 1.
-
+             
+[31-05-2026] MASALAH: Pop-up interaktif (Koreksi, Komentar, Share) merender transparan, background textarea putih solid (merusak kontras Mode Gelap), dan judul artikel Opinions gagal berinversi.
+           STATUS: resolved
+           WORKAROUND: -
+           RESOLVED: [31-05-2026] | Root cause: 1) Pemanggilan token V1 usang (`bg-primary-light`) yang diabaikan Tailwind karena sudah dihapus dari config. 2) Ketiadaan deklarasi background pada textarea sehingga browser memaksakan default putih. 3) Penggunaan warna HEX absolut (`text-[#1A1A1A]`) pada judul opini yang memblokir CSS variables. Fix: Replace massal menggunakan token V2 (`bg-paper`, `text-ink`) dan injeksi `bg-transparent` pada input form.
 ```
 Format pengisian:
 [TANGGAL] MASALAH: [deskripsi]
@@ -1604,6 +1608,17 @@ Yang dikerjakan:
 **Status akhir: Selesai. TypeScript bersih. ESLint 0 error baru. Build exit code 0.
               Bundle /akun/tulis: 349 kB (naik 15 kB dari 4 package table).**
 **Next step: Merge ke main setelah test manual di /akun/tulis.**
+
+[31-05-2026] SESI #45 — PEMBERSIHAN RESIDU TOKEN V1 & HARDCODE HEX KOMPONEN
+Branch: main
+Tujuan sesi: Membersihkan sisa-sisa kelas Tailwind lama (V1) yang menyebabkan anomali rendering (transparansi dan kontras) pada komponen interaktif dan daftar opini setelah transisi ke V2.
+Yang dikerjakan:
+  - Mengganti seluruh `bg-primary-light` dengan `bg-paper` dan `primary-dark` dengan `ink` pada file bottom sheet (Koreksi, Komentar, Share) di modul editorial maupun opini.
+  - Menyuntikkan `bg-transparent` pada `<textarea>` di formulir untuk menggugurkan *background* putih default browser.
+  - Menghapus hardcode `text-[#1A1A1A]`, `text-text-secondary`, dan `border-border-subtle` pada `OpinionCard`, serta halaman dinamis opini/penulis, lalu menggantinya dengan token V2 (`text-ink`, `text-warm-gray`) agar mematuhi CSS Variables.
+Status akhir: Selesai. Seluruh komponen interaktif dan daftar artikel opini sekarang merespons transisi Mode Gelap secara akurat tanpa residu warna absolut.
+Next step: -
+---
 ---
 ---
 
