@@ -123,13 +123,13 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
       {/* Icon trigger — w-10 h-10 sejajar dengan icon lain, badge count di pojok */}
       <button
         onClick={() => setIsOpen(true)}
-        className="relative flex items-center justify-center w-10 h-10 rounded-full border border-primary-dark/30 text-primary-dark/60 hover:border-primary-dark hover:text-primary-dark transition-colors duration-150"
+        className="relative flex items-center justify-center w-10 h-10 rounded-full border border-ink/30 text-ink/60 hover:border-ink hover:text-ink transition-colors duration-150"
         aria-label="Buka komentar"
         title="Komentar"
       >
         <MessageCircle size={18} />
         {!isLoadingComments && comments.length > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-dark text-primary-light font-helvetica text-[10px] rounded-full flex items-center justify-center leading-none">
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-ink text-paper font-helvetica text-[10px] rounded-full flex items-center justify-center leading-none">
             {comments.length}
           </span>
         )}
@@ -145,85 +145,85 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
         >
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-primary-dark/40"
+            className="absolute inset-0 bg-ink/40"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Sheet */}
-          <div className="relative bg-primary-light w-full max-h-[85vh] flex flex-col rounded-t-2xl shadow-2xl">
+          <div className="relative bg-paper w-full max-h-[85vh] flex flex-col rounded-t-2xl shadow-2xl">
             {/* Handle bar */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-primary-dark/20 rounded-full" />
+              <div className="w-10 h-1 bg-ink/20 rounded-full" />
             </div>
 
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-primary-dark/10">
-              <div className="flex items-center gap-2">
-                <h3 className="font-libre text-lg font-bold text-primary-dark">Komentar</h3>
-                <span className="font-helvetica text-xs text-primary-dark/50 bg-primary-dark/5 px-2 py-0.5">
-                  {comments.length}
-                </span>
+<div className="flex items-center gap-2">
+                 <h3 className="font-libre text-lg font-bold text-ink">Komentar</h3>
+                 <span className="font-helvetica text-xs text-ink/50 bg-ink/5 px-2 py-0.5">
+                   {comments.length}
+                 </span>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 hover:bg-primary-dark/10 rounded-full transition-colors"
-                aria-label="Tutup"
-              >
+<button
+                 onClick={() => setIsOpen(false)}
+                 className="p-1.5 hover:bg-ink/10 rounded-full transition-colors"
+                 aria-label="Tutup"
+               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto px-5 py-4">
-              {isLoadingComments ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary-dark/10 animate-pulse flex-shrink-0" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-3 w-28 bg-primary-dark/10 animate-pulse" />
-                        <div className="h-12 w-full bg-primary-dark/10 animate-pulse" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : comments.length === 0 ? (
-                <div className="text-center py-10">
-                  <MessageCircle size={28} className="mx-auto mb-3 text-primary-dark/20" />
-                  <p className="font-helvetica text-sm text-primary-dark/40">
-                    Belum ada komentar. Jadilah yang pertama!
-                  </p>
-                </div>
+{isLoadingComments ? (
+                 <div className="space-y-4">
+                   {[1, 2, 3].map((i) => (
+                     <div key={i} className="flex gap-3">
+                       <div className="w-9 h-9 rounded-full bg-ink/10 animate-pulse flex-shrink-0" />
+                       <div className="flex-1 space-y-2">
+                         <div className="h-3 w-28 bg-ink/10 animate-pulse" />
+                         <div className="h-12 w-full bg-ink/10 animate-pulse" />
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               ) : comments.length === 0 ? (
+<div className="text-center py-10">
+                   <MessageCircle size={28} className="mx-auto mb-3 text-ink/20" />
+                   <p className="font-helvetica text-sm text-ink/40">
+                     Belum ada komentar. Jadilah yang pertama!
+                   </p>
+                 </div>
               ) : (
                 <div className="space-y-5">
                   {comments.map((comment) => (
                     <div key={comment.id} className="flex gap-3">
                       <div className="flex-shrink-0">
-                        {comment.user_avatar ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={comment.user_avatar}
-                            alt={comment.user_name}
-                            className="w-9 h-9 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-primary-dark/10 flex items-center justify-center">
-                            <User size={14} className="text-primary-dark/50" />
-                          </div>
-                        )}
+{comment.user_avatar ? (
+                           // eslint-disable-next-line @next/next/no-img-element
+                           <img
+                             src={comment.user_avatar}
+                             alt={comment.user_name}
+                             className="w-9 h-9 rounded-full object-cover"
+                           />
+                         ) : (
+                           <div className="w-9 h-9 rounded-full bg-ink/10 flex items-center justify-center">
+                             <User size={14} className="text-ink/50" />
+                           </div>
+                         )}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-helvetica font-medium text-sm text-primary-dark">
-                            {comment.user_name}
-                          </span>
-                          <span className="font-helvetica text-xs text-primary-dark/40">
-                            {formatDate(comment.created_at)}
-                          </span>
-                        </div>
-                        <p className="font-helvetica text-sm text-primary-dark/80 leading-relaxed">
-                          {comment.content}
-                        </p>
+<div className="flex items-center gap-2 mb-1">
+                           <span className="font-helvetica font-medium text-sm text-ink">
+                             {comment.user_name}
+                           </span>
+                           <span className="font-helvetica text-xs text-ink/40">
+                             {formatDate(comment.created_at)}
+                           </span>
+                         </div>
+<p className="font-helvetica text-sm text-ink/80 leading-relaxed">
+                           {comment.content}
+                         </p>
                       </div>
                     </div>
                   ))}
@@ -235,29 +235,29 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
             <div className="border-t border-primary-dark/10 px-5 py-4">
               <form onSubmit={handleSubmit}>
                 <div className="flex gap-3 items-end">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder={userId ? 'Tulis komentar...' : 'Login untuk berkomentar'}
-                    disabled={isSubmitting}
-                    rows={2}
-                    className="flex-1 font-helvetica text-sm p-3 border border-primary-dark/15 focus:border-primary-dark focus:outline-none resize-none transition-colors"
-                  />
-                  <button
-                    type={userId ? 'submit' : 'button'}
-                    onClick={!userId ? async () => {
-                      const origin = window.location.origin
-                      await supabase.auth.signInWithOAuth({
-                        provider: 'google',
-                        options: {
-                          queryParams: { prompt: 'select_account' },
-                          redirectTo: `${origin}${window.location.pathname}`,
-                        },
-                      })
-                    } : undefined}
-                    disabled={userId ? (!newComment.trim() || isSubmitting) : false}
-                    className="flex items-center justify-center w-10 h-10 bg-primary-dark text-primary-light hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
-                  >
+<textarea
+                     value={newComment}
+                     onChange={(e) => setNewComment(e.target.value)}
+                     placeholder={userId ? 'Tulis komentar...' : 'Login untuk berkomentar'}
+                     disabled={isSubmitting}
+                     rows={2}
+                     className="flex-1 font-helvetica text-sm p-3 border border-ink/15 focus:border-ink focus:outline-none resize-none transition-colors"
+                   />
+<button
+                     type={userId ? 'submit' : 'button'}
+                     onClick={!userId ? async () => {
+                       const origin = window.location.origin
+                       await supabase.auth.signInWithOAuth({
+                         provider: 'google',
+                         options: {
+                           queryParams: { prompt: 'select_account' },
+                           redirectTo: `${origin}${window.location.pathname}`,
+                         },
+                       })
+                     } : undefined}
+                     disabled={userId ? (!newComment.trim() || isSubmitting) : false}
+                     className="flex items-center justify-center w-10 h-10 bg-ink text-paper hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
+                   >
                     {isSubmitting ? (
                       <Loader2 size={16} className="animate-spin" />
                     ) : (
