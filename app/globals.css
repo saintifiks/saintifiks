@@ -4,51 +4,72 @@
 
 /* Saintifiks color & design tokens V2 */
 :root {
-   /* V2 Color tokens — light mode default */
-   --color-paper:      #F7F5F0;
-   --color-ink:        #1A1917;
-   --color-warm-gray:  #5A5750;
-   --color-sea-deep:   #0B5263;
-   --color-amber:      #C8972A;
-   --color-data-gray:  #B8B4AE;
-   --color-trend-up:   #5C8F6E;
-   --color-trend-down: #C90203;
+  /* V2 Color tokens — light mode default */
+  --color-paper:      #F7F5F0;
+  --color-ink:        #1A1917;
+  --color-warm-gray:  #5A5750;
+  --color-sea-deep:   #0B5263;
+  --color-amber:      #C8972A;
+  --color-data-gray:  #B8B4AE;
+  --color-trend-up:   #5C8F6E;
+  --color-trend-down: #C90203;
 
-   /* Legacy tokens (for backward compatibility during migration) */
-   --primary-dark: #0D0D0D;
-   --primary-light: #F5F4F0;
-   --accent-red: #C90203;
-   --accent-blue: var(--color-sea-deep);
-   --accent-green: #5C8F6E;
+  /* Legacy tokens (for backward compatibility during migration) */
+  --primary-dark: #0D0D0D;
+  --primary-light: #F5F4F0;
+  --accent-red: #C90203;
+  --accent-blue: var(--color-sea-deep);
+  --accent-green: #5C8F6E;
 
-   /* P0-04: Token tonal — berbasis palette yang ada */
-   --color-text-primary: #1A1A1A;
-   --color-text-secondary: #6B6B6B;
-   --color-text-muted: #9A9A9A;
-   --color-border-subtle: #E2E0DC;
-   --color-border-default: #D8D6D2;
-   --color-surface-elevated: #EEECEA;
+  /* P0-04: Token tonal — berbasis palette yang ada */
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #6B6B6B;
+  --color-text-muted: #9A9A9A;
+  --color-border-subtle: #E2E0DC;
+  --color-border-default: #D8D6D2;
+  --color-surface-elevated: #EEECEA;
 
-   /* Shadow tokens */
-   --shadow-xs: 0 1px 2px rgba(13, 13, 13, 0.06);
-   --shadow-sm: 0 1px 4px rgba(13, 13, 13, 0.08), 0 0 0 1px rgba(13, 13, 13, 0.04);
-   --shadow-md: 0 4px 12px rgba(13, 13, 13, 0.10), 0 1px 3px rgba(13, 13, 13, 0.06);
-   --shadow-lg: 0 8px 24px rgba(13, 13, 13, 0.14), 0 2px 8px rgba(13, 13, 13, 0.08);
+  /* Shadow tokens */
+  --shadow-xs: 0 1px 2px rgba(13, 13, 13, 0.06);
+  --shadow-sm: 0 1px 4px rgba(13, 13, 13, 0.08), 0 0 0 1px rgba(13, 13, 13, 0.04);
+  --shadow-md: 0 4px 12px rgba(13, 13, 13, 0.10), 0 1px 3px rgba(13, 13, 13, 0.06);
+  --shadow-lg: 0 8px 24px rgba(13, 13, 13, 0.14), 0 2px 8px rgba(13, 13, 13, 0.08);
 
-   /* Transition tokens */
-   --transition-fast: 120ms ease-out;
-   --transition-base: 150ms ease-out;
-   --transition-slow: 250ms ease-out;
+  /* Transition tokens */
+  --transition-fast: 120ms ease-out;
+  --transition-base: 150ms ease-out;
+  --transition-slow: 250ms ease-out;
 
-   /* Typography tokens */
-   --font-body-size: 17px;
-   --font-body-line-h: 1.72;
-   --article-measure: 68ch;
+  /* Typography tokens */
+  --font-body-size: 17px;
+  --font-body-line-h: 1.72;
+  --article-measure: 68ch;
+}
 
-   /* Base tokens for overrides */
-   --color-ink-base: #1A1917;
-   --color-paper-base: #F7F5F0;
-   --color-night: #0F1620;
+/* Override for text-ink to ensure it uses the CSS variable (which is media-query aware) */
+.text-ink { color: var(--color-ink); }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper:     #0F1620;  /* night */
+    --color-ink:       #E8E4DC;  /* paper-night */
+    --color-warm-gray: #8A8880;  /* gray-night */
+    --color-sea-deep:  #3A9BB5;  /* sea-light */
+    --color-amber:     #E8B84B;  /* amber-night */
+  }
+}
+
+/* Base body — 90% halaman hanya dua warna ini */
+body {
+  color: var(--color-ink);
+  font-family: 'IBM Plex Sans', Arial, sans-serif;
+}
+
+/* ============================================================
+   P0-05: Global button transitions
+   ============================================================ */
+button {
+  transition: all 150ms ease-out;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -66,7 +87,6 @@
 .bg-ink { background-color: var(--color-ink-base); }
 /* Base body — 90% halaman hanya dua warna ini */
 body {
-  background-color: var(--color-paper);
   color: var(--color-ink);
   font-family: 'IBM Plex Sans', Arial, sans-serif;
 }
