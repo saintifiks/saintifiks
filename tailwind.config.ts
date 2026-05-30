@@ -9,17 +9,17 @@ const config: Config = {
   darkMode: 'media',
   theme: {
     extend: {
-      // Saintifiks color palette V2
+      // Saintifiks color palette V2 - Mendukung Opacity Modifier (/10, /20, dst)
       colors: {
-        paper:        { DEFAULT: '#F7F5F0', night: '#E8E4DC' },
-        ink:          { DEFAULT: '#1A1917', night: '#0F1620' },
-        night:        '#0F1620',
-        'warm-gray':  { DEFAULT: '#5A5750', night: '#8A8880' },
-        'sea-deep':   { DEFAULT: '#0B5263', light: '#3A9BB5' },
-        amber:        { DEFAULT: '#C8972A', night: '#E8B84B' },
-        'data-gray':  '#B8B4AE',
-        'trend-up':   '#5C8F6E',
-        'trend-down': '#C90203',
+        paper:        'rgb(var(--color-paper) / <alpha-value>)',
+        ink:          'rgb(var(--color-ink) / <alpha-value>)',
+        night:        'rgb(var(--color-night) / <alpha-value>)',
+        'warm-gray':  'rgb(var(--color-warm-gray) / <alpha-value>)',
+        'sea-deep':   'rgb(var(--color-sea-deep) / <alpha-value>)',
+        amber:        'rgb(var(--color-amber) / <alpha-value>)',
+        'data-gray':  'rgb(var(--color-data-gray) / <alpha-value>)',
+        'trend-up':   'rgb(var(--color-trend-up) / <alpha-value>)',
+        'trend-down': 'rgb(var(--color-trend-down) / <alpha-value>)',
       },
       // Font families V2
       fontFamily: {
