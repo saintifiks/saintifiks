@@ -19,15 +19,15 @@
 
 ---
 
-## 📋 STATUS SAAT INI (Per 30 Mei 2026, 04:10)
-
+## 📋 STATUS SAAT INI (Per 30 Mei 2026, 15:51)
+ 
 ### ✅ SELESAI: Fase 1 - Fondasi Design System V2
 - Build sukses tanpa error
 - 4 file fondasi sudah diupdate
 - Token warna V2 aktif
 - Font Marcellus menggantikan Libre Baskerville
 - Dark mode otomatis via prefers-color-scheme
-
+ 
 ### ✅ SELESAI: Fase 2 - Layout Components
 - Build sukses (1 warning ESLint tidak kritis)
 - Footer redesigned + link /tentang & /standar-editorial
@@ -72,10 +72,11 @@
    - ✅ Text size tokens (text-kicker, text-meta, text-display-sm, text-body-base)
 
 7. **`app/page.tsx`** *(Fase 2)*
-   - ✅ Token warna V2 (bg-paper, border-ink/10, text-ink, text-warm-gray)
-   - ✅ Font display untuk judul "Saintifiks"
-   - ✅ Logo SVG updated dengan `currentColor` (responsive dark mode)
-   - ✅ Text size tokens (text-display-lg, text-body-lg)
+    - ✅ Token warna V2 (bg-paper, border-ink/10, text-ink, text-warm-gray)
+    - ✅ Font display untuk judul "Saintifiks"
+    - ✅ Logo SVG updated dengan `currentColor` (responsive dark mode)
+    - ✅ Text size tokens (text-display-lg, text-body-lg)
+    - ✅ Improved text tracking for better readability (tracking-[0.05em])
 
 ---
 
@@ -97,8 +98,8 @@
 
 #### **Fase 4 - Artikel Components**
 - [ ] `components/artikel/ArticleInteractions.tsx`
-- [ ] `components/artikel/CommentsSection.tsx`
-- [ ] `components/artikel/ShareButton.tsx`
+- [ ] `components/artikel/CommentsSection.tsx` - ✅ SELESAI (Text visibility & interaction fixes)
+- [ ] `components/artikel/ShareButton.tsx` - ✅ SELESAI (Text visibility & interaction fixes)
 - [ ] `components/artikel/ChartBlock.tsx` - Update default Chart.js colors
 
 #### **Fase 5 - Komponen Baru**
@@ -268,8 +269,8 @@ saintifiks/
 │   │   ├── ChartBlock.tsx       ⚠️ RED ZONE (colors only)
 │   │   ├── LikeButton.tsx       ⚠️ RED ZONE (token only)
 │   │   ├── CorrectionSection.tsx ⚠️ RED ZONE (token only)
-│   │   ├── CommentsSection.tsx  ⏳ PERLU DIUPDATE (Fase 4)
-│   │   ├── ShareButton.tsx      ⏳ PERLU DIUPDATE (Fase 4)
+│   │   ├── CommentsSection.tsx  ✅ DIUPDATE (Fase 4 - Text visibility & interaction fixes)
+│   │   ├── ShareButton.tsx      ✅ DIUPDATE (Fase 4 - Text visibility & interaction fixes)
 │   │   └── ReadingProgress.tsx  ✅ SUDAH ADA (tidak perlu ubah)
 │   ├── opinions/
 │   │   ├── OpinionCard.tsx      ⏳ PERLU DIUPDATE (Fase 6)
@@ -486,7 +487,7 @@ PENTING:
 ---
 
 **Dibuat**: 30 Mei 2026, 04:11 WIB
-**Diperbarui**: 30 Mei 2026, 04:30 WIB
-**Status**: Fase 1 & 2 ✅ SELESAI
+**Diperbarui**: 30 Mei 2026, 16:07 WIB
+**Status**: Fase 1 & 2 ✅ SELESAI, Fase 4 progres (CommentsSection, ShareButton selesai)
 **Next Step**: Lanjut Fase 3 (Red Zone) / Fase 7 (Halaman Baru) / Deploy
 **Build Status**: ✅ SUKSES (0 errors, 1 ESLint warning tidak kritis)

@@ -46,6 +46,9 @@
   --article-measure: 68ch;
 }
 
+/* Override for text-ink to ensure it uses the CSS variable (which is media-query aware) */
+.text-ink { color: var(--color-ink); }
+
 @media (prefers-color-scheme: dark) {
   :root {
     --color-paper:     #0F1620;  /* night */
@@ -58,7 +61,32 @@
 
 /* Base body — 90% halaman hanya dua warna ini */
 body {
-  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: 'IBM Plex Sans', Arial, sans-serif;
+}
+
+/* ============================================================
+   P0-05: Global button transitions
+   ============================================================ */
+button {
+  transition: all 150ms ease-out;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper:     #0F1620;  /* night */
+    --color-ink:       #E8E4DC;  /* paper-night */
+    --color-warm-gray: #8A8880;  /* gray-night */
+    --color-sea-deep:  #3A9BB5;  /* sea-light */
+    --color-amber:     #E8B84B;  /* amber-night */
+  }
+}
+ 
+/* Override for text-ink and bg-ink to ensure correct dark mode */
+.text-ink { color: var(--color-ink); }
+.bg-ink { background-color: var(--color-ink-base); }
+/* Base body — 90% halaman hanya dua warna ini */
+body {
   color: var(--color-ink);
   font-family: 'IBM Plex Sans', Arial, sans-serif;
 }
@@ -374,7 +402,7 @@ button {
   top: 0;
   left: 0;
   height: 2px;
-  background-color: var(--color-text-primary);
+  background-color: var(--color-sea-deep);
   z-index: 50;
   transition: width 50ms linear;
   pointer-events: none;
