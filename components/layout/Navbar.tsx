@@ -1,20 +1,31 @@
 'use client'
 
 // Komponen Navbar — navigasi utama situs Saintifiks
-// [PERUBAHAN SESI #16] — Improve Login UX: tambah prompt select_account via queryParams
+// [IMPROVEMENT] NYT-style layout: hamburger left, brand center, user right
 
 import { useState, useEffect, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { Menu, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import NavDrawer from './NavDrawer'
 
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userInitial, setUserInitial] = useState('')
   const [loading, setLoading] = useState(true)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
   const supabase = useMemo(() => createClient(), [])
+
+  // Track scroll untuk shadow effect
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   function getInitialFromName(name: string) {
     const trimmed = name.trim()
@@ -61,64 +72,77 @@ export default function Navbar() {
     window.location.href = '/'
   }
 
-  // Sembunyikan tombol Masuk/Keluar di halaman admin dan halaman login.
+  // Sembunyikan auth buttons di halaman admin dan halaman login
   const isHalamanAdmin =
     pathname.startsWith('/dashboard') || pathname === '/login'
 
   return (
-    <nav className="border-b border-ink/10 dark:border-paper/10 bg-paper dark:bg-night transition-[border-color] duration-150">
-      <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
+    <>
+      <NavDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
 
-        {/* Brand — nama situs, link ke beranda */}
-        {/* Tracking +15 sesuai Brand Guidelines untuk wordmark */}
-        <Link
-          href="/"
-          className="font-display text-xl font-bold text-ink dark:text-paper-night tracking-[0.06em] hover:opacity-60 transition-opacity duration-150"
-        >
-          Saintifiks
-        </Link>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 bg-paper dark:bg-night border-b border-ink/10 dark:border-paper/10 transition-shadow duration-200 ${
+          scrolled ? 'shadow-sm' : ''
+        }`}
+      >
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          {/* Kiri: Hamburger menu */}
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="text-ink dark:text-paper hover:opacity-70 transition-opacity p-1 -ml-1"
+            aria-label="Buka menu navigasi"
+          >
+            <Menu size={24} strokeWidth={1.5} />
+          </button>
 
-        {/* Navigasi tengah + kanan */}
-        <div className="flex items-center gap-5">
-          {/* Tombol Masuk / Keluar — hanya tampil di halaman publik */}
-          {!loading && !isHalamanAdmin && (
-            isLoggedIn ? (
-              <div className="flex items-center gap-3">
+          {/* Tengah: Brand/wordmark */}
+          <Link
+            href="/"
+            className="font-display text-xl sm:text-2xl font-bold text-ink dark:text-paper tracking-[0.04em] hover:opacity-60 transition-opacity duration-150 absolute left-1/2 -translate-x-1/2"
+          >
+            Saintifiks
+          </Link>
+
+          {/* Kanan: User icon / Login */}
+          <div className="flex items-center">
+            {!loading && !isHalamanAdmin && (
+              isLoggedIn ? (
                 <Link
                   href="/akun"
                   aria-label="Akun saya"
                   className="transition-opacity duration-150 hover:opacity-80"
                 >
-                  <span className="inline-flex h-9 w-9 items-center justify-center border border-ink/10 bg-ink text-paper dark:bg-paper dark:text-ink transition-all duration-150 rotate-45">
-                    <span className="font-display text-xl font-bold -rotate-45 leading-none">
+                  <span className="inline-flex h-8 w-8 items-center justify-center border border-ink/10 bg-ink text-paper dark:bg-paper dark:text-ink transition-all duration-150 rotate-45">
+                    <span className="font-display text-lg font-bold -rotate-45 leading-none">
                       {userInitial || 'U'}
                     </span>
                   </span>
                 </Link>
+              ) : (
                 <button
-                  onClick={handleKeluar}
-                  className="font-interface text-xs text-ink/40 dark:text-paper-night/40 hover:text-ink dark:hover:text-paper-night transition-colors duration-150"
+                  onClick={handleMasuk}
+                  disabled={isLoggingIn}
+                  className="text-ink dark:text-paper hover:opacity-70 transition-opacity disabled:opacity-50 p-1"
+                  aria-label="Masuk"
                 >
-                  Keluar
+                  {isLoggingIn ? (
+                    <Loader2 size={20} className="animate-spin" strokeWidth={1.5} />
+                  ) : (
+                    <span className="inline-flex h-8 w-8 items-center justify-center border border-ink/10 bg-ink text-paper dark:bg-paper dark:text-ink transition-all duration-150 rotate-45">
+                      <span className="font-display text-lg font-bold -rotate-45 leading-none">
+                        M
+                      </span>
+                    </span>
+                  )}
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleMasuk}
-                disabled={isLoggingIn}
-                className="font-interface text-xs text-ink/40 dark:text-paper-night/40 hover:text-ink dark:hover:text-paper-night transition-colors duration-150 disabled:opacity-50 flex items-center gap-1.5"
-              >
-                {isLoggingIn ? (
-                  <>Membuka Google...</>
-                ) : (
-                  <>Masuk</>
-                )}
-              </button>
-            )
-          )}
+              )
+            )}
+          </div>
         </div>
+      </header>
 
-      </div>
-    </nav>
+      {/* Spacer untuk fixed header */}
+      <div className="h-14" />
+    </>
   )
 }

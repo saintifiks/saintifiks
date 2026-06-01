@@ -438,6 +438,41 @@ button {
 }
 
 /* ============================================================
+   NYT-STYLE RULE UTILITY CLASSES (Section Dividers)
+   ============================================================ */
+.rule-top {
+  border-top: 1px solid rgb(var(--color-ink) / 0.15);
+}
+
+.rule-bottom {
+  border-bottom: 1px solid rgb(var(--color-ink) / 0.15);
+}
+
+.rule-light {
+  border-bottom: 1px solid rgb(var(--color-ink) / 0.08);
+}
+
+.rule-heavy {
+  border-bottom: 4px solid rgb(var(--color-ink));
+}
+
+/* Dark mode rules */
+@media (prefers-color-scheme: dark) {
+  .rule-top {
+    border-top-color: rgb(var(--color-ink) / 0.2);
+  }
+  .rule-bottom {
+    border-bottom-color: rgb(var(--color-ink) / 0.2);
+  }
+  .rule-light {
+    border-bottom-color: rgb(var(--color-ink) / 0.12);
+  }
+  .rule-heavy {
+    border-bottom-color: rgb(var(--color-ink));
+  }
+}
+
+/* ============================================================
    V2 UTILITY CLASSES
    ============================================================ */
 .article-body {

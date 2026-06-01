@@ -37,6 +37,11 @@ const config: Config = {
         deck:    '1.6',
         heading: '1.4',
       },
+      spacing: {
+        'margin-mobile': '1rem',
+        'section-gap': '2.5rem',
+        'gutter-vertical': '1.5rem',
+      },
       fontSize: {
         kicker:         ['11px', { lineHeight: '1.4', letterSpacing: '0.05em', fontWeight: '500' }],
         'kicker-lg':    ['12px', { lineHeight: '1.4', letterSpacing: '0.05em', fontWeight: '500' }],
@@ -49,6 +54,10 @@ const config: Config = {
         'display-sm':   ['32px', { lineHeight: '1.2',  letterSpacing: '0.01em' }],
         'display-base': ['40px', { lineHeight: '1.15', letterSpacing: '0.01em' }],
         'display-lg':   ['52px', { lineHeight: '1.1',  letterSpacing: '0.01em' }],
+      },
+      borderWidth: {
+        'rule': '1px',
+        'rule-heavy': '4px',
       },
       boxShadow: {
         "xs": "0 1px 2px rgba(13, 13, 13, 0.06)",
