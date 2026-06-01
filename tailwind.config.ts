@@ -23,7 +23,7 @@ const config: Config = {
       },
       // Font families V2
       fontFamily: {
-        display:   ['Marcellus', 'var(--font-display)', 'Georgia', 'serif'],
+        display:   ['Cormorant', 'var(--font-display)', 'Georgia', 'serif'],
         body:      ['"Source Serif 4"', 'var(--font-body)', 'Georgia', 'serif'],
         interface: ['"IBM Plex Sans"', 'var(--font-interface)', 'Arial', 'sans-serif'],
         mono:      ['"IBM Plex Mono"', 'var(--font-mono)', '"Courier New"', 'monospace'],

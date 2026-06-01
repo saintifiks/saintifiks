@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Marcellus, Source_Serif_4, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Cormorant, Source_Serif_4, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -8,11 +8,11 @@ import IndexStrip from "@/components/widgets/IndexStrip";
 import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 
-// Load Marcellus (display font) dari Google Fonts
-// Weight 400 = regular; Marcellus hanya memiliki weight 400
-const marcellus = Marcellus({
+// Load Cormorant (display font) dari Google Fonts
+// Weight 300-700 tersedia; menggunakan 400 sebagai default
+const cormorant = Cormorant({
   subsets: ['latin'],
-  weight: ['400'],
+  weight: ['300', '400', '500', '600', '700'],
   variable: '--font-display',
   display: 'swap',
 })
@@ -75,8 +75,8 @@ export default function RootLayout({
 }>) {
   return (
     // lang="id" karena seluruh konten dalam Bahasa Indonesia
-    // variable font Marcellus, Source Serif 4, IBM Plex Sans, IBM Plex Mono ditaruh di <html> agar bisa diakses seluruh halaman
-    <html lang="id" className={`${marcellus.variable} ${sourceSerif4.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
+    // variable font Cormorant, Source Serif 4, IBM Plex Sans, IBM Plex Mono ditaruh di <html> agar bisa diakses seluruh halaman
+    <html lang="id" className={`${cormorant.variable} ${sourceSerif4.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
       <body className="bg-paper text-ink font-interface antialiased">
         <AnalyticsTracker />
         <ScrollToTop />
