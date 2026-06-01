@@ -6,7 +6,9 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: 'media',
+  // Dark mode dikendalikan via atribut data-theme pada <html> (toggle manual + default OS).
+  // Script anti-FOUC di layout.tsx selalu men-set data-theme, jadi preferensi OS tetap terbaca.
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       // Saintifiks color palette V2 - Mendukung Opacity Modifier (/10, /20, dst)
@@ -23,7 +25,8 @@ const config: Config = {
       },
       // Font families V2
       fontFamily: {
-        display:   ['Marcellus', 'var(--font-display)', 'Georgia', 'serif'],
+        display:   ['var(--font-display)', 'Georgia', 'serif'],
+        libre:     ['var(--font-display)', 'Georgia', 'serif'],
         body:      ['"Source Serif 4"', 'var(--font-body)', 'Georgia', 'serif'],
         interface: ['"IBM Plex Sans"', 'var(--font-interface)', 'Arial', 'sans-serif'],
         mono:      ['"IBM Plex Mono"', 'var(--font-mono)', '"Courier New"', 'monospace'],
