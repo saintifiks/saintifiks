@@ -753,6 +753,11 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
            STATUS: resolved
            WORKAROUND: -
            RESOLVED: [31-05-2026] | Root cause: 1) Pemanggilan token V1 usang (`bg-primary-light`) yang diabaikan Tailwind karena sudah dihapus dari config. 2) Ketiadaan deklarasi background pada textarea sehingga browser memaksakan default putih. 3) Penggunaan warna HEX absolut (`text-[#1A1A1A]`) pada judul opini yang memblokir CSS variables. Fix: Replace massal menggunakan token V2 (`bg-paper`, `text-ink`) dan injeksi `bg-transparent` pada input form.
+
+[01-06-2026] MASALAH: Preview deployment Vercel terkunci proteksi login (SSO) — pengujian visual otomatis (toggle, lebar 65ch, font) tidak bisa diakses Devin tanpa kredensial Vercel.
+           STATUS: open
+           WORKAROUND: Pemilik membuka URL preview sambil login akun Vercel; ATAU jalankan `npx next dev` lokal dengan env publik NEXT_PUBLIC_SUPABASE_URL & NEXT_PUBLIC_SUPABASE_ANON_KEY agar halaman artikel ter-render.
+           RESOLVED: -
 ```
 Format pengisian:
 [TANGGAL] MASALAH: [deskripsi]
@@ -1053,6 +1058,7 @@ Format pengisian:
              ALTERNATIF DITOLAK: Kelas `dark:` Tailwind (Tailwind darkMode tidak dikonfigurasi
                                  dan situs memang tidak dirancang untuk dark mode);
                                  filter CSS manual (tidak mengatasi root cause).
+             SUPERSEDED: [01-06-2026] Sesi #46 — situs kini mendukung dark mode penuh (hibrida OS + toggle). Lihat keputusan "Dark Mode Hibrida" di bawah.
 
 [23-05-2026] KEPUTUSAN: Opinions Platform — platform opini pengguna terpisah dari sistem editorial
              ALASAN: Memungkinkan pembaca terpilih mempublikasikan artikel opini tanpa mengubah
@@ -1244,6 +1250,24 @@ Format pengisian:
 
 [[Isi Tanggal Hari Ini]] KEPUTUSAN: Penggunaan Marcellus Sebagai Font Display Utama & Pembatalan Canela
            ALASAN: Rencana penggunaan font berbayar Canela dibatalkan. Marcellus ditetapkan sebagai font display default (Wordmark & Headline) via Google Fonts. Strategi fallback Playfair Display dihapus karena sistem kini sepenuhnya mengandalkan Google Fonts untuk keempat layer tipografi.
+           SUPERSEDED: [01-06-2026] Sesi #46 — Marcellus diganti Libre Baskerville. Lihat keputusan di bawah.
+
+[01-06-2026] KEPUTUSAN: Dark Mode Hibrida — default OS + toggle manual (localStorage)
+           ALASAN: Pembaca butuh kontrol eksplisit atas tema, bukan sekadar mengikuti OS. Script anti-FOUC di <head> men-set `data-theme` (prioritas localStorage > prefers-color-scheme) sebelum render; ThemeToggle (Sun/Moon di Navbar) menimpa & menyimpan pilihan ke localStorage('saintifiks-theme').
+           CATATAN IMPLEMENTASI: globals.css punya 3 skenario — @media(prefers-color-scheme:dark) :root:not([data-theme="light"]); :root[data-theme="dark"]; :root[data-theme="light"]. Komponen baru components/layout/ThemeToggle.tsx (Client, hydration-safe, aria-label ID).
+           MEMBATALKAN: keputusan lama "dark mode OS-level TANPA toggle" (Sesi #43) dan "[22-05-2026] color-scheme: only light".
+
+[01-06-2026] KEPUTUSAN: Tailwind darkMode 'media' → ['selector','[data-theme="dark"]']
+           ALASAN: Utility `dark:` (dipakai di Navbar) harus mengikuti toggle manual, bukan hanya OS. Default OS tetap benar karena anti-FOUC selalu men-set data-theme.
+           ALTERNATIF DITOLAK: darkMode 'class' (kurang eksplisit); tetap 'media' (mengabaikan toggle).
+
+[01-06-2026] KEPUTUSAN: Libre Baskerville menggantikan Marcellus sebagai font display
+           ALASAN: Sesuai Master Brief Sesi #46. Libre Baskerville (Google Fonts, weight 400/700 + italic, var --font-display). Marcellus dihapus total dari kode. fontFamily.libre juga dipetakan ke var(--font-display) agar heading ber-class `font-libre` (sebelumnya tak terdefinisi) konsisten.
+           CATATAN: Libre Baskerville tidak punya weight 600 — penggunaan 600 efektif menjadi 700.
+
+[01-06-2026] KEPUTUSAN: Reading width 65ch + leading dua-lapis (mobile 18px/1.7, desktop 19px/1.65)
+           ALASAN: Mobile-first namun desktop optimal. Lebar baris ~65 huruf (Bringhurst 1992) hanya mengikat di layar lebar; ponsel pakai lebar penuh. Menggantikan 680px/1.75.
+           CATATAN: Diterapkan via globals.css ke .article-body (editorial) & .article-content (opini) — TIDAK menyentuh Red Zone. Plus token formal CSS, skip-link, focus-visible outline, reduced motion, print stylesheet.
 ```
 
 ---
@@ -1646,6 +1670,20 @@ Yang dikerjakan:
   - Menghapus hardcode `text-[#1A1A1A]`, `text-text-secondary`, dan `border-border-subtle` pada `OpinionCard`, serta halaman dinamis opini/penulis, lalu menggantinya dengan token V2 (`text-ink`, `text-warm-gray`) agar mematuhi CSS Variables.
 Status akhir: Selesai. Seluruh komponen interaktif dan daftar artikel opini sekarang merespons transisi Mode Gelap secara akurat tanpa residu warna absolut.
 Next step: -
+---
+
+[01-06-2026] SESI #46 — UI/UX: LIBRE BASKERVILLE, DARK MODE TOGGLE, READING & A11Y
+Branch: feature/uiux-libre-darktoggle-reading (PR #95)
+Tujuan sesi: Redesain fondasi UI/UX sesuai Master Brief — ganti font display, tambah toggle dark mode hibrida, token formal CSS, aksesibilitas, print stylesheet, dan penyempurnaan reading experience. Semua di feature branch; Red Zone tidak disentuh.
+Yang dikerjakan:
+  - app/layout.tsx: import Libre_Baskerville (ganti Marcellus), script anti-FOUC dark mode di <head>, skip-link "Langsung ke konten", bungkus children dengan <div id="main-content" tabIndex={-1}>.
+  - tailwind.config.ts: fontFamily.display & .libre → var(--font-display); darkMode → ['selector','[data-theme="dark"]'].
+  - app/globals.css: hapus Marcellus (→ var(--font-display)); 3 skenario data-theme; token formal (type scale, spacing, leading, measure, radius, transition, z-index); skip-link, focus-visible outline, reduced motion; print stylesheet; reading dua-lapis (mobile 18px/1.7, desktop 19px/1.65 + 65ch) ke .article-body & .article-content.
+  - components/layout/ThemeToggle.tsx (BARU): tombol Sun/Moon, hydration-safe, aria-label ID, simpan pilihan ke localStorage.
+  - components/layout/Navbar.tsx: integrasi ThemeToggle di kiri tombol auth.
+Keputusan baru: Lihat Seksi 11 — 4 keputusan (dark mode hibrida+toggle; darkMode selector; Libre Baskerville; reading 65ch dua-lapis). Membatalkan keputusan lama "tanpa toggle" & "color-scheme only light".
+Status akhir: Selesai. `next lint` bersih (1 warning pre-existing di Red Zone), `tsc` 0 error, CI Vercel preview build sukses, PR #95 dibuka. Pengujian visual dilakukan pemilik via preview Vercel.
+Next step: Merge PR #95 setelah pemilik verifikasi tampilan; pantau CLS & FOUC di produksi.
 ---
 
 ## 13. REFERENSI & RESOURCE

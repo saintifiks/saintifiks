@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Marcellus, Source_Serif_4, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Libre_Baskerville, Source_Serif_4, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -8,11 +8,12 @@ import IndexStrip from "@/components/widgets/IndexStrip";
 import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 
-// Load Marcellus (display font) dari Google Fonts
-// Weight 400 = regular; Marcellus hanya memiliki weight 400
-const marcellus = Marcellus({
+// Load Libre Baskerville (display/headline font) dari Google Fonts
+// Libre Baskerville hanya tersedia weight 400 & 700 (tidak ada 600/SemiBold)
+const libreBaskerville = Libre_Baskerville({
   subsets: ['latin'],
-  weight: ['400'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
   variable: '--font-display',
   display: 'swap',
 })
@@ -75,9 +76,28 @@ export default function RootLayout({
 }>) {
   return (
     // lang="id" karena seluruh konten dalam Bahasa Indonesia
-    // variable font Marcellus, Source Serif 4, IBM Plex Sans, IBM Plex Mono ditaruh di <html> agar bisa diakses seluruh halaman
-    <html lang="id" className={`${marcellus.variable} ${sourceSerif4.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
+    // variable font Libre Baskerville, Source Serif 4, IBM Plex Sans, IBM Plex Mono ditaruh di <html> agar bisa diakses seluruh halaman
+    <html lang="id" className={`${libreBaskerville.variable} ${sourceSerif4.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
+      <head>
+        {/* Anti-FOUC dark mode: set data-theme SEBELUM render agar tidak ada kedipan tema.
+            Prioritas: localStorage ('saintifiks-theme') > preferensi OS. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  try {
+    var s = localStorage.getItem('saintifiks-theme');
+    var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var t = s || (d ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', t);
+  } catch(e) {}
+})();`,
+          }}
+        />
+      </head>
       <body className="bg-paper text-ink font-interface antialiased">
+        {/* Skip link (WCAG 2.4.1) — terlihat hanya saat fokus keyboard */}
+        <a href="#main-content" className="skip-link">Langsung ke konten</a>
+
         <AnalyticsTracker />
         <ScrollToTop />
 
@@ -87,7 +107,9 @@ export default function RootLayout({
         <ConditionalIndexStrip strip={<IndexStrip />} />
 
         <Navbar />
-        {children}
+        <div id="main-content" tabIndex={-1}>
+          {children}
+        </div>
         <Footer />
       </body>
     </html>
