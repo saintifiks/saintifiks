@@ -21,6 +21,24 @@
   --accent-red: var(--color-trend-down);
   --accent-blue: var(--color-sea-deep);
   --accent-green: var(--color-trend-up);
+
+  /* Derived tokens — Single Source of Truth (mengacu ke color-* di atas) */
+  --color-text-primary: rgb(var(--color-ink));
+  --color-text-secondary: rgb(var(--color-warm-gray));
+  --color-text-muted: rgb(var(--color-warm-gray) / 0.6);
+  --color-border-default: rgb(var(--color-ink) / 0.18);
+  --color-border-subtle: rgb(var(--color-ink) / 0.10);
+
+  /* Motion & shadow tokens */
+  --transition-fast: 150ms;
+  --shadow-xs: 0 1px 2px rgba(13, 13, 13, 0.06);
+  --shadow-sm: 0 1px 4px rgba(13, 13, 13, 0.08), 0 0 0 1px rgba(13, 13, 13, 0.04);
+  --shadow-md: 0 4px 12px rgba(13, 13, 13, 0.10), 0 1px 3px rgba(13, 13, 13, 0.06);
+
+  /* Measure & typography base */
+  --article-measure: 68ch;
+  --font-body-size: 18px;
+  --font-body-line-h: 1.75;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -99,6 +117,36 @@ button {
   margin-bottom: 24px;
   letter-spacing: -0.01em;
   color: var(--color-ink);
+}
+
+/* Milestone 4: Micro-ritme mobile untuk artikel */
+@media (max-width: 639px) {
+  .article-content p {
+    margin-bottom: 20px;
+  }
+  .article-content h2 {
+    margin-top: 40px;
+    margin-bottom: 16px;
+    font-size: 24px;
+  }
+  .article-content h3 {
+    margin-top: 32px;
+    margin-bottom: 14px;
+    font-size: 20px;
+  }
+  .article-content h1 {
+    margin-top: 36px;
+    margin-bottom: 20px;
+    font-size: 30px;
+  }
+  .article-content blockquote {
+    margin: 32px 0;
+    padding: 6px 0 6px 20px;
+    font-size: 18px;
+  }
+  .article-content table {
+    margin: 32px 0;
+  }
 }
 
 /* P2-02: Blockquote / pull quote */
@@ -351,7 +399,11 @@ button {
    ============================================================ */
 .reading-progress {
   position: fixed;
+  /* Fallback terlebih dulu */
   top: 0;
+  /* iOS safe-area (legacy & modern) agar bar tidak tertutup notch */
+  top: constant(safe-area-inset-top);
+  top: env(safe-area-inset-top);
   left: 0;
   height: 2px;
   background-color: var(--color-text-primary);

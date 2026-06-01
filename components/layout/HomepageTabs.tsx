@@ -45,11 +45,11 @@ export default function HomepageTabs({ articles, opinions }: Props) {
     <>
       {/* Tab navigation — statis, ikut scroll ke atas bersama header */}
       <div className="border-b border-ink/10">
-        <div className="max-w-2xl mx-auto px-6">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-center">
             <button
               onClick={() => setActiveTab('redaksi')}
-              className={`font-mono text-kicker uppercase px-8 py-4 border-b-2 transition-all duration-150 ${
+              className={`font-mono text-kicker uppercase px-4 sm:px-8 py-3 sm:py-4 border-b-2 transition-all duration-150 ${
                 activeTab === 'redaksi'
                   ? 'border-ink text-ink'
                   : 'border-transparent text-warm-gray hover:text-ink'
@@ -59,7 +59,7 @@ export default function HomepageTabs({ articles, opinions }: Props) {
             </button>
             <button
               onClick={() => setActiveTab('opinions')}
-              className={`font-mono text-kicker uppercase px-8 py-4 border-b-2 transition-all duration-150 ${
+              className={`font-mono text-kicker uppercase px-4 sm:px-8 py-3 sm:py-4 border-b-2 transition-all duration-150 ${
                 activeTab === 'opinions'
                   ? 'border-ink text-ink'
                   : 'border-transparent text-warm-gray hover:text-ink'
@@ -73,7 +73,7 @@ export default function HomepageTabs({ articles, opinions }: Props) {
 
       {/* Konten tab Saintifiks */}
       {activeTab === 'redaksi' && (
-        <section className="max-w-2xl mx-auto px-6 py-12">
+        <section className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {articles.length === 0 ? (
             <p className="font-interface text-sm text-warm-gray">
               Belum ada artikel yang dipublikasikan.
@@ -91,11 +91,11 @@ export default function HomepageTabs({ articles, opinions }: Props) {
                         {formatTanggal(artikel.published_at)}
                       </time>
                     )}
-                    <h2 className="font-display text-display-sm font-bold text-ink mt-2 group-hover:text-sea-deep transition-colors duration-[120ms]">
+                    <h2 className="font-display text-[26px] sm:text-display-sm font-bold text-ink mt-2 group-hover:text-sea-deep transition-colors duration-[120ms]">
                       {artikel.title}
                     </h2>
                     {artikel.excerpt && (
-                      <p className="font-body text-body-base text-warm-gray mt-2 line-clamp-2">
+                      <p className="font-body text-body-base text-warm-gray mt-1.5 sm:mt-2 line-clamp-2">
                         {artikel.excerpt}
                       </p>
                     )}
@@ -109,7 +109,7 @@ export default function HomepageTabs({ articles, opinions }: Props) {
 
       {/* Konten tab Opinions */}
       {activeTab === 'opinions' && (
-        <section className="max-w-2xl mx-auto px-6 py-12">
+        <section className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {opinions.length === 0 ? (
             <div className="py-20 text-center">
               <p className="font-interface text-sm text-warm-gray">

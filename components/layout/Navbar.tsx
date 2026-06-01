@@ -67,7 +67,7 @@ export default function Navbar() {
 
   return (
     <nav className="border-b border-ink/10 dark:border-paper/10 bg-paper dark:bg-night transition-[border-color] duration-150">
-      <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 sm:py-5 flex items-center justify-between">
 
         {/* Brand — nama situs, link ke beranda */}
         {/* Tracking +15 sesuai Brand Guidelines untuk wordmark */}
