@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import ThemeToggle from '@/components/layout/ThemeToggle'
 
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -80,6 +81,9 @@ export default function Navbar() {
 
         {/* Navigasi tengah + kanan */}
         <div className="flex items-center gap-5">
+          {/* Tombol ganti tema terang/gelap — tampil di semua halaman, di kiri tombol auth */}
+          <ThemeToggle />
+
           {/* Tombol Masuk / Keluar — hanya tampil di halaman publik */}
           {!loading && !isHalamanAdmin && (
             isLoggedIn ? (
