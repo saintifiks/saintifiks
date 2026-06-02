@@ -655,6 +655,14 @@ html.theme-transition *::after {
     stroke 420ms ease !important;
 }
 
+/* Ticker indikator selalu gelap & ber-animasi gulir terus-menerus. Mengikutkan
+   subtree-nya ke transisi tema memicu repaint tiap frame → terlihat berkedip.
+   Kecualikan dari transisi tema (tampilannya memang tidak berubah antar mode). */
+html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"],
+html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
+  transition: none !important;
+}
+
 /* ============================================================
    V2 UTILITY CLASSES
    ============================================================ */
