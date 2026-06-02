@@ -140,7 +140,8 @@ export default function Drawer({ open, onClose }: DrawerProps) {
               />
             </button>
 
-            {locationOpen && (
+            <div className={`accordion ${locationOpen ? 'accordion-open' : ''}`}>
+              <div className="accordion-inner">
               <div className="mt-4 flex flex-col gap-4">
                 {/* Posisi terkini (terdeteksi otomatis) */}
                 <button
@@ -175,12 +176,14 @@ export default function Drawer({ open, onClose }: DrawerProps) {
                 </button>
 
                 {/* Daftar negara A–Z — tetap ter-mount agar posisi scroll terjaga.
-                    overscroll-contain: hanya area ini yang ikut tergulir. */}
+                    Animasi buka/tutup mulus via .accordion; overscroll-contain
+                    membuat hanya area ini yang ikut tergulir. */}
                 <div
-                  className={countryOpen ? 'block' : 'hidden'}
+                  className={`accordion ${countryOpen ? 'accordion-open' : ''}`}
                   aria-hidden={!countryOpen}
                 >
-                  <div className="max-h-[50vh] overflow-y-auto overscroll-contain pr-2 flex flex-col gap-4">
+                  <div className="accordion-inner">
+                  <div className="max-h-[50vh] overflow-y-auto overscroll-contain pr-2 flex flex-col gap-4 pt-1">
                     {countryGroups.map((group) => (
                       <div key={group.letter}>
                         <p className="font-mono text-kicker uppercase text-warm-gray mb-2">
@@ -202,9 +205,11 @@ export default function Drawer({ open, onClose }: DrawerProps) {
                       </div>
                     ))}
                   </div>
+                  </div>
                 </div>
               </div>
-            )}
+              </div>
+            </div>
           </div>
 
           {/* Navigasi utama */}
