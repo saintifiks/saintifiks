@@ -1,50 +1,15 @@
-'use client'
+// Halaman login — gerbang masuk (Google OAuth via Supabase)
+// Memakai komponen PreLogin agar selaras Design System V2 (mendukung dark mode).
+// Tujuan default setelah login: /dashboard (area admin).
 
-// Halaman login admin — hanya untuk pemilik Saintifiks
-// Client Component karena menggunakan browser Supabase client untuk memulai OAuth flow
-
-import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
+import PreLogin from '@/components/layout/PreLogin'
 
 export default function LoginPage() {
-  async function handleGoogleLogin() {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        // Setelah login Google berhasil, Supabase mengarahkan ke URL ini
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-  }
-
   return (
-    <main className="min-h-screen bg-primary-light flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-
-        <div className="mb-10">
-          <Link
-            href="/"
-            className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest hover:text-primary-dark transition-colors duration-150"
-          >
-            ← Saintifiks
-          </Link>
-          <h1 className="font-libre text-3xl font-bold text-primary-dark mt-6">
-            Admin
-          </h1>
-          <p className="font-helvetica text-sm text-primary-dark/60 mt-2">
-            Masuk untuk mengelola artikel Saintifiks.
-          </p>
-        </div>
-
-        <button
-          onClick={handleGoogleLogin}
-          className="w-full bg-primary-dark text-primary-light font-helvetica text-sm py-3 px-4 hover:opacity-80 transition-opacity duration-150"
-        >
-          Masuk dengan Google
-        </button>
-
-      </div>
-    </main>
+    <PreLogin
+      next="/dashboard"
+      title="Masuk"
+      description="Masuk untuk mengelola Saintifiks."
+    />
   )
 }
