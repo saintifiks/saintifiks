@@ -1268,6 +1268,21 @@ Format pengisian:
 [01-06-2026] KEPUTUSAN: Reading width 65ch + leading dua-lapis (mobile 18px/1.7, desktop 19px/1.65)
            ALASAN: Mobile-first namun desktop optimal. Lebar baris ~65 huruf (Bringhurst 1992) hanya mengikat di layar lebar; ponsel pakai lebar penuh. Menggantikan 680px/1.75.
            CATATAN: Diterapkan via globals.css ke .article-body (editorial) & .article-content (opini) — TIDAK menyentuh Red Zone. Plus token formal CSS, skip-link, focus-visible outline, reduced motion, print stylesheet.
+
+[02-06-2026] KEPUTUSAN: Header global menggantikan Navbar
+           ALASAN: Spesifikasi Sesi #47 — kepala situs tunggal (matahari/bulan kiri, wordmark tengah, ikon menu kanan) berlaku di semua halaman, membuka Drawer. components/layout/Navbar.tsx dihapus, components/layout/Header.tsx menjadi satu-satunya header di app/layout.tsx.
+           CATATAN: ThemeToggle tetap dipakai di dalam Header. onAuthStateChange (logout) dipindah ke Drawer.
+
+[02-06-2026] KEPUTUSAN: Beranda menjadi feed editorial tunggal — tab Opinions dihapus
+           ALASAN: Redesain beranda Sesi #47 hanya menampilkan article-card editorial + search bar + divider. Opini (Argumen) diakses lewat Drawer → /opinions, bukan tab beranda.
+           ALTERNATIF DITOLAK: Mempertahankan tab [Saintifiks | Opinions] (Sesi #34) — tidak sesuai desain baru. components/layout/HomepageTabs.tsx dihapus.
+
+[02-06-2026] KEPUTUSAN: Relevansi konten per-lokasi via Context klien + localStorage
+           ALASAN: Drawer memilih lokasi (posisi terkini auto / Global / negara A–Z); beranda memfilter artikel berdasarkan kolom articles.country. State dibagi via LocationProvider (React Context) + localStorage('saintifiks-location'). Deteksi negara murni klien (timezone) tanpa pelacak pihak ketiga (selaras misi privasi).
+           CATATAN IMPLEMENTASI: Migration menambah kolom nullable category, kicker, country ke articles (aman, data lama utuh). 'Global' → tampilkan semua; selain itu country === selected ATAU country kosong.
+
+[02-06-2026] KEPUTUSAN: Halaman pra-login (gerbang masuk) untuk /akun logged-out
+           ALASAN: /akun yang belum login dulunya redirect paksa ke OAuth. Kini menampilkan PreLogin (tombol "Masuk dengan Google") agar pengguna sadar konteks. /login memakai komponen sama (default next=/dashboard). Alur OAuth & validasi redirect tidak berubah.
 ```
 
 ---
@@ -1684,6 +1699,30 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — 4 keputusan (dark mode hibrida+toggle; darkMode selector; Libre Baskerville; reading 65ch dua-lapis). Membatalkan keputusan lama "tanpa toggle" & "color-scheme only light".
 Status akhir: Selesai. `next lint` bersih (1 warning pre-existing di Red Zone), `tsc` 0 error, CI Vercel preview build sukses, PR #95 dibuka. Pengujian visual dilakukan pemilik via preview Vercel.
 Next step: Merge PR #95 setelah pemilik verifikasi tampilan; pantau CLS & FOUC di produksi.
+---
+
+[02-06-2026] SESI #47 — REDESAIN BERANDA, HEADER GLOBAL, DRAWER & HALAMAN PLACEHOLDER
+Branch: feature/redesign-homepage-drawer-sesi47 (PR #97)
+Tujuan sesi: Implementasi Sistem Web Baru bagian "(dikerjakan sesi ini)" — redesain Halaman Utama, header global baru, drawer navigasi turun-dari-atas, 9 halaman placeholder under-maintenance, dan halaman pra-login. Semua di feature branch; Red Zone tidak disentuh.
+Yang dikerjakan:
+  - components/layout/Header.tsx (BARU): kepala situs global 3-kolom (ThemeToggle kiri, wordmark tengah, ikon menu kanan). Menggantikan Navbar.
+  - components/layout/Navbar.tsx: DIHAPUS (digantikan Header).
+  - components/layout/Drawer.tsx (BARU): menu full-screen turun dari atas; accordion lokasi (terkini/Global/Cari Negara A–Z) + navigasi (Argumen/Akun/Tentang Kami/Koreksi/Bookstore/Bagikan Ide) + tombol Keluar (hanya saat login).
+  - components/layout/LocationProvider.tsx (BARU): React Context + localStorage untuk pilihan lokasi; deteksi negara via timezone (klien).
+  - lib/countries.ts (BARU): daftar negara (ID) + groupCountriesByLetter untuk daftar A–Z.
+  - components/layout/HomeFeed.tsx (BARU): search bar + article-card (cover, kategori|kicker, judul, ringkasan, baca X menit) + divider; filter pencarian & lokasi.
+  - app/page.tsx: refactor — fetch artikel (kolom baru category/kicker/country) + hitung menit baca server-side, render HomeFeed. Tab Opinions dihapus.
+  - components/layout/HomepageTabs.tsx: DIHAPUS.
+  - app/layout.tsx: import Header + LocationProvider (bungkus konten); hapus Navbar.
+  - components/layout/UnderMaintenance.tsx (BARU): template placeholder.
+  - app/{tentang-kami,kontak,panduan-editorial,koreksi,kebijakan-iklan,keamanan,kebijakan-privasi,bookstore,bagikan-ide}/page.tsx (BARU): 9 halaman under-maintenance.
+  - components/layout/PreLogin.tsx (BARU): gerbang masuk Google OAuth.
+  - app/akun/page.tsx: logged-out → tampilkan PreLogin (bukan redirect paksa).
+  - app/login/page.tsx: pakai PreLogin (default next=/dashboard).
+  - app/globals.css: keyframes animasi drawer (slide-down/up + stagger; hormati prefers-reduced-motion).
+Keputusan baru: Lihat Seksi 11 — 4 keputusan (Header global; beranda feed editorial tunggal; relevansi lokasi via Context+localStorage; halaman pra-login).
+Status akhir: Selesai di kode. `next lint` bersih (1 warning pre-existing Red Zone), `tsc` 0 error, CI Vercel preview build sukses, PR #97 dibuka.
+Next step: (1) Pemilik menjalankan migration 3 kolom (category/kicker/country) di Supabase SQL Editor. (2) Pemilik verifikasi tampilan via Vercel Preview. (3) Merge PR #97. Sesi lain: redesain footer, redesain Opinions/Argumen, rearsitekturisasi halaman penulisan artikel.
 ---
 
 ## 13. REFERENSI & RESOURCE

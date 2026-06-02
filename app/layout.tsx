@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Libre_Baskerville, Source_Serif_4, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
+import Header from "@/components/layout/Header";
+import LocationProvider from "@/components/layout/LocationProvider";
 import Footer from "@/components/layout/Footer";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import IndexStrip from "@/components/widgets/IndexStrip";
@@ -101,15 +102,17 @@ export default function RootLayout({
         <AnalyticsTracker />
         <ScrollToTop />
 
-        {/* IndexStrip dipasang di atas Navbar, tapi hanya tampil di halaman beranda (/).
+        {/* IndexStrip dipasang di atas Header, tapi hanya tampil di halaman beranda (/).
             IndexStrip (Server Component) dilempar sebagai prop ke ConditionalIndexStrip
             (Client Component) — pola resmi Next.js App Router untuk kasus ini. */}
-        <ConditionalIndexStrip strip={<IndexStrip />} />
+        <LocationProvider>
+          <ConditionalIndexStrip strip={<IndexStrip />} />
 
-        <Navbar />
-        <div id="main-content" tabIndex={-1}>
-          {children}
-        </div>
+          <Header />
+          <div id="main-content" tabIndex={-1}>
+            {children}
+          </div>
+        </LocationProvider>
         <Footer />
       </body>
     </html>

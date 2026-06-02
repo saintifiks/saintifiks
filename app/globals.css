@@ -583,6 +583,50 @@ button {
 }
 
 /* ============================================================
+   SESI #47: DRAWER (menu turun dari atas)
+   Panel meluncur dari atas — cepat di awal, melambat menjelang bawah
+   (cubic-bezier ease-out). Konten muncul bertahap: wordmark dulu, lalu isi.
+   ============================================================ */
+@keyframes drawer-slide-down {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes drawer-slide-up {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100%); }
+}
+@keyframes drawer-row-in {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.drawer-panel {
+  animation: drawer-slide-down 380ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.drawer-panel-closing {
+  animation: drawer-slide-up 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Stagger isi drawer — wordmark turun lebih dulu, konten menyusul */
+.drawer-row {
+  opacity: 0;
+  animation: drawer-row-in 260ms ease-out forwards;
+}
+.drawer-row-1 { animation-delay: 90ms; }
+.drawer-row-2 { animation-delay: 160ms; }
+
+/* Hormati preferensi minim animasi: tampilkan isi tanpa transisi turun */
+@media (prefers-reduced-motion: reduce) {
+  .drawer-panel,
+  .drawer-panel-closing,
+  .drawer-row {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ============================================================
    V2 UTILITY CLASSES
    ============================================================ */
 .article-body {

@@ -2,11 +2,11 @@
 // Menampilkan daftar artikel, analitik, dan link ke profil publik
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import OpinionAnalyticsDashboard from '@/components/opinions/OpinionAnalyticsDashboard'
 import AkunClient from '@/components/opinions/AkunClient'
+import PreLogin from '@/components/layout/PreLogin'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,8 +22,15 @@ export default async function AkunPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Belum login → tampilkan halaman pra-login (gerbang masuk akun)
   if (!user) {
-    redirect('/auth/callback?next=/akun')
+    return (
+      <PreLogin
+        next="/akun"
+        title="Masuk ke Akun"
+        description="Masuk untuk melihat dan mengelola artikel Anda di Saintifiks."
+      />
+    )
   }
 
   const { data: profile } = await supabase
