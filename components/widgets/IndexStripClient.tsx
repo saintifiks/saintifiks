@@ -75,7 +75,7 @@ export default function IndexStripClient({
 
   return (
     <aside
-      className="w-full bg-primary-dark border-b border-primary-light/10"
+      className="no-theme-transition w-full bg-primary-dark border-b border-primary-light/10"
       aria-label="Indikator ekonomi dan tata kelola"
     >
       <div className="index-ticker-scroll overflow-x-auto overscroll-x-contain">

@@ -656,14 +656,10 @@ html.theme-transition *::after {
 }
 
 /* Kecualikan elemen yang tidak perlu transisi warna (mencegah flickering):
-   1. IndexStrip (ticker indikator) — selalu gelap, ber-animasi gulir terus-menerus
-   2. Header (wordmark, tombol theme, tombol drawer) — perubahan langsung tanpa fade
-   3. Semua elemen di dalam header dan IndexStrip
-   4. Class .index-ticker-scroll dan semua child-nya (override transisi inline) */
-html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"],
-html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] *,
-html.theme-transition .index-ticker-scroll,
-html.theme-transition .index-ticker-scroll *,
+   1. Elemen dengan class .no-theme-transition (IndexStrip)
+   2. Header (wordmark, tombol theme, tombol drawer) */
+html.theme-transition .no-theme-transition,
+html.theme-transition .no-theme-transition *,
 html.theme-transition header,
 html.theme-transition header * {
   transition: none !important;
