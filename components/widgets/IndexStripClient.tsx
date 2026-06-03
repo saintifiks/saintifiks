@@ -48,8 +48,12 @@ export default function IndexStripClient({
   const [pollMs, setPollMs] = useState(
     Math.max(INDICES_MIN_POLL_MS, initialPollMs)
   )
+  const [isThemeTransitioning, setIsThemeTransitioning] = useState(false)
 
   const refresh = useCallback(async () => {
+    // Jangan update data saat theme sedang transisi (mencegah flickering)
+    if (isThemeTransitioning) return
+
     try {
       const res = await fetch('/api/indices', { cache: 'no-store' })
       if (!res.ok) return
@@ -61,6 +65,25 @@ export default function IndexStripClient({
     } catch {
       // Pertahankan data terakhir agar strip tetap tenang
     }
+  }, [isThemeTransitioning])
+
+  // Deteksi saat theme transition sedang aktif
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const hasTransition = document.documentElement.classList.contains('theme-transition')
+          setIsThemeTransitioning(hasTransition)
+        }
+      })
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
