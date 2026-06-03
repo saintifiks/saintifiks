@@ -21,14 +21,17 @@ export default function ThemeToggle() {
 
   const toggle = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
-    const root = document.documentElement
-    // Pasang transisi warna sesaat agar perpindahan tema ber-fade halus,
-    // lalu lepas agar tidak mengganggu interaksi lain (hover, dsb).
-    root.classList.add('theme-transition')
-    root.setAttribute('data-theme', next)
-    localStorage.setItem('saintifiks-theme', next)
-    setTheme(next)
-    window.setTimeout(() => root.classList.remove('theme-transition'), 480)
+    
+    // Trigger overlay animation
+    window.dispatchEvent(new Event('theme-transition-start'))
+    
+    // Tunggu overlay muncul penuh (300ms), baru ubah theme
+    setTimeout(() => {
+      const root = document.documentElement
+      root.setAttribute('data-theme', next)
+      localStorage.setItem('saintifiks-theme', next)
+      setTheme(next)
+    }, 300)
   }
 
   // Hydration-safe: jangan render ikon sampai tema diketahui (hindari mismatch).

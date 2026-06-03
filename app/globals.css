@@ -641,29 +641,8 @@ button {
   min-height: 0;
 }
 
-/* Transisi mode terang↔gelap — fade warna lembut, hanya aktif saat tema diganti
-   (kelas .theme-transition dipasang sesaat oleh ThemeToggle, lalu dilepas). */
-html.theme-transition,
-html.theme-transition *,
-html.theme-transition *::before,
-html.theme-transition *::after {
-  transition:
-    background-color 420ms ease,
-    border-color 420ms ease,
-    color 420ms ease,
-    fill 420ms ease,
-    stroke 420ms ease !important;
-}
-
-/* Kecualikan elemen yang tidak perlu transisi warna (mencegah flickering):
-   1. Elemen dengan class .no-theme-transition (IndexStrip)
-   2. Header (wordmark, tombol theme, tombol drawer) */
-html.theme-transition .no-theme-transition,
-html.theme-transition .no-theme-transition *,
-html.theme-transition header,
-html.theme-transition header * {
-  transition: none !important;
-}
+/* Theme transition sekarang menggunakan overlay (ThemeTransitionOverlay.tsx).
+   CSS transisi lama dihapus untuk menghindari konflik. */
 
 /* ============================================================
    V2 UTILITY CLASSES
@@ -820,5 +799,46 @@ html.theme-transition header * {
   .article-content p {
     font-size: 19px;
     line-height: 1.65;
+  }
+}
+/* ============================================================
+   THEME TRANSITION OVERLAY — Sesi #48
+   Overlay smooth saat toggle theme untuk menutupi flickering.
+   Muncul dari tengah dengan scale + fade (300ms), theme berubah
+   di balik overlay, lalu hilang dengan fade out (400ms).
+   Total durasi: ~700ms. Terasa premium, bukan bug.
+   ============================================================ */
+
+@keyframes theme-overlay-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes theme-overlay-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.theme-overlay-animation {
+  animation: 
+    theme-overlay-in 300ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    theme-overlay-out 400ms cubic-bezier(0.4, 0, 1, 1) 300ms forwards;
+}
+
+/* Hormati preferensi reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .theme-overlay-animation {
+    animation: none !important;
+    opacity: 0 !important;
   }
 }

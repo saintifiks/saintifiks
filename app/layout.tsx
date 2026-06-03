@@ -8,6 +8,7 @@ import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import IndexStrip from "@/components/widgets/IndexStrip";
 import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import ThemeTransitionOverlay from '@/components/layout/ThemeTransitionOverlay'
 
 // Load Libre Baskerville (display/headline font) dari Google Fonts
 // Libre Baskerville hanya tersedia weight 400 & 700 (tidak ada 600/SemiBold)
@@ -101,6 +102,7 @@ export default function RootLayout({
 
         <AnalyticsTracker />
         <ScrollToTop />
+        <ThemeTransitionOverlay />
 
         {/* IndexStrip dipasang di atas Header, tapi hanya tampil di halaman beranda (/).
             IndexStrip (Server Component) dilempar sebagai prop ke ConditionalIndexStrip
