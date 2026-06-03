@@ -657,15 +657,14 @@ html.theme-transition *::after {
 
 /* Kecualikan elemen yang tidak perlu transisi warna (mencegah flickering):
    1. IndexStrip (ticker indikator) — selalu gelap, ber-animasi gulir terus-menerus
-   2. Tombol theme toggle (Sun/Moon) — ikon berganti langsung tanpa fade
-   3. Tombol drawer (Menu) — ikon statis, tidak perlu fade */
+   2. Header (wordmark, tombol theme, tombol drawer) — perubahan langsung tanpa fade
+   3. Semua elemen di dalam header dan IndexStrip */
 html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"],
 html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] *,
-html.theme-transition button[aria-label*="mode"],
-html.theme-transition button[aria-label*="menu"] {
+html.theme-transition header,
+html.theme-transition header * {
   transition: none !important;
 }
-
 
 /* ============================================================
    V2 UTILITY CLASSES
