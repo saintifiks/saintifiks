@@ -641,8 +641,78 @@ button {
   min-height: 0;
 }
 
-/* Theme transition sekarang menggunakan overlay (ThemeTransitionOverlay.tsx).
-   CSS transisi lama dihapus untuk menghindari konflik. */
+/* ============================================================
+   THEME TRANSITION SYSTEM — Sesi #48
+   Pendekatan: Selective transitions (bukan blanket)
+   Filosofi: Serius, elegan, intentional — sesuai karakter Saintifiks
+   ============================================================ */
+
+/* Durasi transisi — tuned untuk balance smooth vs responsive */
+:root {
+  --transition-theme-fast: 180ms;
+  --transition-theme-normal: 280ms;
+  --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 
+ * Background & Border: Transisi normal (280ms)
+ * Mata kurang sensitif pada perubahan background
+ */
+.theme-transition-bg {
+  transition: 
+    background-color var(--transition-theme-normal) var(--transition-easing),
+    border-color var(--transition-theme-normal) var(--transition-easing);
+}
+
+/* 
+ * Text: Transisi cepat (180ms)
+ * Mata lebih sensitif pada perubahan warna text
+ */
+.theme-transition-text {
+  transition: color var(--transition-theme-fast) var(--transition-easing);
+}
+
+/* 
+ * SVG Icons: TIDAK transition color
+ * Alasan: currentColor pada SVG sering flicker
+ * Solusi: Instant change terasa lebih intentional
+ */
+.theme-transition-icon {
+  transition: 
+    transform var(--transition-theme-fast) var(--transition-easing),
+    opacity var(--transition-theme-fast) var(--transition-easing);
+}
+
+/* 
+ * Data dinamis (IndexStrip): Micro opacity dip untuk mask perubahan
+ */
+.theme-transition-data {
+  transition: 
+    background-color var(--transition-theme-normal) var(--transition-easing),
+    opacity 80ms ease-out;
+}
+
+/* Saat tema berubah, brief opacity dip (едва заметно) */
+[data-theme-transitioning="true"] .theme-transition-data {
+  opacity: 0.92;
+}
+
+/* 
+ * ACCESSIBILITY: Respect reduced motion (WCAG 2.3.3)
+ */
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition-bg,
+  .theme-transition-text,
+  .theme-transition-icon,
+  .theme-transition-data {
+    transition: none !important;
+  }
+  
+  [data-theme-transitioning="true"] .theme-transition-data {
+    opacity: 1 !important;
+  }
+}
+
 
 /* ============================================================
    V2 UTILITY CLASSES

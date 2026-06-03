@@ -43,7 +43,7 @@ export default function Header() {
               aria-expanded={drawerOpen}
               className="flex h-9 w-9 items-center justify-center text-ink hover:opacity-60 transition-opacity duration-150"
             >
-              <Menu size={26} strokeWidth={1.75} />
+              <Menu size={26} strokeWidth={1.75} className="theme-transition-icon" />
             </button>
           </div>
         </div>

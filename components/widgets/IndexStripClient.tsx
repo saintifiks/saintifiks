@@ -48,8 +48,32 @@ export default function IndexStripClient({
   const [pollMs, setPollMs] = useState(
     Math.max(INDICES_MIN_POLL_MS, initialPollMs)
   )
+  const [isThemeTransitioning, setIsThemeTransitioning] = useState(false)
+
+  // Listen untuk theme transition events
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-theme-transitioning') {
+          const isTransitioning = 
+            document.documentElement.hasAttribute('data-theme-transitioning')
+          setIsThemeTransitioning(isTransitioning)
+        }
+      })
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme-transitioning'],
+    })
+
+    return () => observer.disconnect()
+  }, [])
 
   const refresh = useCallback(async () => {
+    // Skip fetch saat theme transitioning untuk avoid visual conflict
+    if (isThemeTransitioning) return
+
     try {
       const res = await fetch('/api/indices', { cache: 'no-store' })
       if (!res.ok) return
@@ -61,7 +85,7 @@ export default function IndexStripClient({
     } catch {
       // Pertahankan data terakhir agar strip tetap tenang
     }
-  }, [])
+  }, [isThemeTransitioning])
 
   useEffect(() => {
     const tick = () => {
@@ -75,7 +99,7 @@ export default function IndexStripClient({
 
   return (
     <aside
-      className="w-full bg-primary-dark border-b border-primary-light/10"
+      className="w-full bg-primary-dark border-b border-primary-light/10 theme-transition-data"
       aria-label="Indikator ekonomi dan tata kelola"
     >
       <div className="index-ticker-scroll overflow-x-auto overscroll-x-contain">
