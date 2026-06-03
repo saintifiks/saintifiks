@@ -655,13 +655,17 @@ html.theme-transition *::after {
     stroke 420ms ease !important;
 }
 
-/* Ticker indikator selalu gelap & ber-animasi gulir terus-menerus. Mengikutkan
-   subtree-nya ke transisi tema memicu repaint tiap frame → terlihat berkedip.
-   Kecualikan dari transisi tema (tampilannya memang tidak berubah antar mode). */
+/* Kecualikan elemen yang tidak perlu transisi warna (mencegah flickering):
+   1. IndexStrip (ticker indikator) — selalu gelap, ber-animasi gulir terus-menerus
+   2. Tombol theme toggle (Sun/Moon) — ikon berganti langsung tanpa fade
+   3. Tombol drawer (Menu) — ikon statis, tidak perlu fade */
 html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"],
-html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
+html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] *,
+html.theme-transition button[aria-label*="mode"],
+html.theme-transition button[aria-label*="menu"] {
   transition: none !important;
 }
+
 
 /* ============================================================
    V2 UTILITY CLASSES
