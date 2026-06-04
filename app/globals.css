@@ -790,6 +790,218 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
 }
 
 /* ============================================================
+   THE-CARD: Komponen header artikel (kategori, kicker, H1, caption, cover)
+   Spesifikasi dari Figma: frame 440px, margin 16px, padding atas 24px
+   ============================================================ */
+
+.the-card {
+  padding-top: 24px;
+}
+
+/* Kategori & Kicker: IBM Plex Sans, semibold, 20px */
+.the-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'IBM Plex Sans', var(--font-interface), Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 24px;
+}
+
+.the-card__category {
+  color: #0B5263; /* sea-deep */
+}
+
+.the-card__divider {
+  width: 1px;
+  height: 16px;
+  background-color: #5A5750;
+}
+
+.the-card__kicker {
+  color: #1A1917; /* ink */
+}
+
+/* H1 Judul Artikel: Libre Baskerville, Regular, 32px, letter-spacing -1.5%, line-height 1.25x */
+.the-card__title {
+  font-family: 'Libre Baskerville', var(--font-display), Georgia, serif;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: #1A1917;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+/* Caption/Ringkasan: Libre Baskerville, Regular, 14px */
+.the-card__excerpt {
+  font-family: 'Libre Baskerville', var(--font-display), Georgia, serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #1A1917;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+/* Cover: full width, melewati margin */
+.the-card__cover {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  margin-bottom: 16px;
+}
+
+.the-card__cover img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Cover Caption: IBM Plex Sans, Medium, 16px, ALL CAPS, letter-spacing 12% */
+.the-card__cover-caption {
+  font-family: 'IBM Plex Sans', var(--font-interface), Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5A5750;
+  margin-bottom: 32px;
+}
+
+/* Divider: 2px, #5A5750 */
+.the-card__divider-wide {
+  width: 100%;
+  height: 2px;
+  background-color: #5A5750;
+  margin-bottom: 8px;
+}
+
+/* Published Date: IBM Plex Sans, Medium, 16px, format "3 Juni 2026" */
+.the-card__date {
+  font-family: 'IBM Plex Sans', var(--font-interface), Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #5A5750;
+  margin-bottom: 32px;
+}
+
+/* ============================================================
+   THE-ARTICLE: Isi artikel utama
+   Spesifikasi dari Figma: max-width 65ch/640px, font Lora
+   Note: max-width dan margin sudah di-handle di JSX dengan max-w-[65ch] mx-auto
+   ============================================================ */
+
+.the-article {
+  /* Layout handled by Tailwind classes in JSX */
+}
+
+/* H2: Libre Baskerville, 24px, weight 700, line-height 1.25x */
+.the-article h2 {
+  font-family: 'Libre Baskerville', var(--font-display), Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #1A1917;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+/* H3: Libre Baskerville, 20px, weight 600, line-height 1.375x */
+.the-article h3 {
+  font-family: 'Libre Baskerville', var(--font-display), Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.375;
+  color: #1A1917;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+/* H4: Libre Baskerville, 17px, weight 600, line-height 1.375x */
+.the-article h4 {
+  font-family: 'Libre Baskerville', var(--font-display), Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.375;
+  color: #1A1917;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+/* Body Text: Lora, 17px, weight 400, line-height 1.6x, letter-spacing 0.01em */
+.the-article p {
+  font-family: 'Lora', var(--font-article-body), Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  color: #1A1917;
+  margin-bottom: 1.375em; /* paragraph spacing */
+}
+
+/* Image Caption: IBM Plex Sans, 16px, letter-spacing 0.12em, weight 500 */
+.the-article figcaption,
+.the-article .image-caption {
+  font-family: 'IBM Plex Sans', var(--font-interface), Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: #5A5750;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Spacing antara elemen */
+
+/* Body text → H2: selalu dipisahkan divider (gap 15px + divider 2px + gap 15px = 32px total) */
+.the-article p + h2 {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 2px solid #5A5750;
+}
+
+/* H2 → Body text: gap 8px */
+.the-article h2 + p {
+  margin-top: 0;
+}
+
+/* Body text → H3: gap 24px */
+.the-article p + h3 {
+  margin-top: 24px;
+}
+
+/* H3 → Body text: gap 8px */
+.the-article h3 + p {
+  margin-top: 0;
+}
+
+/* Body text → H4: gap 16px */
+.the-article p + h4 {
+  margin-top: 16px;
+}
+
+/* H4 → Body text: gap 8px */
+.the-article h4 + p {
+  margin-top: 0;
+}
+
+/* Article caption sama dengan body text */
+.the-article .article-caption {
+  font-family: 'Lora', var(--font-article-body), Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  color: #1A1917;
+}
+
+/* ============================================================
    READING EXPERIENCE — Sesi #46 (mobile-first, desktop optimal)
    Ponsel: lebar mengikuti layar, teks 18px, leading 1.7 (lega di layar kecil).
    Desktop (>=1024px): teks 19px, leading 1.65, lebar baris dikunci ~65 huruf

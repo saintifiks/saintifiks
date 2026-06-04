@@ -1,9 +1,9 @@
-// [PERBAIKAN V2] — Update ke Design System V2
+// [PERBAIKAN V3] — Redesign Halaman Artikel dengan The-Card & The-Article
 
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import Image from 'next/image'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 import ArticleInteractions from '@/components/artikel/ArticleInteractions'
 import ReadingProgress from '@/components/artikel/ReadingProgress'
@@ -12,6 +12,8 @@ import ReadingProgress from '@/components/artikel/ReadingProgress'
 // Note: Koreksi dan interaksi (like/share/comment) tetap real-time via Client Components
 export const revalidate = 3600  // Cache 1 jam — artikel jarang berubah, quota efisien
 
+// [PERBAIKAN V3]
+// Tipe article diperbarui: tambah kolom category, kicker, country, cover_caption, cover_illustrator
 // [PERBAIKAN SESI #15]
 // Tipe article_corrections diperbarui: tambah kolom 'status' untuk filter approved
 // [PERBAIKAN SESI #16]
@@ -24,6 +26,11 @@ type Article = {
   content: string
   excerpt: string | null
   cover_image_url: string | null
+  cover_caption: string | null
+  cover_illustrator: string | null
+  category: string | null
+  kicker: string | null
+  country: string | null
   published_at: string | null
   article_charts: { chart_identifier: string; config: string | object }[]
   article_corrections: {
@@ -98,7 +105,12 @@ export default async function ArtikelPage({ params }: Props) {
       slug, 
       content, 
       excerpt, 
-      cover_image_url, 
+      cover_image_url,
+      cover_caption,
+      cover_illustrator,
+      category,
+      kicker,
+      country,
       published_at,
       article_charts (
         chart_identifier,
@@ -149,39 +161,75 @@ export default async function ArtikelPage({ params }: Props) {
   return (
     <main className="min-h-screen bg-paper">
       <ReadingProgress />
-      <header className="border-b border-ink/10 py-16 px-6">
-        <div className="max-w-content mx-auto">
-          <Link
-            href="/"
-            className="font-interface text-sm text-sea-deep hover:opacity-70 transition-opacity duration-[120ms]"
-          >
-            &#8592; Saintifiks
-          </Link>
+      
+      {/* THE-CARD: Komponen header artikel */}
+      <header className="the-card">
+        {/* Konten Text Atas - dalam container 65ch */}
+        <div className="max-w-[65ch] mx-auto px-4">
+          {/* Kategori & Kicker */}
+          {(artikel.category || artikel.kicker) && (
+            <div className="the-card__meta">
+              {artikel.category && (
+                <span className="the-card__category">{artikel.category}</span>
+              )}
+              {artikel.category && artikel.kicker && (
+                <span className="the-card__divider" aria-hidden="true" />
+              )}
+              {artikel.kicker && (
+                <span className="the-card__kicker">{artikel.kicker}</span>
+              )}
+            </div>
+          )}
 
-          <h1 className="font-display text-display-lg font-bold text-ink mt-8 leading-heading max-w-content">
-            {artikel.title}
-          </h1>
+          {/* H1 Judul */}
+          <h1 className="the-card__title">{artikel.title}</h1>
 
+          {/* Caption/Excerpt */}
           {artikel.excerpt && (
-            <p className="font-body text-body-lg text-warm-gray mt-5 max-w-content">
-              {artikel.excerpt}
+            <p className="the-card__excerpt">{artikel.excerpt}</p>
+          )}
+        </div>
+
+        {/* Cover Image - Full Width (di luar container) */}
+        {artikel.cover_image_url && (
+          <figure className="the-card__cover">
+            <Image
+              src={artikel.cover_image_url}
+              alt={artikel.cover_caption || artikel.title}
+              width={1200}
+              height={675}
+              priority
+              className="w-full h-auto"
+            />
+          </figure>
+        )}
+
+        {/* Konten Text Bawah - dalam container 65ch */}
+        <div className="max-w-[65ch] mx-auto px-4">
+          {/* Cover Caption */}
+          {artikel.cover_illustrator && (
+            <p className="the-card__cover-caption">
+              ILLUSTRATION: {artikel.cover_illustrator}
             </p>
           )}
 
+          {/* Divider */}
+          <div className="the-card__divider-wide" aria-hidden="true" />
+
+          {/* Published Date */}
           {artikel.published_at && (
-            <div className="mt-8 pt-4 border-t border-ink/10">
-              <time
-                dateTime={artikel.published_at}
-                className="font-interface text-meta text-warm-gray"
-              >
-                {formatTanggal(artikel.published_at)}
-              </time>
-            </div>
+            <time
+              dateTime={artikel.published_at}
+              className="the-card__date"
+            >
+              {formatTanggal(artikel.published_at)}
+            </time>
           )}
         </div>
       </header>
 
-      <article className="max-w-content mx-auto px-6 py-12">
+      {/* THE-ARTICLE: Isi artikel utama - dalam container 65ch */}
+      <article className="the-article max-w-[65ch] mx-auto px-4">
         <ArticleRenderer content={artikel.content} charts={charts} />
         
         {/* Section Interaksi — Client Component wrapper untuk menghindari cache */}
