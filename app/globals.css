@@ -811,17 +811,17 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
 }
 
 .the-card__category {
-  color: #0B5263; /* sea-deep */
+  color: rgb(var(--color-sea-deep));
 }
 
 .the-card__divider {
   width: 1px;
   height: 16px;
-  background-color: #5A5750;
+  background-color: rgb(var(--color-warm-gray));
 }
 
 .the-card__kicker {
-  color: #1A1917; /* ink */
+  color: rgb(var(--color-ink));
 }
 
 /* H1 Judul Artikel: Libre Baskerville, Regular, 32px, letter-spacing -1.5%, line-height 1.25x */
@@ -831,7 +831,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   font-weight: 400;
   line-height: 1.25;
   letter-spacing: -0.015em;
-  color: #1A1917;
+  color: rgb(var(--color-ink));
   margin-bottom: 8px;
   text-align: left;
 }
@@ -842,16 +842,14 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   font-size: 14px;
   font-weight: 400;
   line-height: 1.5;
-  color: #1A1917;
+  color: rgb(var(--color-ink));
   margin-bottom: 32px;
   text-align: left;
 }
 
-/* Cover: full width, melewati margin */
+/* Cover: default contained dalam container (desktop) */
 .the-card__cover {
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
-  margin-right: calc(-50vw + 50%);
+  width: 100%;
   margin-bottom: 16px;
 }
 
@@ -859,6 +857,15 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   width: 100%;
   height: auto;
   display: block;
+}
+
+/* Cover: full width hanya di mobile (< 640px) */
+@media (max-width: 639px) {
+  .the-card__cover {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+  }
 }
 
 /* Cover Caption: IBM Plex Sans, Medium, 16px, ALL CAPS, letter-spacing 12% */
@@ -869,15 +876,15 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   line-height: 1.4;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #5A5750;
+  color: rgb(var(--color-warm-gray));
   margin-bottom: 32px;
 }
 
-/* Divider: 2px, #5A5750 */
+/* Divider: 2px */
 .the-card__divider-wide {
   width: 100%;
   height: 2px;
-  background-color: #5A5750;
+  background-color: rgb(var(--color-warm-gray));
   margin-bottom: 8px;
 }
 
@@ -887,7 +894,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   font-size: 16px;
   font-weight: 500;
   line-height: 1.4;
-  color: #5A5750;
+  color: rgb(var(--color-warm-gray));
   margin-bottom: 32px;
 }
 
@@ -899,6 +906,8 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
 
 .the-article {
   /* Layout handled by Tailwind classes in JSX */
+  /* Gap dengan the-card: 32px */
+  margin-top: 32px;
 }
 
 /* H2: Libre Baskerville, 24px, weight 700, line-height 1.25x */
@@ -907,7 +916,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   font-size: 24px;
   font-weight: 700;
   line-height: 1.25;
-  color: #1A1917;
+  color: rgb(var(--color-ink));
   margin-top: 0;
   margin-bottom: 8px;
 }
@@ -918,7 +927,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   font-size: 20px;
   font-weight: 600;
   line-height: 1.375;
-  color: #1A1917;
+  color: rgb(var(--color-ink));
   margin-top: 0;
   margin-bottom: 8px;
 }
@@ -929,7 +938,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   font-size: 17px;
   font-weight: 600;
   line-height: 1.375;
-  color: #1A1917;
+  color: rgb(var(--color-ink));
   margin-top: 0;
   margin-bottom: 8px;
 }
@@ -941,7 +950,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: 0.01em;
-  color: #1A1917;
+  color: rgb(var(--color-ink));
   margin-bottom: 1.375em; /* paragraph spacing */
 }
 
@@ -952,7 +961,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   font-size: 16px;
   font-weight: 500;
   letter-spacing: 0.12em;
-  color: #5A5750;
+  color: rgb(var(--color-warm-gray));
   text-align: center;
   margin-top: 8px;
 }
@@ -963,7 +972,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
 .the-article p + h2 {
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 2px solid #5A5750;
+  border-top: 2px solid rgb(var(--color-warm-gray));
 }
 
 /* H2 → Body text: gap 8px */
@@ -998,7 +1007,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: 0.01em;
-  color: #1A1917;
+  color: rgb(var(--color-ink));
 }
 
 /* ============================================================
