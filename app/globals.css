@@ -951,7 +951,14 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   line-height: 1.6;
   letter-spacing: 0.01em;
   color: rgb(var(--color-ink));
-  margin-bottom: 1.375em; /* paragraph spacing */
+  /* Default: no margin-bottom, akan ditambahkan oleh gap rules atau p + p */
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+/* Paragraph spacing: gap antara p dan p berikutnya = 1.375em */
+.the-article p + p {
+  margin-top: 1.375em;
 }
 
 /* Image Caption: IBM Plex Sans, 16px, letter-spacing 0.12em, weight 500 */
@@ -966,38 +973,48 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   margin-top: 8px;
 }
 
-/* Spacing antara elemen */
+/* ============================================================
+   SPACING ANTAR ELEMEN DALAM THE-ARTICLE (Presisi Figma)
+   ============================================================ */
 
-/* Body text → H2: selalu dipisahkan divider (gap 15px + divider 2px + gap 15px = 32px total) */
+/* 
+   Body text → H2: gap 32px (selalu dengan divider)
+   Struktur: body-text <15px margin> divider(2px) <15px padding> H2 content
+   Total: 15 + 2 + 15 = 32px
+*/
 .the-article p + h2 {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 2px solid rgb(var(--color-warm-gray));
+  margin-top: 15px;           /* gap pertama 15px */
+  padding-top: 15px;          /* gap kedua 15px (di dalam h2, sebelum content) */
+  border-top: 2px solid rgb(var(--color-warm-gray)); /* divider 2px */
 }
 
 /* H2 → Body text: gap 8px */
-.the-article h2 + p {
-  margin-top: 0;
+.the-article h2 {
+  margin-bottom: 8px;
 }
 
-/* Body text → H3: gap 24px */
+/* 
+   Body text → H3: gap 24px
+*/
 .the-article p + h3 {
   margin-top: 24px;
 }
 
 /* H3 → Body text: gap 8px */
-.the-article h3 + p {
-  margin-top: 0;
+.the-article h3 {
+  margin-bottom: 8px;
 }
 
-/* Body text → H4: gap 16px */
+/* 
+   Body text → H4: gap 16px
+*/
 .the-article p + h4 {
   margin-top: 16px;
 }
 
 /* H4 → Body text: gap 8px */
-.the-article h4 + p {
-  margin-top: 0;
+.the-article h4 {
+  margin-bottom: 8px;
 }
 
 /* Article caption sama dengan body text */
