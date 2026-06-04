@@ -28,6 +28,7 @@ const config: Config = {
         display:   ['var(--font-display)', 'Georgia', 'serif'],
         libre:     ['var(--font-display)', 'Georgia', 'serif'],
         body:      ['"Source Serif 4"', 'var(--font-body)', 'Georgia', 'serif'],
+        lora:      ['var(--font-lora)', 'Lora', 'Georgia', 'serif'],
         interface: ['"IBM Plex Sans"', 'var(--font-interface)', 'Arial', 'sans-serif'],
         mono:      ['"IBM Plex Mono"', 'var(--font-mono)', '"Courier New"', 'monospace'],
         sans:      ['"IBM Plex Sans"', 'var(--font-interface)', 'Arial', 'sans-serif'],

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Libre_Baskerville, Source_Serif_4, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Libre_Baskerville, Lora, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import LocationProvider from "@/components/layout/LocationProvider";
@@ -19,16 +19,6 @@ const libreBaskerville = Libre_Baskerville({
   display: 'swap',
 })
 
-// Load Source Serif 4 (body font) dari Google Fonts
-// Weight 400 = regular, 600 = semi-bold; style italic tersedia untuk body artikel
-const sourceSerif4 = Source_Serif_4({
-  subsets: ['latin'],
-  weight: ['400', '600'],
-  style: ['normal', 'italic'],
-  variable: '--font-body',
-  display: 'swap',
-})
-
 // Load IBM Plex Sans (interface font) dari Google Fonts
 // Weight 400 = regular, 500 = medium, 600 = semi-bold
 const ibmPlexSans = IBM_Plex_Sans({
@@ -44,6 +34,16 @@ const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-mono',
+  display: 'swap',
+})
+
+// Load Lora (body text artikel) dari Google Fonts
+// Weight 400 = regular, 500 = medium, 600 = semi-bold
+const lora = Lora({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-lora',
   display: 'swap',
 })
 
@@ -77,8 +77,8 @@ export default function RootLayout({
 }>) {
   return (
     // lang="id" karena seluruh konten dalam Bahasa Indonesia
-    // variable font Libre Baskerville, Source Serif 4, IBM Plex Sans, IBM Plex Mono ditaruh di <html> agar bisa diakses seluruh halaman
-    <html lang="id" className={`${libreBaskerville.variable} ${sourceSerif4.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
+    // variable font Libre Baskerville, IBM Plex Sans, IBM Plex Mono, Lora ditaruh di <html> agar bisa diakses seluruh halaman
+    <html lang="id" className={`${libreBaskerville.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} ${lora.variable}`}>
       <head>
         {/* Anti-FOUC dark mode: set data-theme SEBELUM render agar tidak ada kedipan tema.
             Prioritas: localStorage ('saintifiks-theme') > preferensi OS. */}
