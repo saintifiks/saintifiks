@@ -168,11 +168,11 @@ button {
 }
 
 .article-content p {
-  font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 18px;
-  line-height: 1.75;
+  font-family: var(--font-lora), 'Lora', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.6;
   margin-bottom: 24px;
-  letter-spacing: -0.003em;
+  letter-spacing: 0.01em;
 }
 
 .article-content h2 {
@@ -667,9 +667,10 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
    V2 UTILITY CLASSES
    ============================================================ */
 .article-body {
-  font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 18px;
-  line-height: 1.75;
+  font-family: var(--font-lora), 'Lora', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
   color: var(--color-ink);
   max-width: 680px;
   margin-inline: auto;
@@ -696,7 +697,11 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
 }
 
 .article-body p {
-  margin-bottom: 1.5rem;
+  font-family: var(--font-lora), 'Lora', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  margin-bottom: 1.375em;
   color: var(--color-ink);
 }
 
@@ -805,18 +810,21 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   margin-inline: auto;
 }
 
-/* Dasar (ponsel): teks 18px, leading 1.7 */
+/* Dasar (ponsel): teks 17px, leading 1.6, letter-spacing 0.01em sesuai brief */
 .article-body p,
 .article-content p {
-  font-size: 18px;
-  line-height: 1.7;
+  font-family: var(--font-lora), 'Lora', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
 }
 
-/* Desktop: teks sedikit lebih besar, leading sedikit lebih rapat */
+/* Desktop: maintain 17px, leading sedikit lebih rapat */
 @media (min-width: 1024px) {
   .article-body p,
   .article-content p {
-    font-size: 19px;
-    line-height: 1.65;
+    font-size: 17px;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
   }
 }
