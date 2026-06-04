@@ -114,7 +114,7 @@
     --color-paper:     15 22 32;    /* #0F1620 */
     --color-ink:       232 228 220; /* #E8E4DC */
     --color-warm-gray: 138 136 128; /* #8A8880 */
-    --color-sea-deep:  58 155 181;  /* #3A9BB5 */
+    --color-sea-deep:  28 27 26;    /* #1C1B1A - menggantikan biru */
     --color-amber:     232 184 75;  /* #E8B84B */
     color-scheme: dark;
   }
@@ -125,7 +125,7 @@
   --color-paper:     15 22 32;    /* #0F1620 */
   --color-ink:       232 228 220; /* #E8E4DC */
   --color-warm-gray: 138 136 128; /* #8A8880 */
-  --color-sea-deep:  58 155 181;  /* #3A9BB5 */
+  --color-sea-deep:  28 27 26;    /* #1C1B1A - menggantikan biru */
   --color-amber:     232 184 75;  /* #E8B84B */
   color-scheme: dark;
 }

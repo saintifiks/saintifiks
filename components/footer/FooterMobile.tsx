@@ -67,7 +67,7 @@ export default function FooterMobile() {
   return (
     <footer
       aria-label="Navigasi footer"
-      className="bg-paper w-full"
+      className="bg-[#1A1917] w-full"
     >
       {/* Container dengan padding */}
       <div className="w-full px-8 pt-8 pb-6 flex flex-col items-center">
@@ -80,7 +80,7 @@ export default function FooterMobile() {
               className="flex flex-col items-center"
             >
               {/* Section Title */}
-              <h3 className="font-display text-ink text-2xl font-bold mb-6 text-center">
+              <h3 className="font-display text-[#E8E4DC] text-2xl font-bold mb-6 text-center">
                 {section.title}
               </h3>
               {/* Links */}
@@ -89,7 +89,7 @@ export default function FooterMobile() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="font-display text-warm-gray text-xl hover:text-ink transition-colors duration-150 text-center"
+                    className="font-display text-[#8A8880] text-xl hover:text-[#E8E4DC] transition-colors duration-150 text-center"
                   >
                     {link.label}
                   </Link>
@@ -101,7 +101,7 @@ export default function FooterMobile() {
 
         {/* Diamond Logo */}
         <div className="mt-12 mb-16">
-          <DiamondLogo size={72} />
+          <DiamondLogo size={72} variant="dark" />
         </div>
 
         {/* Social Icons Row */}
@@ -115,7 +115,7 @@ export default function FooterMobile() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={social.ariaLabel}
-                className="text-warm-gray hover:text-ink transition-colors duration-150"
+                className="text-[#8A8880] hover:text-[#E8E4DC] transition-colors duration-150"
               >
                 {IconComponent && (
                   <IconComponent className="w-8 h-8" />
@@ -126,7 +126,7 @@ export default function FooterMobile() {
         </div>
 
         {/* Copyright */}
-        <p className="font-interface text-warm-gray text-sm w-full">
+        <p className="font-interface text-[#8A8880] text-sm w-full">
           {copyrightText}
         </p>
       </div>

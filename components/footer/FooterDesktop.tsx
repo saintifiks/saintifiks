@@ -70,7 +70,7 @@ export default function FooterDesktop() {
   return (
     <footer
       aria-label="Navigasi footer"
-      className="bg-paper w-full"
+      className="bg-[#1A1917] w-full"
     >
       {/* Inner container dengan max-width */}
       <div className="max-w-[1440px] mx-auto px-12 pt-20 pb-12">
@@ -83,7 +83,7 @@ export default function FooterDesktop() {
               className="flex flex-col items-center"
             >
               {/* Section Title */}
-              <h3 className="font-display text-ink text-3xl font-bold mb-6 text-center">
+              <h3 className="font-display text-[#E8E4DC] text-3xl font-bold mb-6 text-center">
                 {section.title}
               </h3>
               {/* Links */}
@@ -92,7 +92,7 @@ export default function FooterDesktop() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="font-display text-warm-gray text-xl hover:text-ink transition-colors duration-150 text-center"
+                    className="font-display text-[#8A8880] text-xl hover:text-[#E8E4DC] transition-colors duration-150 text-center"
                   >
                     {link.label}
                   </Link>
@@ -104,13 +104,13 @@ export default function FooterDesktop() {
 
         {/* Diamond Logo — centered */}
         <div className="flex justify-center mb-16">
-          <DiamondLogo size={72} />
+          <DiamondLogo size={72} variant="dark" />
         </div>
 
         {/* Bottom Bar — copyright kiri, social kanan */}
         <div className="flex justify-between items-center">
           {/* Copyright */}
-          <p className="font-interface text-warm-gray text-sm max-w-[220px] leading-relaxed">
+          <p className="font-interface text-[#8A8880] text-sm max-w-[220px] leading-relaxed">
             {copyrightText}
           </p>
 
@@ -125,7 +125,7 @@ export default function FooterDesktop() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.ariaLabel}
-                  className="text-warm-gray hover:text-ink transition-colors duration-150"
+                  className="text-[#8A8880] hover:text-[#E8E4DC] transition-colors duration-150"
                 >
                   {IconComponent && (
                     <IconComponent className="w-8 h-8" />

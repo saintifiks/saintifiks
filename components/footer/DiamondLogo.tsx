@@ -4,9 +4,12 @@
 interface DiamondLogoProps {
   size?: number;
   className?: string;
+  variant?: 'default' | 'dark';
 }
 
-export default function DiamondLogo({ size = 72, className = '' }: DiamondLogoProps) {
+export default function DiamondLogo({ size = 72, className = '', variant = 'default' }: DiamondLogoProps) {
+  const isDark = variant === 'dark';
+
   return (
     <div
       className={`flex items-center justify-center ${className}`}
@@ -14,7 +17,7 @@ export default function DiamondLogo({ size = 72, className = '' }: DiamondLogoPr
     >
       {/* Diamond shape — rotated square */}
       <div
-        className="bg-paper flex items-center justify-center"
+        className={isDark ? 'bg-[#E8E4DC] flex items-center justify-center' : 'bg-paper flex items-center justify-center'}
         style={{
           width: size,
           height: size,
@@ -24,7 +27,7 @@ export default function DiamondLogo({ size = 72, className = '' }: DiamondLogoPr
       >
         {/* Letter "S" — counter-rotated to stay upright */}
         <span
-          className="font-display text-ink font-normal"
+          className={isDark ? 'font-display text-[#1A1917] font-normal' : 'font-display text-ink font-normal'}
           style={{
             fontSize: Math.floor(size * 0.44), // ~32px for 72px diamond
             transform: 'rotate(-45deg)',
