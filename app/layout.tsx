@@ -3,7 +3,7 @@ import { Libre_Baskerville, Lora, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import LocationProvider from "@/components/layout/LocationProvider";
-import Footer from "@/components/layout/Footer";
+import Footer from "@/components/footer";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import IndexStrip from "@/components/widgets/IndexStrip";
 import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
