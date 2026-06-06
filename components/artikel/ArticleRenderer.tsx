@@ -146,7 +146,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
           },
           a: ({ href, children }) => React.createElement('a', {
             href,
-            className: "text-sea-deep underline underline-offset-2 hover:opacity-70 transition-opacity duration-150",
+            className: "text-text-link underline underline-offset-2 hover:text-interactive-primary-hover transition-colors duration-150",
             target: href?.startsWith('http') ? '_blank' : undefined,
             rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
           }, children),

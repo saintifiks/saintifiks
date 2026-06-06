@@ -14,7 +14,7 @@ export default function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <header className="bg-surface-page sticky top-0 z-sticky">
+    <header className="bg-surface-page sticky top-0 z-sticky border-b border-border-default/10">
       <div className="max-w-2xl mx-auto px-5 pt-6 pb-4">
         <div className="grid grid-cols-3 items-center">
           <div className="flex justify-start">

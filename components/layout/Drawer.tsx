@@ -146,7 +146,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
                 {/* Posisi terkini (terdeteksi otomatis) */}
                 <button
                   onClick={() => chooseLocation(detected)}
-                  className="text-left font-display text-[24px] leading-tight text-sea-deep"
+                  className="text-left font-display text-[24px] leading-tight text-text-link"
                 >
                   {detected}
                 </button>
@@ -195,7 +195,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
                               key={name}
                               onClick={() => chooseLocation(name)}
                               className={`text-left font-display text-[16px] leading-tight transition-colors duration-150 ${
-                                selected === name ? 'text-sea-deep' : 'text-ink hover:text-sea-deep'
+                                selected === name ? 'text-text-link' : 'text-ink hover:text-text-link'
                               }`}
                             >
                               {name}
@@ -219,7 +219,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className="font-display text-[40px] font-medium leading-tight text-ink hover:text-sea-deep transition-colors duration-150"
+                className="font-display text-[40px] font-medium leading-tight text-ink hover:text-text-link transition-colors duration-150"
               >
                 {item.label}
               </Link>

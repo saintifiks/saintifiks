@@ -156,11 +156,12 @@
     --color-paper:     28 27 26;    /* #1C1B1A */
     --color-ink:       232 228 220; /* #E8E4DC */
     --color-warm-gray: 138 136 128; /* #8A8880 */
-    --color-sea-deep:  28 27 26;    /* #1C1B1A - menggantikan biru */
+    --color-sea-deep:  78 156 170;  /* #4E9CAA */
     --color-amber:     232 184 75;  /* #E8B84B */
     --color-surface-sunken: 38 37 36;
     --color-text-tertiary: 152 150 144;
-    --color-interactive-primary-hover: 45 44 42;
+    --color-interactive-primary-hover: 66 140 154;
+    --color-interactive-primary-active: 54 124 138;
     --color-interactive-primary-disabled: 80 78 74;
     --color-signal-success-surface: 30 50 40;
     --color-signal-warning-surface: 50 42 28;
@@ -175,11 +176,12 @@
   --color-paper:     28 27 26;    /* #1C1B1A */
   --color-ink:       232 228 220; /* #E8E4DC */
   --color-warm-gray: 138 136 128; /* #8A8880 */
-  --color-sea-deep:  28 27 26;    /* #1C1B1A - menggantikan biru */
+  --color-sea-deep:  78 156 170;  /* #4E9CAA */
   --color-amber:     232 184 75;  /* #E8B84B */
   --color-surface-sunken: 38 37 36;
   --color-text-tertiary: 152 150 144;
-  --color-interactive-primary-hover: 45 44 42;
+  --color-interactive-primary-hover: 66 140 154;
+  --color-interactive-primary-active: 54 124 138;
   --color-interactive-primary-disabled: 80 78 74;
   --color-signal-success-surface: 30 50 40;
   --color-signal-warning-surface: 50 42 28;

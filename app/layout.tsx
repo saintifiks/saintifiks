@@ -95,7 +95,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-paper text-ink font-interface antialiased">
+      <body className="bg-paper text-ink font-interface antialiased overflow-x-hidden">
         {/* Skip link (WCAG 2.4.1) — terlihat hanya saat fokus keyboard */}
         <a href="#main-content" className="skip-link">Langsung ke konten</a>
 
