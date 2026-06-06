@@ -6,6 +6,8 @@ import type { Metadata } from 'next'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 import ArticleInteractions from '@/components/artikel/ArticleInteractions'
 import ReadingProgress from '@/components/artikel/ReadingProgress'
+import BylineBlock from '@/components/artikel/BylineBlock'
+import { Badge } from '@/components/ui'
 
 // [STABIL] Fitur social interaction sudah berjalan, hemat quota with cache 1 jam
 // Note: Koreksi dan interaksi (like/share/comment) tetap real-time via Client Components
@@ -78,14 +80,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...(article.cover_image_url && { images: [article.cover_image_url] }),
     },
   }
-}
-
-function formatTanggal(tanggal: string): string {
-  return new Date(tanggal).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 export default async function ArtikelPage({ params }: Props) {
@@ -173,9 +167,9 @@ export default async function ArtikelPage({ params }: Props) {
             <div className="flex items-center gap-2 mb-2">
               {/* Kategori-konten */}
               {hasCategory && (
-                <span className="font-interface text-[20px] font-semibold text-sea-deep">
+                <Badge variant="category" className="text-xl font-semibold">
                   {artikel.category}
-                </span>
+                </Badge>
               )}
 
               {/* Vertical bar separator - hanya tampil jika keduanya ada */}
@@ -255,16 +249,10 @@ export default async function ArtikelPage({ params }: Props) {
           <hr className="border-0 h-[2px] bg-warm-gray" />
         </div>
 
-        {/* 7. PUBLISHED DATE — TANGGAL TERBIT ------------------------ */}
-        {/* Format: "3 Juni 2026" (tanpa leading zero) */}
+        {/* 7. BYLINE — TANGGAL TERBIT -------------------------------- */}
         {artikel.published_at && (
           <div className="px-4 md:px-0 md:max-w-[720px] md:mx-auto mt-2">
-            <time
-              dateTime={artikel.published_at}
-              className="font-interface text-[16px] font-medium text-warm-gray"
-            >
-              {formatTanggal(artikel.published_at)}
-            </time>
+            <BylineBlock publishedAt={artikel.published_at} />
           </div>
         )}
       </header>

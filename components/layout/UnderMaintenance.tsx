@@ -12,23 +12,23 @@ type UnderMaintenanceProps = {
 
 export default function UnderMaintenance({ title, description }: UnderMaintenanceProps) {
   return (
-    <main className="min-h-[70vh] bg-paper flex items-center justify-center px-5">
+    <main className="min-h-[70vh] bg-surface-page flex items-center justify-center px-5">
       <div className="max-w-md w-full text-center">
-        <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-ink/5 text-warm-gray mb-8">
+        <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-surface-sunken/50 text-text-secondary mb-8">
           <Wrench size={26} strokeWidth={1.75} />
         </span>
 
-        <h1 className="font-display text-display-sm font-bold text-ink">
+        <h1 className="font-display text-display-sm font-bold text-text-primary">
           {title}
         </h1>
 
-        <p className="font-interface text-body-sm text-warm-gray mt-4">
+        <p className="font-interface text-body-sm text-text-secondary mt-4">
           {description ?? 'Halaman ini sedang dalam pemeliharaan. Kami sedang menyiapkan isinya — silakan kembali lagi nanti.'}
         </p>
 
         <Link
           href="/"
-          className="inline-block font-mono text-kicker uppercase tracking-widest text-sea-deep hover:opacity-70 transition-opacity duration-150 mt-8"
+          className="inline-block font-interface text-kicker uppercase tracking-widest text-text-link hover:opacity-70 transition-opacity duration-fast mt-8"
         >
           ← Kembali ke Beranda
         </Link>

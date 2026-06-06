@@ -40,11 +40,11 @@ const sanitizeSchema = {
   },
 }
 
-const CALLOUT_CONFIG: Record<string, { label: string; borderClass: string; bgClass: string; labelClass: string }> = {
-  note:      { label: 'Catatan',   borderClass: 'border-accent-blue',  bgClass: 'bg-accent-blue/5',  labelClass: 'text-accent-blue'  },
-  warning:   { label: 'Perhatian', borderClass: 'border-yellow-500',   bgClass: 'bg-yellow-50',      labelClass: 'text-yellow-700'   },
-  important: { label: 'Penting',   borderClass: 'border-accent-red',   bgClass: 'bg-accent-red/5',   labelClass: 'text-accent-red'   },
-  tip:       { label: 'Tips',      borderClass: 'border-green-600',    bgClass: 'bg-green-50',       labelClass: 'text-green-700'    },
+const CALLOUT_CONFIG: Record<string, { label: string; typeClass: string }> = {
+  note:      { label: 'Catatan',   typeClass: 'callout-note' },
+  warning:   { label: 'Perhatian', typeClass: 'callout-warning' },
+  important: { label: 'Penting',   typeClass: 'callout-important' },
+  tip:       { label: 'Tips',      typeClass: 'callout-tip' },
 }
 
 export default function OpinionContentRenderer({ content, charts }: OpinionContentRendererProps) {
@@ -83,11 +83,13 @@ export default function OpinionContentRenderer({ content, charts }: OpinionConte
 
             if (config) {
               return (
-                <div className={`my-8 border-l-4 ${config.borderClass} ${config.bgClass} px-5 py-4 rounded-r`}>
-                  <p className={`font-helvetica font-bold text-xs uppercase tracking-widest mb-2 ${config.labelClass}`}>
-                    {config.label}
-                  </p>
-                  <div className="font-libre text-base text-primary-dark/90 [&>p]:mb-0 [&>p]:leading-relaxed">
+                <div
+                  className={`callout-box ${config.typeClass}`}
+                  data-callout-type={calloutType}
+                  role="note"
+                >
+                  <p className="callout-box__label">{config.label}</p>
+                  <div className="font-lora text-body-sm text-text-primary [&>p]:mb-0 [&>p]:leading-relaxed">
                     {children}
                   </div>
                 </div>
@@ -95,7 +97,7 @@ export default function OpinionContentRenderer({ content, charts }: OpinionConte
             }
 
             return (
-              <blockquote className="border-l-4 border-primary-dark/30 pl-6 my-8 italic text-primary-dark/80 font-libre text-lg">
+              <blockquote className="my-8">
                 {children}
               </blockquote>
             )

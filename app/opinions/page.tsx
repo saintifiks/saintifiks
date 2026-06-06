@@ -4,16 +4,17 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import OpinionCard from '@/components/opinions/OpinionCard'
-import Link from 'next/link'
+import Link from '@/components/ui/Link'
+import { Badge } from '@/components/ui'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Opinions — Saintifiks',
+  title: 'Argumen — Saintifiks',
   description: 'Perspektif dan analisis dari pembaca Saintifiks.',
   openGraph: {
-    title: 'Opinions — Saintifiks',
+    title: 'Argumen — Saintifiks',
     description: 'Perspektif dan analisis dari pembaca Saintifiks.',
     siteName: 'Saintifiks',
   },
@@ -28,7 +29,6 @@ export default async function OpinionsPage({
 }: {
   searchParams: SearchParams
 }) {
-  // Admin client untuk bypass RLS — fallback ke server client jika service key tidak tersedia
   let supabase
   try {
     supabase = createAdminClient()
@@ -92,27 +92,24 @@ export default async function OpinionsPage({
   const hasNext = page < totalPages
 
   return (
-    <main className="min-h-screen bg-primary-light">
-      <div className="max-w-2xl mx-auto px-6 py-16">
-
-        {/* Header */}
-        <div className="mb-12">
-          <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">
-            Opinions
-          </p>
-          <h1 className="font-libre text-3xl font-bold text-primary-dark leading-tight">
+    <main className="min-h-screen bg-surface-page">
+      <div className="max-w-2xl mx-auto px-5 py-12 md:py-16">
+        <header className="mb-10">
+          <Badge variant="kicker" className="mb-2">
+            Argumen
+          </Badge>
+          <h1 className="font-display text-3xl font-bold text-text-primary leading-tight">
             Perspektif dari pembaca Saintifiks
           </h1>
-          <p className="font-helvetica text-sm text-primary-dark/50 mt-3">
+          <p className="font-interface text-sm text-text-secondary mt-3 leading-relaxed">
             Artikel-artikel ini adalah pendapat pribadi penulisnya, bukan posisi redaksi.
           </p>
-        </div>
+        </header>
 
-        {/* Daftar artikel */}
         {items.length === 0 ? (
-          <div className="py-20 text-center border border-primary-dark/10">
-            <p className="font-helvetica text-sm text-primary-dark/40">
-              Belum ada artikel opinions yang diterbitkan.
+          <div className="py-16 text-center border border-border-default/20 rounded-md">
+            <p className="font-interface text-sm text-text-secondary">
+              Belum ada artikel argumen yang diterbitkan.
             </p>
           </div>
         ) : (
@@ -134,29 +131,26 @@ export default async function OpinionsPage({
           </div>
         )}
 
-        {/* Pagination */}
         {(page > 1 || hasNext) && (
-          <div className="flex items-center justify-between mt-12 pt-8 border-t border-primary-dark/10">
+          <nav
+            className="flex items-center justify-between mt-10 pt-6 border-t border-border-default/20"
+            aria-label="Navigasi halaman"
+          >
             {page > 1 ? (
-              <Link
-                href={`/opinions?page=${page - 1}`}
-                className="font-helvetica text-sm text-primary-dark hover:opacity-60 transition-opacity duration-150"
-              >
+              <Link href={`/opinions?page=${page - 1}`} variant="nav">
                 ← Lebih baru
               </Link>
-            ) : <span />}
+            ) : (
+              <span />
+            )}
 
             {hasNext && (
-              <Link
-                href={`/opinions?page=${page + 1}`}
-                className="font-helvetica text-sm text-primary-dark hover:opacity-60 transition-opacity duration-150"
-              >
+              <Link href={`/opinions?page=${page + 1}`} variant="nav">
                 Lebih lama →
               </Link>
             )}
-          </div>
+          </nav>
         )}
-
       </div>
     </main>
   )

@@ -95,7 +95,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[200] bg-paper overflow-y-auto"
+      className="fixed inset-0 z-modal bg-surface-page overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label="Menu navigasi"
@@ -115,7 +115,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
           <button
             onClick={onClose}
             aria-label="Tutup menu"
-            className="flex h-8 w-8 items-center justify-center text-ink hover:opacity-60 transition-opacity duration-150"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center text-text-primary hover:opacity-60 transition-opacity duration-fast focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
           >
             <X size={28} strokeWidth={1.75} />
           </button>

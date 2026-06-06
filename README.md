@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.3 | Status: Live | Terakhir diperbarui: 04-06-2026
+> Versi: 2.4 | Status: Live | Terakhir diperbarui: 07-06-2026
+>
+> Perubahan v2.4 (Sesi #49): Design System V3 — token semantik, atom UI, molekul, penyelarasan organisme.
 >
 > Perubahan v2.1 (Sesi #46): Font display Libre Baskerville, dark mode hibrida OS+toggle.
 > Perubahan v2.2 (Sesi #47): Header global, Drawer, beranda feed tunggal, 9 halaman placeholder.
@@ -221,6 +223,48 @@ Halaman artikel publik (`app/artikel/[slug]/page.tsx`) dibagi dua zona: **the-ca
 - Gap the-article dari the-card: 24px (berlaku untuk elemen pertama apapun).
 - Max content width: 65ch / 640px.
 - Warna seluruh teks artikel: `#1A1917` (token `ink`).
+
+### Design System V3 — Evolusi dari Riset Desain
+
+> Status: DITETAPKAN (Sesi #49) | Versi: **V3.0** | Sumber riset: `design_system_part1.md` (Brand Scripture v0.1)
+>
+> V3 **bukan** pengganti V2. V3 memperluas V2 dengan token semantik (Layer 1), komponen atom di `components/ui/`, dan molekul bersama — tanpa mengubah font stack, arsitektur beranda, atau keputusan Sesi #47–#48.
+>
+> **Changelog V3.0 (07-06-2026):** Token semantik surface/text/border/interactive/signal; motion & z-index scale; `components/ui/*`; `components/feed/ArticleCard`; prose callout/pull-quote; penyelarasan Header, Drawer, HomeFeed, artikel, Opinions, 404.
+
+### Riset Desain — Matriks Adopsi
+
+| Kategori | Item Riset | Keputusan | Alasan |
+|----------|-----------|-----------|--------|
+| **ADOPT** | Filosofi Layer 0 (restraint, tipografi infrastruktur, WCAG AA, mobile-first) | Terapkan | Selaras misi Seksi 2–3 |
+| **ADOPT** | Token semantik surface/text/border/interactive/signal | Terapkan | Dipetakan ke 10 token V2 di `globals.css` |
+| **ADOPT** | Spacing 8pt, motion, z-index scale | Terapkan | Tambahan di `:root` |
+| **ADOPT** | Atom: Button, Link, Input, Badge, Divider, Skeleton | Terapkan | `components/ui/` |
+| **ADOPT** | Molekul: ArticleCard, BylineBlock, DataCallout | Terapkan | Ekstrak dari layout existing |
+| **ADOPT** | Article body: blockquote, pull quote, tabel, callout CSS | Terapkan | Perkaya `.article-body` / `.article-content` |
+| **ADOPT** | Governance checklist komponen/halaman baru | Terapkan | Sub-bagian di bawah |
+| **ADAPT** | Homepage template (hero + grid) | Adaptasi visual card saja | Struktur feed tunggal Sesi #47 tetap |
+| **ADAPT** | Global nav fixed + dropdown | Spacing/a11y Header | Arsitektur 3-kolom + Drawer atas tetap |
+| **ADAPT** | Article hero / the-card | Selaraskan spesifikasi README 5.1 | Bukan sidebar 2-kolom riset |
+| **REJECT** | Source Serif 4 body, DM Sans UI, JetBrains Mono | Tolak | Lora + IBM Plex sudah final Sesi #48 |
+| **REJECT** | Newsletter, Subscribe, Paywall | Tolak | Zona Merah + Prinsip Editorial #9 |
+| **REJECT** | Breaking News Bar | Tolak | Engagement artifisial — Zona Merah |
+| **REJECT** | Tab Opinions di beranda | Tolak | Keputusan Sesi #47 |
+| **REJECT** | Like count menonjol | Tolak | Likes untuk analitik internal |
+| **DEFER** | ToC sticky sidebar | Tunda | Butuh keputusan eksplisit pemilik |
+| **DEFER** | Halaman kategori/search dedicated | Tunda | Konten/struktur belum siap |
+
+### Checklist Komponen Baru (Governance V3)
+
+Sebelum merge komponen baru ke `main`, pastikan:
+
+1. Warna memakai token semantik V3 atau token V2 — **bukan** hex statis di Tailwind
+2. Touch target minimum 44×44px di mobile (WCAG)
+3. `focus-visible` outline terlihat (2px `sea-deep` atau `interactive-primary`)
+4. `aria-label` pada tombol icon-only
+5. `prefers-reduced-motion` dihormati untuk animasi non-esensial
+6. Dark mode diuji via toggle **dan** preferensi OS
+7. Satu file per PR commit sesi (website live)
 
 ## 5.2.1 SINTAKS MARKDOWN YANG DIDUKUNG
 
@@ -706,9 +750,10 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] **Redesain beranda: Header global, Drawer animasi, feed editorial tunggal, search bar** ← Sesi #47
 - [x] **Sistem relevansi konten per-lokasi (LocationProvider + React Context + localStorage)** ← Sesi #47
 - [x] **9 halaman placeholder under-maintenance; komponen PreLogin untuk /akun logged-out** ← Sesi #47
-- [ ] **Redesain halaman artikel publik: the-card + the-article, font body Lora** ← Sesi #48
-- [ ] **Redesain footer** ← sesi mendatang
-- [ ] **Redesain halaman Argumen (Opinions)** ← sesi mendatang
+- [x] **Redesain halaman artikel publik: the-card + the-article, font body Lora** ← Sesi #48
+- [x] **Redesain footer** ← PR #101
+- [x] **Design System V3: token semantik + atom UI + molekul** ← Sesi #49
+- [x] **Redesain halaman Argumen (Opinions)** ← Sesi #49 Fase F
 - [ ] **Rearsitekturisasi halaman penulisan artikel** ← sesi mendatang
 ---
 
@@ -1403,6 +1448,18 @@ Format pengisian:
            ALTERNATIF DITOLAK: Divider di setiap H2 (terlalu banyak pemisah visual, terasa majalah lama).
 ```
 
+[07-06-2026] KEPUTUSAN: Design System V3 — perluasan token & komponen atom, bukan ganti arsitektur V2  ← SESI #49
+           ALASAN: Riset desain (`design_system_part1.md`) menyediakan layer token→atom→molekul yang
+                   selaras filosofi brand, tetapi banyak spesifikasi bentrok dengan keputusan live
+                   (Lora, feed tunggal, tanpa newsletter/paywall). V3 mengadopsi fondasi riset
+                   sambil mempertahankan keputusan Sesi #46–#48.
+           ALTERNATIF DITOLAK: Implementasi mentah seluruh template riset (hero multi-section,
+                              nav fixed dropdown, Source Serif 4, newsletter bar).
+           CATATAN IMPLEMENTASI:
+             - Token semantik di `app/globals.css` alias ke RGB triplets V2 (`--color-paper`, dll.)
+             - Atom di `components/ui/`; molekul di `components/feed/` dan `components/artikel/`
+             - Changelog versi: Design System V3.0 (Sesi #49)
+
 ---
 
 ## 12. LOG SESI
@@ -1864,9 +1921,26 @@ Yang dikerjakan:
  
 Keputusan baru: Lihat Seksi 11 — empat keputusan baru: Lora, tata letak responsif,
                komponen the-card, dan spacing system tanpa divider antar H2.
-Status akhir: [DIISI SETELAH IMPLEMENTASI]
-Next step: [DIISI SETELAH IMPLEMENTASI] — kandidat sesi berikutnya: redesain footer,
-           redesain halaman Argumen, rearsitekturisasi halaman penulisan artikel.
+Status akhir: Selesai. Di-merge ke main via PR #100.
+Next step: Redesain footer (PR #101), lalu Design System V3 dari riset desain.
+---
+
+[07-06-2026] SESI #49 — DESIGN SYSTEM V3 (RISET DESAIN)
+Branch: feature/design-system-v3
+Tujuan sesi: Mengadopsi temuan riset `design_system_part1.md` ke codebase live — token semantik,
+             komponen atom/molekul, penyelarasan organisme (Header, Drawer, HomeFeed, artikel,
+             footer, 404), dan redesain halaman Opinions — tanpa perubahan database/API/RLS.
+Yang dikerjakan:
+  - README.md: matriks ADOPT/ADAPT/REJECT/DEFER, governance checklist, keputusan Seksi 11 V3.
+  - app/globals.css: token semantik V3, motion, z-index, prose enhancements.
+  - tailwind.config.ts: alias warna semantik V3.
+  - components/ui/: Button, Link, Input, Label, Badge, Divider, Skeleton.
+  - components/feed/ArticleCard.tsx, components/artikel/BylineBlock.tsx, DataCallout styles.
+  - Penyelarasan Header, Drawer, HomeFeed, artikel page, ArticleRenderer, footer, not-found.
+  - app/opinions/page.tsx + OpinionCard: visual alignment V3.
+Keputusan baru: Lihat Seksi 11 — Design System V3.
+Status akhir: Selesai di branch feature/design-system-v3. `next lint` dan `tsc` bersih.
+Next step: Vercel Preview → merge ke main setelah verifikasi pemilik.
 ---
 
 ## 13. REFERENSI & RESOURCE
