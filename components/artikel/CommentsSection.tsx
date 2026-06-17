@@ -157,7 +157,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-primary-dark/10">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-ink/10">
 <div className="flex items-center gap-2">
                  <h3 className="font-libre text-lg font-bold text-ink">Komentar</h3>
                  <span className="font-helvetica text-xs text-ink/50 bg-ink/5 px-2 py-0.5">
@@ -232,7 +232,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
             </div>
 
             {/* Form komentar — pinned di bawah */}
-            <div className="border-t border-primary-dark/10 px-5 py-4">
+            <div className="border-t border-ink/10 px-5 py-4">
               <form onSubmit={handleSubmit}>
                 <div className="flex gap-3 items-end">
 <textarea
@@ -241,7 +241,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
                      placeholder={userId ? 'Tulis komentar...' : 'Login untuk berkomentar'}
                      disabled={isSubmitting}
                      rows={2}
-                     className="flex-1 font-helvetica text-sm p-3 border border-ink/15 focus:border-ink focus:outline-none resize-none transition-colors"
+                     className="bg-transparent flex-1 font-helvetica text-sm p-3 border border-ink/15 focus:border-ink focus:outline-none resize-none transition-colors"
                    />
 <button
                      type={userId ? 'submit' : 'button'}
@@ -266,7 +266,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
                   </button>
                 </div>
                 {!userId && (
-                  <p className="font-helvetica text-xs text-primary-dark/40 mt-2">
+                  <p className="font-helvetica text-xs text-ink/40 mt-2">
                     Login dengan Google untuk berkomentar
                   </p>
                 )}

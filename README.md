@@ -1,9 +1,10 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 1.7 | Status: Live | Terakhir diperbarui: 2026-05-25
+> Versi: 2.3 | Status: Live | Terakhir diperbarui: 04-06-2026
 >
-> Perubahan v1.7: Editor Opinions Improvements — TipTap table extensions (tabel GFM dirender sebagai grid), chart chip label informatif, placeholder isEmpty fix, sticky toolbar top eksplisit
-
----
+> Perubahan v2.1 (Sesi #46): Font display Libre Baskerville, dark mode hibrida OS+toggle.
+> Perubahan v2.2 (Sesi #47): Header global, Drawer, beranda feed tunggal, 9 halaman placeholder.
+> Perubahan v2.3 (Sesi #48): Redesain halaman artikel publik (the-card + the-article), font body Lora.
+--
 
 ## ⚠️ INSTRUKSI WAJIB UNTUK AI YANG MEMBACA DOKUMEN INI
 
@@ -141,52 +142,85 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 
 ---
 
-## 5.1 DESIGN SYSTEM
+## 5.1 DESIGN SYSTEM (VISUAL SYSTEM V2)
 
-> Status: DITETAPKAN. Wajib diikuti di seluruh proyek tanpa pengecualian.
+> Status: DITETAPKAN (Hard Reset Arsitektur). Wajib diikuti di seluruh proyek tanpa pengecualian. Arsitektur ini menolak penggunaan static hex di Tailwind untuk properti yang merespons tema.
 
-### Tipografi
-
+### Tipografi (4 Lapis)
+ 
 | Peran | Font | Keterangan |
 |-------|------|------------|
-| Primary | Libre Baskerville | Serif — untuk body artikel, heading utama, identitas brand |
-| Secondary | Helvetica (fallback: Arial, sans-serif) | Sans-serif — untuk UI elemen, label, navigasi, metadata |
+| Display / Headline | Libre Baskerville | Serif (Google Fonts) — weight 400/700 + italic. Menggantikan Marcellus sejak Sesi #46. Catatan: tidak ada weight 600; penggunaan `font-weight: 600` efektif menjadi 700. Digunakan untuk: wordmark, H1–H4 di halaman artikel, judul article-card. |
+| Body Artikel | Lora | Serif (Google Fonts) — weight 400. Menggantikan Source Serif 4 sejak Sesi #48. Digunakan untuk: body text artikel, article caption. |
+| Interface / UI / Metadata | IBM Plex Sans | Sans-serif (Google Fonts) — untuk navigasi, tombol, metadata, kicker artikel, label, tanggal terbit, cover caption, image caption. |
+| Data / Angka | IBM Plex Mono | Monospace (Google Fonts) — khusus untuk elemen numerik presisi: angka di IndexStrip. |
+ 
+**Cara implementasi:** Font dimuat via `next/font/google` di `app/layout.tsx`. Variabel font diinjeksikan ke `<body>`. `tailwind.config.ts` membaca variabel ini di objek `theme.fontFamily`. Lora ditambahkan di Sesi #48; jika belum ada, tambahkan sebelum mengerjakan halaman artikel.
+### Color Palette (10 Token CSS)
 
-**Cara implementasi:** Libre Baskerville di-load via Google Fonts di `layout.tsx`. Helvetica adalah system font, tidak perlu di-load. Semua konfigurasi font ada di `tailwind.config.ts`.
+Sistem warna menggunakan CSS Variables di `:root` (`app/globals.css`) untuk memastikan *Single Source of Truth*. Tailwind dilarang keras menggunakan Hex statis untuk warna-warna ini.
 
-### Color Palette
+| Token Tailwind | CSS Variable | Peran Utama |
+|----------------|--------------|-------------|
+| `paper` | `--color-paper` | Background utama halaman (inversi di dark mode) |
+| `ink` | `--color-ink` | Teks utama artikel & UI (inversi di dark mode) |
+| `night` | `--color-night` | Background khusus dark mode |
+| `warm-gray` | `--color-warm-gray` | Teks sekunder, metadata, caption |
+| `sea-deep` | `--color-sea-deep` | Aksen primer, tautan interaktif, elemen aktif |
+| `amber` | `--color-amber` | Aksen sekunder (sangat terbatas) |
+| `data-gray` | `--color-data-gray` | Chart dan visualisasi data |
+| `trend-up` | `--color-trend-up` | Indikator naik (IndexStrip) — tidak diinversi |
+| `trend-down`| `--color-trend-down`| Indikator turun (IndexStrip) — tidak diinversi |
 
-| Token | Hex | Peran |
-|-------|-----|-------|
-| `primary-dark` | `#0D0D0D` | Warna utama — teks, background dark mode, elemen struktural |
-| `primary-light` | `#F5F4F0` | Warna utama — background halaman, surface terang |
-| `accent-red` | `#C90203` | Aksen — digunakan sangat sedikit (indikator turun di strip indeks, error state, highlight kritis) |
-| `accent-blue` | `#002EC7` | Aksen — digunakan sangat sedikit (link aktif, CTA spesifik, elemen interaktif tertentu) |
-| `accent-green` | `#5C8F6E` | Aksen — digunakan sangat sedikit (indikator naik di strip indeks beranda; hijau sage elegan, keputusan eksplisit 2026-05-21) |
-
-**Prinsip penggunaan warna:** 90% halaman adalah `#0D0D0D` dan `#F5F4F0`. Warna aksen muncul hanya untuk elemen yang benar-benar membutuhkan perhatian. Jangan menggunakan aksen untuk dekorasi.
-
----
-
-## 5.2 WORKFLOW PENULISAN & PUBLIKASI ARTIKEL
-
-> Ini adalah workflow pemilik proyek — harus dipahami AI untuk mendesain sistem admin yang sesuai.
-
-### Alur dari draft ke live:
-
-1. **Pemilik menulis draft** di tools luar (Obsidian, Notion, atau text editor apapun) dalam format Markdown.
-2. **Jika artikel membutuhkan visualisasi data** (chart ekonomi, grafik, dll): pemilik mendeskripsikan chart yang diinginkan kepada AI → AI menghasilkan Chart.js config JSON → pemilik menyimpan JSON tersebut.
-3. **Pemilik masuk ke admin panel** Saintifiks (hanya bisa diakses oleh akun pemilik).
-4. **Upload/paste konten Markdown** ke editor admin.
-5. **Jika ada chart:** tambahkan placeholder `{{chart:chart-id}}` di posisi yang tepat dalam artikel, lalu masukkan Chart.js config JSON ke field yang tersedia.
-6. **Preview artikel** sebelum publish untuk memastikan rendering benar.
-7. **Publish** — artikel live di situs.
-
-### Implikasi teknis dari workflow ini:
-- Admin panel harus memiliki field terpisah untuk: (a) konten Markdown, (b) Chart.js config JSON per chart, (c) metadata artikel.
-- Parser artikel di Next.js harus bisa mendeteksi `{{chart:chart-id}}`, mengambil config dari database `article_charts`, dan me-render Chart.js component di posisi tersebut.
-- Preview harus akurat — apa yang terlihat di preview harus identik dengan apa yang live.
+### Arsitektur Dark Mode (Hibrida: OS Default + Toggle Manual)
+ 
+Sistem menggunakan hibrida OS default + toggle manual (ikon Sun/Moon di Header).
+Keputusan ini membalikkan keputusan "TANPA toggle" dari Sesi #43 — lihat Seksi 11.
+ 
+1. **Prioritas:** `localStorage('saintifiks-theme')` > `prefers-color-scheme`. Script anti-FOUC di `<head>` men-set `data-theme` sebelum render pertama, mencegah flash warna.
+2. **Mekanisme:** `app/globals.css` memiliki 3 skenario:
+   - `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])` — OS gelap, belum ada pilihan manual
+   - `:root[data-theme="dark"]` — dipilih manual via toggle
+   - `:root[data-theme="light"]` — dipilih manual, override OS gelap
+3. **Integrasi Tailwind:** `darkMode: ['selector','[data-theme="dark"]']` — utility `dark:` mengikuti toggle, bukan hanya OS.
+4. **Komponen:** `components/layout/ThemeToggle.tsx` — Client Component, hydration-safe, aria-label, simpan ke localStorage.
+5. **Integrasi Header:** ThemeToggle dipasang di `components/layout/Header.tsx` (menggantikan posisi lama di Navbar).
   ---
+### Sistem Tipografi Halaman Artikel (Sesi #48)
+ 
+Halaman artikel publik (`app/artikel/[slug]/page.tsx`) dibagi dua zona: **the-card** (metadata artikel) dan **the-article** (isi artikel). Ini adalah acuan kanonikal — jika ada konflik dengan kode, teks ini yang benar.
+ 
+**Tata Letak Responsif:**
+- Mobile (< 768px): margin 16px, padding atas 24px, cover image 100vw (melewati margin).
+- Tablet (≥ 768px) & Desktop (≥ 1024px): seluruh konten max-width 720px, `margin: 0 auto`. Cover image = 720px, tidak melewati container.
+ 
+**Komponen the-card (urutan atas ke bawah):**
+ 
+| Elemen | Font | Size | Weight | Warna | Keterangan |
+|--------|------|------|--------|-------|------------|
+| Kategori-konten | IBM Plex Sans | 20px | 600 | #0B5263 | gap 24px dari header; format: [Kategori] \| [Kicker] dengan sep. vertikal bar 16px + gap 8px kiri-kanan |
+| Kicker | IBM Plex Sans | 20px | 600 | #1A1917 | — |
+| H1 (judul) | Libre Baskerville | 32px | 400 | #1A1917 | gap 8px dari kategori/kicker; letter-spacing -1.5%; line-height 1.25x |
+| Caption/ringkasan | Libre Baskerville | 14px | 400 | #1A1917 | gap 8px dari H1 |
+| Cover image | — | 100vw / 720px | — | — | di bawah caption; mobile melewati margin, desktop dalam container; tinggi proporsional asli |
+| Cover caption | IBM Plex Sans | 16px | 500 | #5A5750 | gap 16px dari cover; format: ILLUSTRATION : [NAMA] (ALL CAPS); letter-spacing 0.12em |
+| Divider | — | 2px | — | #5A5750 | gap 32px dari cover caption; full width dalam margin |
+| Tanggal terbit | IBM Plex Sans | 16px | 500 | #5A5750 | gap 8px dari divider; format: "3 Juni 2026" — bukan "03 Juni 2026", bukan "3/06/2026" |
+ 
+**Komponen the-article:**
+ 
+| Elemen | Font | Size | Weight | Line-height | Keterangan |
+|--------|------|------|--------|-------------|------------|
+| H2 | Libre Baskerville | 24px | 700 | 1.25x | gap 24px dari body di atasnya |
+| H3 | Libre Baskerville | 20px | 600 | 1.375x | gap 16px dari body di atasnya |
+| H4 | Libre Baskerville | 17px | 600 | 1.375x | gap 16px dari body di atasnya |
+| Body text | Lora | 17px | 400 | 1.6x | letter-spacing 0.01em; gap 8px dari H2/H3/H4 di atasnya; paragraph spacing 1.375em |
+| Article caption | Lora | 17px | 400 | 1.6x | sama dengan body text |
+| Image caption | IBM Plex Sans | 16px | 500 | — | letter-spacing 0.12em; #5A5750 |
+ 
+- Gap the-article dari the-card: 24px (berlaku untuk elemen pertama apapun).
+- Max content width: 65ch / 640px.
+- Warna seluruh teks artikel: `#1A1917` (token `ink`).
 
 ## 5.2.1 SINTAKS MARKDOWN YANG DIDUKUNG
 
@@ -410,14 +444,14 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │   ├── page.tsx                          ← Halaman beranda
 │   ├── not-found.tsx                     ← Custom 404 page (bukan default Next.js)
 │   ├── error.tsx                         ← Global error boundary
-│   ├── artikel/
-│   │   ├── layout.tsx                    ← KaTeX + highlight.js CSS (hanya dimuat di halaman artikel)
+│   │   ├── artikel/
+│   │   ├── layout.tsx                        ← KaTeX + highlight.js + Lora CSS (hanya di halaman artikel) [Lora: Sesi #48]
 │   │   └── [slug]/
-│   │       └── page.tsx                  ← Halaman artikel publik
+│   │       └── page.tsx                      ← Halaman artikel publik — REDESAIN Sesi #48 (the-card + the-article)
 │   ├── (admin)/
-│   │   ├── layout.tsx                    ← Auth guard admin
+│   │   ├── layout.tsx                        ← Auth guard admin
 │   │   └── dashboard/
-│   │       ├── page.tsx                  ← Dashboard utama
+│   │       ├── page.tsx                      ← Dashboard utama
 │   │       ├── artikel/
 │   │       │   ├── baru/page.tsx
 │   │       │   └── [id]/edit/page.tsx
@@ -425,9 +459,20 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │   │           └── actions.ts
 │   ├── auth/
 │   │   └── callback/
-│   │       └── route.ts                  ← OAuth callback dengan validasi redirect
+│   │       └── route.ts                      ← OAuth callback dengan validasi redirect
 │   ├── login/
-│   │   └── page.tsx
+│   │   └── page.tsx                          ← Pakai komponen PreLogin (default next=/dashboard). [Sesi #47]
+│   ├── akun/
+│   │   └── page.tsx                          ← Logged-out → PreLogin; logged-in → Dashboard penulis. [Sesi #47]
+│   ├── tentang-kami/page.tsx                 ← Under maintenance. [Sesi #47]
+│   ├── kontak/page.tsx                       ← Under maintenance. [Sesi #47]
+│   ├── panduan-editorial/page.tsx            ← Under maintenance. [Sesi #47]
+│   ├── koreksi/page.tsx                      ← Under maintenance. [Sesi #47]
+│   ├── kebijakan-iklan/page.tsx              ← Under maintenance. [Sesi #47]
+│   ├── keamanan/page.tsx                     ← Under maintenance (Laporkan Masalah Keamanan). [Sesi #47]
+│   ├── kebijakan-privasi/page.tsx            ← Under maintenance. [Sesi #47]
+│   ├── bookstore/page.tsx                    ← Under maintenance (E-Commerce Toko Buku). [Sesi #47]
+│   └── bagikan-ide/page.tsx                  ← Under maintenance. [Sesi #47]
 │   ├── sitemap.ts                        ← Dynamic sitemap untuk SEO (ISR 24h) — mencakup editorial + opinions
 │   ├── robots.ts                         ← Robots.txt konfigurasi crawler (disallow: admin, api, login, akun/tulis, akun/artikel/)
 │   ├── opinions/
@@ -473,13 +518,17 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │           └── [username]/route.ts       ← GET profil publik + daftar artikel
 │
 ├── components/
-│   ├── layout/
-│   │   ├── Navbar.tsx
+│   │   ├── layout/
+│   │   ├── Header.tsx                        ← Header global 3-kolom (ThemeToggle | wordmark | drawer icon). Menggantikan Navbar. [Sesi #47]
+│   │   ├── Drawer.tsx                        ← Menu full-screen turun-dari-atas; accordion lokasi + navigasi. [Sesi #47]
+│   │   ├── LocationProvider.tsx              ← React Context + localStorage('saintifiks-location'); deteksi negara via timezone. [Sesi #47]
+│   │   ├── ThemeToggle.tsx                   ← Toggle Sun/Moon dark mode, hydration-safe, localStorage. [Sesi #46]
+│   │   ├── HomeFeed.tsx                      ← Search bar + article-card + divider; filter lokasi & pencarian. [Sesi #47]
 │   │   ├── Footer.tsx
-│   │   ├── ConditionalIndexStrip.tsx     ← Client Component — tampilkan IndexStrip hanya di /
-│   │   ├── ScrollToTop.tsx               ← Client Component — paksa scroll ke atas setiap navigasi
-│   │   └── HomepageTabs.tsx              ← Tab [Saintifiks | Opinions] di beranda
-│   ├── widgets/
+│   │   ├── ConditionalIndexStrip.tsx         ← Client Component — tampilkan IndexStrip hanya di /
+│   │   ├── ScrollToTop.tsx                   ← Client Component — paksa scroll ke atas setiap navigasi
+│   │   ├── UnderMaintenance.tsx              ← Template halaman placeholder under-maintenance. [Sesi #47]
+│   │   └── PreLogin.tsx                      ← Gerbang masuk Google OAuth untuk /akun saat logged-out. [Sesi #47]
 │   │   ├── IndexStrip.tsx                ← Server wrapper strip indeks beranda
 │   │   ├── IndexStripClient.tsx          ← Client polling + render
 │   │   └── TrendIcon.tsx                 ← Ikon naik/turun
@@ -515,7 +564,7 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │
 ├── lib/
 │   ├── indices/
-│   │   ├── fetchers.ts                   ← **JANGAN DISENTUH TANPA KONFIRMASI**
+│   │   ├── fetchers.ts                       ← **JANGAN DISENTUH TANPA KONFIRMASI**
 │   │   ├── get-indices.ts
 │   │   ├── http.ts
 │   │   ├── format.ts
@@ -523,14 +572,14 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │   │   ├── types.ts
 │   │   └── yahoo.ts
 │   ├── supabase/
-│   │   ├── client.ts                     ← Browser client (anon key)
-│   │   ├── server.ts                     ← Server client (anon key, with cookies)
-│   │   ├── admin.ts                      ← Server-only admin client (service_role key)
+│   │   ├── client.ts                         ← Browser client (anon key)
+│   │   ├── server.ts                         ← Server client (anon key, with cookies)
+│   │   ├── admin.ts                          ← Server-only admin client (service_role key)
 │   │   └── remark/
 │   │       └── remarkCallout.ts
-│   ├── slug.ts                           ← Centralized slug generation (DRY principle)
-│   └── rate-limit.ts                     ← In-memory rate limiting helper untuk API routes
-│
+│   ├── countries.ts                          ← Daftar negara (ID) + groupCountriesByLetter untuk Drawer A–Z. [Sesi #47]
+│   ├── slug.ts                               ← Centralized slug generation (DRY principle)
+│   └── rate-limit.ts                         ← In-memory rate limiting helper untuk API routes
 ├── .github/workflows/backup.yml
 ├── next.config.mjs
 ├── tailwind.config.ts
@@ -541,14 +590,13 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 ```
 
 ### File yang TIDAK BOLEH DISENTUH (Red Zones)
-
+ 
 | File/Folder | Alasan |
 |-------------|--------|
 | `ArticleRenderer.tsx` | Server Component murni — sentuh hanya untuk perbaikan kritis yang terverifikasi |
 | `ChartBlock.tsx` | SSR/Client boundary sudah di-tune — risiko crash |
 | `LikeButton.tsx` | Sistem likes sudah fix 3 kali — sangat sensitif terhadap RLS |
 | `CorrectionSection.tsx` | Bagian dari interaksi artikel yang sudah stabil |
-| `app/artikel/[slug]/page.tsx` | ISR strategy sudah di-tune — perubahan bisa merusak caching |
 | `app/api/analytics/route.ts` | Tracking sistem — perubahan bisa merusak data |
 | `app/api/keep-alive/route.ts` | Risiko eksistensial — database bisa hibernate jika rusak |
 | `lib/indices/` | Widget indeks sudah di-tune untuk rate limiting |
@@ -644,13 +692,24 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] Pembaruan pasar live via `/api/indices` + polling client 15 detik
 - [x] Scroll horizontal tanpa scrollbar terlihat
 - [x] Optimasi kecepatan render artikel (migrasi penuh ke Server Component)
-- [x] Implementasi parser luwes (json5) & parser HTML mentah (rehype-raw) untuk toleransi output AI
+- [x] Implementasi parser luwes (json5) & parser HTML mentah (rehype-raw)
 - [x] Resolusi anomali pemutusan footnote via arsitektur single-pass render
-- [x] Widget indeks dipindah ke atas Navbar (via `ConditionalIndexStrip` di `layout.tsx`)
-- [x] Scroll otomatis ke paling atas saat navigasi halaman (via `ScrollToTop` di `layout.tsx`)
-- [x] **Fix opinions page visibility — query 2 tahap untuk menghindari PostgREST join failure** ← 25-05-2026
-- [x] **Editor improvements — tabel GFM grid di editor, chart chip label, placeholder fix, toolbar top eksplisit** ← 25-05-2026
-
+- [x] Widget indeks dipindah ke atas Header (via `ConditionalIndexStrip` di `layout.tsx`)
+- [x] Scroll otomatis ke paling atas saat navigasi halaman (via `ScrollToTop`)
+- [x] Fix opinions page visibility — query 2 tahap untuk menghindari PostgREST join failure ← 25-05-2026
+- [x] Editor improvements — tabel GFM grid, chart chip label, placeholder fix, toolbar top eksplisit ← 25-05-2026
+- [x] Hard reset arsitektur warna Tailwind + CSS Variables (Single Source of Truth) ← Sesi #43
+- [x] Pembatalan dokumen arsitektur turunan AI yang cacat (HANDOVER_CONTEXT.md, dsb) ← Sesi #43
+- [x] Pembersihan residu token V1 pada komponen interaktif dan kartu artikel Opini ← Sesi #45
+- [x] **Font display: Libre Baskerville menggantikan Marcellus; dark mode hibrida OS+toggle (ThemeToggle)** ← Sesi #46
+- [x] **Reading width 65ch dua-lapis (mobile 18px/1.7, desktop 19px/1.65) di .article-body & .article-content** ← Sesi #46
+- [x] **Redesain beranda: Header global, Drawer animasi, feed editorial tunggal, search bar** ← Sesi #47
+- [x] **Sistem relevansi konten per-lokasi (LocationProvider + React Context + localStorage)** ← Sesi #47
+- [x] **9 halaman placeholder under-maintenance; komponen PreLogin untuk /akun logged-out** ← Sesi #47
+- [ ] **Redesain halaman artikel publik: the-card + the-article, font body Lora** ← Sesi #48
+- [ ] **Redesain footer** ← sesi mendatang
+- [ ] **Redesain halaman Argumen (Opinions)** ← sesi mendatang
+- [ ] **Rearsitekturisasi halaman penulisan artikel** ← sesi mendatang
 ---
 
 ## 10. MASALAH YANG DIKETAHUI
@@ -745,6 +804,30 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
              WORKAROUND: -
              RESOLVED: 25-05-2026 | Sesi #42 — kondisi diganti menjadi isEmpty: doc.textContent === '' && doc.childCount <= 1.
 
+[31-05-2026] MASALAH: Kegagalan Arsitektur Dark Mode (UI Tidak Terbaca)
+           STATUS: resolved
+           WORKAROUND: -
+           RESOLVED: [31-05-2026] | Root cause: Implementasi AI eksternal yang menempatkan warna Hex statis di dalam objek `colors` pada `tailwind.config.ts` (#F7F5F0) dan pada saat yang bersamaan mencoba membalikkan warna melalui `@media (prefers-color-scheme: dark)` di `globals.css`. Tailwind membajak spesifisitas CSS; teks merespons menjadi terang, tapi background terkunci pada mode terang.
+           Fix: Hard reset arsitektur. Hapus Hex statis dari Tailwind. Tailwind dipaksa hanya membaca `var(--color-paper)` dari CSS. Logika Dark Mode dikembalikan 100% ke kendali CSS murni.
+
+[31-05-2026] MASALAH: Pop-up interaktif (Koreksi, Komentar, Share) merender transparan, background textarea putih solid (merusak kontras Mode Gelap), dan judul artikel Opinions gagal berinversi.
+           STATUS: resolved
+           WORKAROUND: -
+           RESOLVED: [31-05-2026] | Root cause: 1) Pemanggilan token V1 usang (`bg-primary-light`) yang diabaikan Tailwind karena sudah dihapus dari config. 2) Ketiadaan deklarasi background pada textarea sehingga browser memaksakan default putih. 3) Penggunaan warna HEX absolut (`text-[#1A1A1A]`) pada judul opini yang memblokir CSS variables. Fix: Replace massal menggunakan token V2 (`bg-paper`, `text-ink`) dan injeksi `bg-transparent` pada input form.
+
+[01-06-2026] MASALAH: Preview deployment Vercel terkunci proteksi login (SSO) — pengujian visual otomatis (toggle, lebar 65ch, font) tidak bisa diakses Devin tanpa kredensial Vercel.
+           STATUS: open
+           WORKAROUND: Pemilik membuka URL preview sambil login akun Vercel; ATAU jalankan `npx next dev` lokal dengan env publik NEXT_PUBLIC_SUPABASE_URL & NEXT_PUBLIC_SUPABASE_ANON_KEY agar halaman artikel ter-render.
+           RESOLVED: -
+
+[02-06-2026] MASALAH: Flickering pada IndexStrip dan tombol drawer saat transisi dark/light mode
+             STATUS: open
+             WORKAROUND: Tidak ada — flickering terjadi hanya saat transisi, tidak memengaruhi fungsi
+             RESOLVED: -
+             CATATAN: Terjadi pada metrik USD/IDR, Democracy Index, harga minyak, dll. dan tombol drawer.
+                      Kemungkinan sebab: komponen-komponen ini memiliki nilai inline atau class yang di-compute
+                      ulang saat CSS Variables berganti, menyebabkan repaint tidak sinkron dengan transisi.
+                      Investigasi dan fix dijadwalkan di sesi terpisah — tidak memblokir Sesi #48.
 ```
 Format pengisian:
 [TANGGAL] MASALAH: [deskripsi]
@@ -1045,6 +1128,7 @@ Format pengisian:
              ALTERNATIF DITOLAK: Kelas `dark:` Tailwind (Tailwind darkMode tidak dikonfigurasi
                                  dan situs memang tidak dirancang untuk dark mode);
                                  filter CSS manual (tidak mengatasi root cause).
+             SUPERSEDED: [01-06-2026] Sesi #46 — situs kini mendukung dark mode penuh (hibrida OS + toggle). Lihat keputusan "Dark Mode Hibrida" di bawah.
 
 [23-05-2026] KEPUTUSAN: Opinions Platform — platform opini pengguna terpisah dari sistem editorial
              ALASAN: Memungkinkan pembaca terpilih mempublikasikan artikel opini tanpa mengubah
@@ -1226,6 +1310,97 @@ Format pengisian:
                      Kondisi benar: isEmpty = doc.textContent === '' && doc.childCount <= 1.
              CATATAN: Diimplementasikan sebagai IIFE inline di JSX agar tidak menambah state baru.
              ALTERNATIF DITOLAK: editor.isEmpty dari TipTap (tidak memperhitungkan atom nodes).
+
+[31-05-2026] KEPUTUSAN: Anulir Dokumen Eksternal AI (design.md, tasks.md, HANDOVER_CONTEXT.md, V2_HANDOVER_COMPREHENSIVE.md)
+           ALASAN: File-file tersebut dihasilkan dari auto-update AI tanpa validasi logis. Instruksi di dalamnya terbukti mendegradasi codebase (memunculkan benturan CSS vs Tailwind).
+           ATURAN: Hanya README.md (CONTEXT.md) ini yang menjadi sumber kebenaran teknis tunggal. Abaikan semua file berlabel "HANDOVER".
+
+[31-05-2026] KEPUTUSAN: Arsitektur Theming Berbasis CSS Variables (Bukan Tailwind Static Hex)
+           ALASAN: Tailwind yang dikonfigurasi dengan Hex statis akan mematikan utilitas CSS `prefers-color-scheme`. Untuk mempertahankan perpindahan tema yang dinamis dan native (OS level), Tailwind hanya boleh bertindak sebagai "pipa" yang menyalurkan `var(--color-...)`. Logika inversi warna diisolasi sepenuhnya di dalam `app/globals.css`.
+
+[31-05-2026] KEPUTUSAN: Penggunaan Marcellus Sebagai Font Display Utama & Pembatalan Canela
+           ALASAN: Rencana penggunaan font berbayar Canela dibatalkan. Marcellus ditetapkan sebagai font display default (Wordmark & Headline) via Google Fonts. Strategi fallback Playfair Display dihapus karena sistem kini sepenuhnya mengandalkan Google Fonts untuk keempat layer tipografi.
+           SUPERSEDED: [01-06-2026] Sesi #46 — Marcellus diganti Libre Baskerville. Lihat keputusan di bawah.
+
+[01-06-2026] KEPUTUSAN: Dark Mode Hibrida — default OS + toggle manual (localStorage)
+           ALASAN: Pembaca butuh kontrol eksplisit atas tema, bukan sekadar mengikuti OS. Script anti-FOUC di <head> men-set `data-theme` (prioritas localStorage > prefers-color-scheme) sebelum render; ThemeToggle (Sun/Moon di Navbar) menimpa & menyimpan pilihan ke localStorage('saintifiks-theme').
+           CATATAN IMPLEMENTASI: globals.css punya 3 skenario — @media(prefers-color-scheme:dark) :root:not([data-theme="light"]); :root[data-theme="dark"]; :root[data-theme="light"]. Komponen baru components/layout/ThemeToggle.tsx (Client, hydration-safe, aria-label ID).
+           MEMBATALKAN: keputusan lama "dark mode OS-level TANPA toggle" (Sesi #43) dan "[22-05-2026] color-scheme: only light".
+
+[01-06-2026] KEPUTUSAN: Tailwind darkMode 'media' → ['selector','[data-theme="dark"]']
+           ALASAN: Utility `dark:` (dipakai di Navbar) harus mengikuti toggle manual, bukan hanya OS. Default OS tetap benar karena anti-FOUC selalu men-set data-theme.
+           ALTERNATIF DITOLAK: darkMode 'class' (kurang eksplisit); tetap 'media' (mengabaikan toggle).
+
+[01-06-2026] KEPUTUSAN: Libre Baskerville menggantikan Marcellus sebagai font display
+           ALASAN: Sesuai Master Brief Sesi #46. Libre Baskerville (Google Fonts, weight 400/700 + italic, var --font-display). Marcellus dihapus total dari kode. fontFamily.libre juga dipetakan ke var(--font-display) agar heading ber-class `font-libre` (sebelumnya tak terdefinisi) konsisten.
+           CATATAN: Libre Baskerville tidak punya weight 600 — penggunaan 600 efektif menjadi 700.
+
+[01-06-2026] KEPUTUSAN: Reading width 65ch + leading dua-lapis (mobile 18px/1.7, desktop 19px/1.65)
+           ALASAN: Mobile-first namun desktop optimal. Lebar baris ~65 huruf (Bringhurst 1992) hanya mengikat di layar lebar; ponsel pakai lebar penuh. Menggantikan 680px/1.75.
+           CATATAN: Diterapkan via globals.css ke .article-body (editorial) & .article-content (opini) — TIDAK menyentuh Red Zone. Plus token formal CSS, skip-link, focus-visible outline, reduced motion, print stylesheet.
+
+[02-06-2026] KEPUTUSAN: Header global menggantikan Navbar
+           ALASAN: Spesifikasi Sesi #47 — kepala situs tunggal (matahari/bulan kiri, wordmark tengah, ikon menu kanan) berlaku di semua halaman, membuka Drawer. components/layout/Navbar.tsx dihapus, components/layout/Header.tsx menjadi satu-satunya header di app/layout.tsx.
+           CATATAN: ThemeToggle tetap dipakai di dalam Header. onAuthStateChange (logout) dipindah ke Drawer.
+
+[02-06-2026] KEPUTUSAN: Beranda menjadi feed editorial tunggal — tab Opinions dihapus
+           ALASAN: Redesain beranda Sesi #47 hanya menampilkan article-card editorial + search bar + divider. Opini (Argumen) diakses lewat Drawer → /opinions, bukan tab beranda.
+           ALTERNATIF DITOLAK: Mempertahankan tab [Saintifiks | Opinions] (Sesi #34) — tidak sesuai desain baru. components/layout/HomepageTabs.tsx dihapus.
+
+[02-06-2026] KEPUTUSAN: Relevansi konten per-lokasi via Context klien + localStorage
+           ALASAN: Drawer memilih lokasi (posisi terkini auto / Global / negara A–Z); beranda memfilter artikel berdasarkan kolom articles.country. State dibagi via LocationProvider (React Context) + localStorage('saintifiks-location'). Deteksi negara murni klien (timezone) tanpa pelacak pihak ketiga (selaras misi privasi).
+           CATATAN IMPLEMENTASI: Migration menambah kolom nullable category, kicker, country ke articles (aman, data lama utuh). 'Global' → tampilkan semua; selain itu country === selected ATAU country kosong.
+
+[02-06-2026] KEPUTUSAN: Halaman pra-login (gerbang masuk) untuk /akun logged-out
+           ALASAN: /akun yang belum login dulunya redirect paksa ke OAuth. Kini menampilkan PreLogin (tombol "Masuk dengan Google") agar pengguna sadar konteks. /login memakai komponen sama (default next=/dashboard). Alur OAuth & validasi redirect tidak berubah.
+
+[04-06-2026] KEPUTUSAN: Lora menggantikan Source Serif 4 sebagai font body artikel  ← SESI #48
+           ALASAN: Libre Baskerville (display) + Lora (body) membentuk pasangan serif yang lebih kohesif
+                   secara visual dibandingkan Libre Baskerville + Source Serif 4. Lora memiliki karakter
+                   yang lebih hangat dan editorial, sesuai dengan identitas Saintifiks.
+           CATATAN IMPLEMENTASI:
+             - Tambahkan Lora via next/font/google di app/layout.tsx.
+             - Update tailwind.config.ts: fontFamily.lora → var(--font-lora).
+             - Terapkan ke class .article-body dan body text halaman artikel.
+             - Source Serif 4 tidak lagi digunakan — hapus dari import jika masih ada.
+           ALTERNATIF DITOLAK: Source Serif 4 (kurang kohesif dengan Libre Baskerville);
+                               Merriweather (terlalu umum); Georgia system font (tidak konsisten lintas OS).
+ 
+[04-06-2026] KEPUTUSAN: Tata letak responsif halaman artikel — max-width 720px desktop, 100vw cover mobile  ← SESI #48
+           ALASAN: Mobile-first dengan acuan Figma 440px. Di layar lebih lebar, seluruh konten artikel
+                   dibatasi 720px dan dicentering untuk keterbacaan optimal (konsisten dengan keputusan
+                   65ch reading width di Sesi #46). Cover image mendapat perlakuan khusus: melewati margin
+                   di mobile untuk efek editorial full-bleed, namun tetap dalam container di desktop.
+           CATATAN IMPLEMENTASI:
+             - Container artikel: max-width 720px, margin: 0 auto, padding 16px mobile.
+             - Cover mobile: width 100vw, margin negatif ±16px untuk menembus margin.
+             - Cover tablet/desktop: width 100% dalam container (efektif 720px).
+             - Tinggi gambar selalu proporsional asli — tidak ada crop.
+           ALTERNATIF DITOLAK: Full-width di semua breakpoint (terlalu lebar untuk baca di desktop);
+                               max-width 640px (terlalu sempit untuk cover image).
+ 
+[04-06-2026] KEPUTUSAN: Komponen the-card sebagai zona metadata terpisah di halaman artikel  ← SESI #48
+           ALASAN: Memisahkan metadata artikel (kategori, kicker, judul, ringkasan, cover, tanggal) dari
+                   isi artikel secara struktural. Ini memungkinkan re-use komponen di masa depan dan
+                   mempertegas hierarki visual: pembaca tahu di mana metadata berakhir dan konten mulai.
+           CATATAN IMPLEMENTASI:
+             - the-card mencakup (urutan): kategori+kicker → H1 → caption/ringkasan → cover →
+               cover-caption → divider → tanggal terbit.
+             - Gap the-article dari the-card: 24px.
+             - Lihat Seksi 5.1 subseksi "Sistem Tipografi Halaman Artikel" untuk spec lengkap.
+           ALTERNATIF DITOLAK: Campur metadata dan konten tanpa pemisahan (tidak ada hierarki jelas).
+ 
+[04-06-2026] KEPUTUSAN: Sistem spacing the-article — H2/H3/H4 tanpa divider pemisah  ← SESI #48
+           ALASAN: Spec sebelumnya (konsultasi awal) menyebutkan H2 selalu dipisahkan divider.
+                   Keputusan final: tidak ada divider antar H2 — cukup spacing (body→H2: 24px).
+                   Divider hanya ada satu: di the-card, antara cover-caption dan tanggal terbit.
+                   Ini mencegah halaman artikel terasa terfragmentasi.
+           CATATAN IMPLEMENTASI:
+             - body→H2: 24px. H2→body: 8px.
+             - body→H3: 16px. H3→body: 8px.
+             - body→H4: 16px. H4→body: 8px.
+             - Max content width: 65ch atau 640px (gunakan yang lebih kecil).
+           ALTERNATIF DITOLAK: Divider di setiap H2 (terlalu banyak pemisah visual, terasa majalah lama).
 ```
 
 ---
@@ -1605,6 +1780,93 @@ Yang dikerjakan:
               Bundle /akun/tulis: 349 kB (naik 15 kB dari 4 package table).**
 **Next step: Merge ke main setelah test manual di /akun/tulis.**
 ---
+
+[31-06-2026] SESI #43 — HARD RESET ARSITEKTUR VISUAL SYSTEM V2
+Branch: main
+Tujuan sesi: Menghapus residu pekerjaan AI yang cacat dan merombak arsitektur Dark Mode agar berfungsi logis tanpa konflik spesifisitas.
+Yang dikerjakan:
+  - Repositori lokal disinkronkan secara absolut dengan branch `main` GitHub (git reset --hard, git clean -fd).
+  - Mengubah `tailwind.config.ts`: Seluruh Hex statis diganti menjadi pemanggilan CSS variable `var(--color-...)`.
+  - Mengubah `app/globals.css`: Penataan ulang struktur `:root` dan `@media (prefers-color-scheme: dark)` untuk inversi warna murni.
+  - Pembaruan dokumen CONTEXT.md (README.md) agar secara akurat mencerminkan spesifikasi V2 (Marcellus dkk) dan menolak dokumen handover/otomatisasi AI sebelumnya.
+Status akhir: Fondasi Theming (Dark Mode) sudah stabil dan logis.
+Next step: Lakukan perbaikan warna pada komponen Red Zone dan navigasi yang mungkin masih menggunakan token usang.
+---
+---
+
+[31-05-2026] SESI #45 — PEMBERSIHAN RESIDU TOKEN V1 & HARDCODE HEX KOMPONEN
+Branch: main
+Tujuan sesi: Membersihkan sisa-sisa kelas Tailwind lama (V1) yang menyebabkan anomali rendering (transparansi dan kontras) pada komponen interaktif dan daftar opini setelah transisi ke V2.
+Yang dikerjakan:
+  - Mengganti seluruh `bg-primary-light` dengan `bg-paper` dan `primary-dark` dengan `ink` pada file bottom sheet (Koreksi, Komentar, Share) di modul editorial maupun opini.
+  - Menyuntikkan `bg-transparent` pada `<textarea>` di formulir untuk menggugurkan *background* putih default browser.
+  - Menghapus hardcode `text-[#1A1A1A]`, `text-text-secondary`, dan `border-border-subtle` pada `OpinionCard`, serta halaman dinamis opini/penulis, lalu menggantinya dengan token V2 (`text-ink`, `text-warm-gray`) agar mematuhi CSS Variables.
+Status akhir: Selesai. Seluruh komponen interaktif dan daftar artikel opini sekarang merespons transisi Mode Gelap secara akurat tanpa residu warna absolut.
+Next step: -
+---
+
+[01-06-2026] SESI #46 — UI/UX: LIBRE BASKERVILLE, DARK MODE TOGGLE, READING & A11Y
+Branch: feature/uiux-libre-darktoggle-reading (PR #95)
+Tujuan sesi: Redesain fondasi UI/UX sesuai Master Brief — ganti font display, tambah toggle dark mode hibrida, token formal CSS, aksesibilitas, print stylesheet, dan penyempurnaan reading experience. Semua di feature branch; Red Zone tidak disentuh.
+Yang dikerjakan:
+  - app/layout.tsx: import Libre_Baskerville (ganti Marcellus), script anti-FOUC dark mode di <head>, skip-link "Langsung ke konten", bungkus children dengan <div id="main-content" tabIndex={-1}>.
+  - tailwind.config.ts: fontFamily.display & .libre → var(--font-display); darkMode → ['selector','[data-theme="dark"]'].
+  - app/globals.css: hapus Marcellus (→ var(--font-display)); 3 skenario data-theme; token formal (type scale, spacing, leading, measure, radius, transition, z-index); skip-link, focus-visible outline, reduced motion; print stylesheet; reading dua-lapis (mobile 18px/1.7, desktop 19px/1.65 + 65ch) ke .article-body & .article-content.
+  - components/layout/ThemeToggle.tsx (BARU): tombol Sun/Moon, hydration-safe, aria-label ID, simpan pilihan ke localStorage.
+  - components/layout/Navbar.tsx: integrasi ThemeToggle di kiri tombol auth.
+Keputusan baru: Lihat Seksi 11 — 4 keputusan (dark mode hibrida+toggle; darkMode selector; Libre Baskerville; reading 65ch dua-lapis). Membatalkan keputusan lama "tanpa toggle" & "color-scheme only light".
+Status akhir: Selesai. `next lint` bersih (1 warning pre-existing di Red Zone), `tsc` 0 error, CI Vercel preview build sukses, PR #95 dibuka. Pengujian visual dilakukan pemilik via preview Vercel.
+Next step: Merge PR #95 setelah pemilik verifikasi tampilan; pantau CLS & FOUC di produksi.
+---
+
+[02-06-2026] SESI #47 — REDESAIN BERANDA, HEADER GLOBAL, DRAWER & HALAMAN PLACEHOLDER
+Branch: feature/redesign-homepage-drawer-sesi47 (PR #97)
+Tujuan sesi: Implementasi Sistem Web Baru bagian "(dikerjakan sesi ini)" — redesain Halaman Utama, header global baru, drawer navigasi turun-dari-atas, 9 halaman placeholder under-maintenance, dan halaman pra-login. Semua di feature branch; Red Zone tidak disentuh.
+Yang dikerjakan:
+  - components/layout/Header.tsx (BARU): kepala situs global 3-kolom (ThemeToggle kiri, wordmark tengah, ikon menu kanan). Menggantikan Navbar.
+  - components/layout/Navbar.tsx: DIHAPUS (digantikan Header).
+  - components/layout/Drawer.tsx (BARU): menu full-screen turun dari atas; accordion lokasi (terkini/Global/Cari Negara A–Z) + navigasi (Argumen/Akun/Tentang Kami/Koreksi/Bookstore/Bagikan Ide) + tombol Keluar (hanya saat login).
+  - components/layout/LocationProvider.tsx (BARU): React Context + localStorage untuk pilihan lokasi; deteksi negara via timezone (klien).
+  - lib/countries.ts (BARU): daftar negara (ID) + groupCountriesByLetter untuk daftar A–Z.
+  - components/layout/HomeFeed.tsx (BARU): search bar + article-card (cover, kategori|kicker, judul, ringkasan, baca X menit) + divider; filter pencarian & lokasi.
+  - app/page.tsx: refactor — fetch artikel (kolom baru category/kicker/country) + hitung menit baca server-side, render HomeFeed. Tab Opinions dihapus.
+  - components/layout/HomepageTabs.tsx: DIHAPUS.
+  - app/layout.tsx: import Header + LocationProvider (bungkus konten); hapus Navbar.
+  - components/layout/UnderMaintenance.tsx (BARU): template placeholder.
+  - app/{tentang-kami,kontak,panduan-editorial,koreksi,kebijakan-iklan,keamanan,kebijakan-privasi,bookstore,bagikan-ide}/page.tsx (BARU): 9 halaman under-maintenance.
+  - components/layout/PreLogin.tsx (BARU): gerbang masuk Google OAuth.
+  - app/akun/page.tsx: logged-out → tampilkan PreLogin (bukan redirect paksa).
+  - app/login/page.tsx: pakai PreLogin (default next=/dashboard).
+  - app/globals.css: keyframes animasi drawer (slide-down/up + stagger; hormati prefers-reduced-motion).
+Keputusan baru: Lihat Seksi 11 — 4 keputusan (Header global; beranda feed editorial tunggal; relevansi lokasi via Context+localStorage; halaman pra-login).
+Status akhir: Selesai di kode. `next lint` bersih (1 warning pre-existing Red Zone), `tsc` 0 error, CI Vercel preview build sukses, PR #97 dibuka.
+Next step: (1) Pemilik menjalankan migration 3 kolom (category/kicker/country) di Supabase SQL Editor. (2) Pemilik verifikasi tampilan via Vercel Preview. (3) Merge PR #97. Sesi lain: redesain footer, redesain Opinions/Argumen, rearsitekturisasi halaman penulisan artikel.
+---
+[04-06-2026] SESI #48 — REDESAIN HALAMAN ARTIKEL PUBLIK (THE-CARD + THE-ARTICLE)
+Branch: feature/redesign-artikel-sesi48
+Tujuan sesi: Implementasi redesain menyeluruh tampilan halaman artikel publik sesuai Master Brief Sesi A — komponen the-card (metadata), sistem tipografi the-article, font body Lora, dan tata letak responsif (max-width 720px desktop, cover 100vw mobile). Tidak menyentuh sistem interaksi artikel (Red Zone).
+Yang dikerjakan:
+  [FONT]
+  - app/layout.tsx: tambah import Lora dari next/font/google. Inject --font-lora ke <body>.
+  - tailwind.config.ts: tambah fontFamily.lora → var(--font-lora).
+ 
+  [HALAMAN ARTIKEL]
+  - app/artikel/[slug]/page.tsx: implementasi the-card (kategori+kicker, H1, caption,
+    cover full-width responsif, cover-caption, divider, tanggal terbit) dan the-article
+    (tipografi H2–H4, Lora body text, spacing system).
+  - app/globals.css atau app/artikel/layout.tsx: tambah class untuk reading layout
+    (max-width 720px, centering, cover mobile 100vw).
+ 
+  [TIPOGRAFI]
+  - Font body artikel berganti dari Source Serif 4 ke Lora.
+  - Sistem tipografi 3-tier diterapkan: Libre Baskerville (heading), Lora (body),
+    IBM Plex Sans (metadata/kicker/caption).
+ 
+Keputusan baru: Lihat Seksi 11 — empat keputusan baru: Lora, tata letak responsif,
+               komponen the-card, dan spacing system tanpa divider antar H2.
+Status akhir: [DIISI SETELAH IMPLEMENTASI]
+Next step: [DIISI SETELAH IMPLEMENTASI] — kandidat sesi berikutnya: redesain footer,
+           redesain halaman Argumen, rearsitekturisasi halaman penulisan artikel.
 ---
 
 ## 13. REFERENSI & RESOURCE

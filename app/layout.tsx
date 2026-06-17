@@ -1,29 +1,21 @@
 import type { Metadata } from "next";
-import { Marcellus, Source_Serif_4, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Libre_Baskerville, Lora, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import Header from "@/components/layout/Header";
+import LocationProvider from "@/components/layout/LocationProvider";
+import Footer from "@/components/footer";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import IndexStrip from "@/components/widgets/IndexStrip";
 import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 
-// Load Marcellus (display font) dari Google Fonts
-// Weight 400 = regular; Marcellus hanya memiliki weight 400
-const marcellus = Marcellus({
+// Load Libre Baskerville (display/headline font) dari Google Fonts
+// Libre Baskerville hanya tersedia weight 400 & 700 (tidak ada 600/SemiBold)
+const libreBaskerville = Libre_Baskerville({
   subsets: ['latin'],
-  weight: ['400'],
-  variable: '--font-display',
-  display: 'swap',
-})
-
-// Load Source Serif 4 (body font) dari Google Fonts
-// Weight 400 = regular, 600 = semi-bold; style italic tersedia untuk body artikel
-const sourceSerif4 = Source_Serif_4({
-  subsets: ['latin'],
-  weight: ['400', '600'],
+  weight: ['400', '700'],
   style: ['normal', 'italic'],
-  variable: '--font-body',
+  variable: '--font-display',
   display: 'swap',
 })
 
@@ -42,6 +34,16 @@ const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-mono',
+  display: 'swap',
+})
+
+// Load Lora (body text artikel) dari Google Fonts
+// Weight 400 = regular, 500 = medium, 600 = semi-bold
+const lora = Lora({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-lora',
   display: 'swap',
 })
 
@@ -75,19 +77,42 @@ export default function RootLayout({
 }>) {
   return (
     // lang="id" karena seluruh konten dalam Bahasa Indonesia
-    // variable font Marcellus, Source Serif 4, IBM Plex Sans, IBM Plex Mono ditaruh di <html> agar bisa diakses seluruh halaman
-    <html lang="id" className={`${marcellus.variable} ${sourceSerif4.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
+    // variable font Libre Baskerville, IBM Plex Sans, IBM Plex Mono, Lora ditaruh di <html> agar bisa diakses seluruh halaman
+    <html lang="id" className={`${libreBaskerville.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} ${lora.variable}`}>
+      <head>
+        {/* Anti-FOUC dark mode: set data-theme SEBELUM render agar tidak ada kedipan tema.
+            Prioritas: localStorage ('saintifiks-theme') > preferensi OS. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  try {
+    var s = localStorage.getItem('saintifiks-theme');
+    var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var t = s || (d ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', t);
+  } catch(e) {}
+})();`,
+          }}
+        />
+      </head>
       <body className="bg-paper text-ink font-interface antialiased">
+        {/* Skip link (WCAG 2.4.1) — terlihat hanya saat fokus keyboard */}
+        <a href="#main-content" className="skip-link">Langsung ke konten</a>
+
         <AnalyticsTracker />
         <ScrollToTop />
 
-        {/* IndexStrip dipasang di atas Navbar, tapi hanya tampil di halaman beranda (/).
+        {/* IndexStrip dipasang di atas Header, tapi hanya tampil di halaman beranda (/).
             IndexStrip (Server Component) dilempar sebagai prop ke ConditionalIndexStrip
             (Client Component) — pola resmi Next.js App Router untuk kasus ini. */}
-        <ConditionalIndexStrip strip={<IndexStrip />} />
+        <LocationProvider>
+          <ConditionalIndexStrip strip={<IndexStrip />} />
 
-        <Navbar />
-        {children}
+          <Header />
+          <div id="main-content" tabIndex={-1}>
+            {children}
+          </div>
+        </LocationProvider>
         <Footer />
       </body>
     </html>
