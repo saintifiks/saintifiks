@@ -14,34 +14,29 @@ export default function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <header className="bg-paper">
-      {/* Margin kiri-kanan 20px (px-5), padding atas 24px (pt-6) */}
+    <header className="bg-surface-page sticky top-0 z-sticky border-b border-border-default/10">
       <div className="max-w-2xl mx-auto px-5 pt-6 pb-4">
-        {/* 3 kolom: kiri (tema) · tengah (wordmark) · kanan (menu) */}
         <div className="grid grid-cols-3 items-center">
-          {/* Kiri — toggle mode terang/gelap */}
           <div className="flex justify-start">
             <ThemeToggle />
           </div>
 
-          {/* Tengah — wordmark, selalu di tengah */}
           <div className="flex justify-center">
             <Link
               href="/"
-              className="font-display text-[24px] font-bold leading-none text-ink hover:opacity-60 transition-opacity duration-150"
+              className="font-display text-2xl font-bold leading-none text-text-primary hover:opacity-60 transition-opacity duration-fast focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
             >
               Saintifiks
             </Link>
           </div>
 
-          {/* Kanan — tombol buka drawer */}
           <div className="flex justify-end">
             <button
               onClick={() => setDrawerOpen(true)}
               aria-label="Buka menu"
               aria-haspopup="dialog"
               aria-expanded={drawerOpen}
-              className="flex h-9 w-9 items-center justify-center text-ink hover:opacity-60 transition-opacity duration-150"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center text-text-primary hover:opacity-60 transition-opacity duration-fast focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
             >
               <Menu size={26} strokeWidth={1.75} />
             </button>

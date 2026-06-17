@@ -22,11 +22,11 @@ type ArticleRendererProps = {
   charts: { chart_identifier: string; config: string | object }[]
 }
 
-const CALLOUT_CONFIG: Record<string, { label: string; borderClass: string; bgClass: string; labelClass: string }> = {
-  note:      { label: 'Catatan',   borderClass: 'border-sea-deep',  bgClass: 'bg-sea-deep/5',  labelClass: 'text-sea-deep'  },
-  warning:   { label: 'Perhatian', borderClass: 'border-amber',     bgClass: 'bg-amber/5',     labelClass: 'text-amber'     },
-  important: { label: 'Penting',   borderClass: 'border-ink',       bgClass: 'bg-ink/5',       labelClass: 'text-ink'       },
-  tip:       { label: 'Tips',      borderClass: 'border-sea-deep',  bgClass: 'bg-sea-deep/5',  labelClass: 'text-sea-deep'  },
+const CALLOUT_CONFIG: Record<string, { label: string; typeClass: string }> = {
+  note:      { label: 'Catatan',   typeClass: 'callout-note' },
+  warning:   { label: 'Perhatian', typeClass: 'callout-warning' },
+  important: { label: 'Penting',   typeClass: 'callout-important' },
+  tip:       { label: 'Tips',      typeClass: 'callout-tip' },
 }
 
 // Custom sanitize schema: extend defaultSchema untuk izinkan class, id, dan data-* attributes
@@ -81,11 +81,13 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
 
             if (config) {
               return (
-                <div className={`my-8 border-l-4 ${config.borderClass} ${config.bgClass} px-5 py-4 rounded-r`}>
-                  <p className={`font-mono font-bold text-xs uppercase tracking-widest mb-2 ${config.labelClass}`}>
-                    {config.label}
-                  </p>
-                  <div className="font-body text-body-sm text-ink/90 [&>p]:mb-0 [&>p]:leading-reading">
+                <div
+                  className={`callout-box ${config.typeClass}`}
+                  data-callout-type={calloutType}
+                  role="note"
+                >
+                  <p className="callout-box__label">{config.label}</p>
+                  <div className="font-lora text-body-sm text-text-primary [&>p]:mb-0 [&>p]:leading-reading">
                     {children}
                   </div>
                 </div>
@@ -93,7 +95,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
             }
 
             return (
-              <blockquote className="border-l-4 border-ink/30 pl-6 my-8 italic text-ink/80 font-body text-body-base">
+              <blockquote className="my-8">
                 {children}
               </blockquote>
             )
@@ -144,7 +146,7 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
           },
           a: ({ href, children }) => React.createElement('a', {
             href,
-            className: "text-sea-deep underline underline-offset-2 hover:opacity-70 transition-opacity duration-150",
+            className: "text-text-link underline underline-offset-2 hover:text-interactive-primary-hover transition-colors duration-150",
             target: href?.startsWith('http') ? '_blank' : undefined,
             rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
           }, children),

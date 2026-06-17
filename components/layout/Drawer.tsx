@@ -95,7 +95,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[200] bg-paper overflow-y-auto"
+      className="fixed inset-0 z-modal bg-surface-page overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label="Menu navigasi"
@@ -115,7 +115,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
           <button
             onClick={onClose}
             aria-label="Tutup menu"
-            className="flex h-8 w-8 items-center justify-center text-ink hover:opacity-60 transition-opacity duration-150"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center text-text-primary hover:opacity-60 transition-opacity duration-fast focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
           >
             <X size={28} strokeWidth={1.75} />
           </button>
@@ -146,7 +146,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
                 {/* Posisi terkini (terdeteksi otomatis) */}
                 <button
                   onClick={() => chooseLocation(detected)}
-                  className="text-left font-display text-[24px] leading-tight text-sea-deep"
+                  className="text-left font-display text-[24px] leading-tight text-text-link"
                 >
                   {detected}
                 </button>
@@ -195,7 +195,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
                               key={name}
                               onClick={() => chooseLocation(name)}
                               className={`text-left font-display text-[16px] leading-tight transition-colors duration-150 ${
-                                selected === name ? 'text-sea-deep' : 'text-ink hover:text-sea-deep'
+                                selected === name ? 'text-text-link' : 'text-ink hover:text-text-link'
                               }`}
                             >
                               {name}
@@ -219,7 +219,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className="font-display text-[40px] font-medium leading-tight text-ink hover:text-sea-deep transition-colors duration-150"
+                className="font-display text-[40px] font-medium leading-tight text-ink hover:text-text-link transition-colors duration-150"
               >
                 {item.label}
               </Link>
