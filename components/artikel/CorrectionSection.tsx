@@ -70,7 +70,7 @@ export default function CorrectionSection({ articleId, corrections }: Correction
       {/* Icon trigger — rata kiri, warna accent-blue untuk membedakan */}
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center justify-center w-10 h-10 rounded-full border border-accent-blue/40 text-accent-blue hover:border-accent-blue hover:bg-accent-blue/5 transition-colors duration-150 relative"
+        className="flex items-center justify-center w-10 h-10 rounded-full border border-sea-deep/40 text-sea-deep hover:border-sea-deep hover:bg-sea-deep/5 transition-colors duration-150 relative"
         aria-label="Koreksi & Klarifikasi"
         title="Koreksi & Klarifikasi"
       >
@@ -109,7 +109,7 @@ export default function CorrectionSection({ articleId, corrections }: Correction
                 <AlertCircle size={18} className="text-accent-blue" />
                 <h3 className="font-libre text-lg font-bold text-ink">Koreksi & Klarifikasi</h3>
                 {correctionCount > 0 && (
-                  <span className="font-helvetica text-xs text-accent-blue bg-accent-blue/10 px-2 py-0.5">
+                  <span className="font-helvetica text-xs text-sea-deep bg-sea-deep/10 px-2 py-0.5">
                     {correctionCount}
                   </span>
                 )}

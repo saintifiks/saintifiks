@@ -21,14 +21,14 @@ function TickerItem({ item }: { item: IndexItem }) {
 
   return (
     <div
-      className="flex shrink-0 items-center gap-1.5 px-4 hover:bg-primary-light/[0.08] transition-colors duration-[120ms] cursor-default"
+      className="flex shrink-0 items-center gap-1.5 px-4 hover:bg-paper/[0.08] transition-colors duration-[120ms] cursor-default"
       title={tooltip}
     >
-      <dt className="font-helvetica text-[11px] uppercase tracking-[0.1em] text-primary-light/50 whitespace-nowrap">
+      <dt className="font-helvetica text-[11px] uppercase tracking-[0.1em] text-paper/50 whitespace-nowrap">
         {item.label}
       </dt>
       <TrendIcon trend={item.trend} trendWindow={item.trendWindow} />
-      <dd className="font-helvetica text-sm font-semibold tabular-nums text-primary-light whitespace-nowrap m-0">
+      <dd className="font-helvetica text-sm font-semibold tabular-nums text-paper whitespace-nowrap m-0">
         {value}
       </dd>
     </div>
@@ -75,7 +75,7 @@ export default function IndexStripClient({
 
   return (
     <aside
-      className="w-full bg-primary-dark border-b border-primary-light/10"
+      className="w-full bg-ink border-b border-paper/10"
       aria-label="Indikator ekonomi dan tata kelola"
     >
       <div className="index-ticker-scroll overflow-x-auto overscroll-x-contain">
@@ -83,7 +83,7 @@ export default function IndexStripClient({
           {items.map((item, i) => (
             <span key={item.id} className="flex items-center">
               {i > 0 && (
-                <span className="text-primary-light/30 text-xs select-none" aria-hidden>&middot;</span>
+                <span className="text-paper/30 text-xs select-none" aria-hidden>&middot;</span>
               )}
               <TickerItem item={item} />
             </span>
