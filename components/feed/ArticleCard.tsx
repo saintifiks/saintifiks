@@ -22,7 +22,7 @@ export default function ArticleCard({ article, showDivider = false }: ArticleCar
     <article>
       <Link
         href={`/artikel/${article.slug}`}
-        className="group block rounded-md border border-transparent transition-all duration-fast hover:border-border-accent/40 hover:shadow-sm"
+        className="group block transition-all duration-fast"
       >
         {article.coverImageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
