@@ -1467,6 +1467,13 @@ Format pengisian:
 
 ---
 
+[09-07-2026] KEPUTUSAN: Redesain Layout Depan Editor Opinions (Cover Image + Judul + Subjudul Selalu Terlihat) ← SESI #51
+             ALASAN: Meningkatkan kegunaan dan keterbukaan fungsionalitas pengeditan dengan meniadakan metadata opsional yang terlipat. Penulis selalu melihat visual cover image, judul, dan subjudul (excerpt) secara eksplisit di bagian atas editor sebelum menulis isi artikel.
+             ALTERNATIF DITOLAK: Menggunakan custom overlay input text untuk gambar cover (tidak ramah drag-and-drop dan kurang modern).
+             CATATAN IMPLEMENTASI: components/opinions/editor/CoverImageUpload.tsx, components/opinions/editor/OpinionEditor.tsx
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -1957,6 +1964,20 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — Hapus hover border & shadow dari ArticleCard.
 Status akhir: Selesai. Visual lebih bersih, judul tetap responsif terhadap hover.
 Next step: Merge ke main.
+---
+
+[09-07-2026] SESI #51 — REDESAIN LAYOUT DEPAN EDITOR OPINIONS
+Branch: feature/opinions-editor-layout
+Tujuan sesi: Mengubah layout depan editor Opinions agar cover image, judul, dan subjudul (excerpt) selalu terlihat di bagian atas editor (terinspirasi dari Paragraph.com), serta menyederhanakan upload cover via drag-and-drop / klik upload ke Supabase Storage.
+Yang dikerjakan:
+  [UI & KOMPONEN BARU]
+  - Dibuat components/opinions/editor/CoverImageUpload.tsx — Komponen upload cover image drag-and-drop + klik upload ke Supabase Storage bucket 'opinions-gambar' dengan validasi tipe file (jpeg, png, webp, gif), ukuran file (max 5MB), dan penamaan file unik per user. Dilengkapi dengan preview gambar cover dan tombol hapus cover (touch target min 44x44px).
+  [REFAKTORING LAYOUT EDITOR]
+  - Diubah components/opinions/editor/OpinionEditor.tsx — Menghapus elemen lipatan <details> "+ Metadata opsional". Menampilkan CoverImageUpload di paling atas editor body, diikuti judul textarea, dan excerpt textarea yang dipromosikan sebagai subjudul (selalu terlihat, text-lg font-libre).
+  - Menghubungkan state coverImageUrl dan excerpt ke CoverImageUpload dan subjudul textarea secara langsung tanpa mengubah logika save/publish/unpublish yang sudah ada.
+Keputusan baru: Lihat Seksi 11 — Redesain Layout Depan Editor Opinions.
+Status akhir: Selesai. Build clean, lint clean.
+Next step: Merge ke main setelah verifikasi pemilik.
 ---
 
 ## 13. REFERENSI & RESOURCE
