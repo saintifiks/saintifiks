@@ -61,7 +61,7 @@ export default function CoverImageUpload({ currentUrl, onChange }: CoverImageUpl
         .getPublicUrl(fileName)
 
       onChange(publicUrl)
-    } catch (err: any) {
+    } catch {
       setError('Terjadi kesalahan saat upload. Coba lagi.')
     } finally {
       setIsUploading(false)
