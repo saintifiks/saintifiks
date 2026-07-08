@@ -1421,7 +1421,7 @@ Format pengisian:
              - Cover mobile: width 100vw, margin negatif ±16px untuk menembus margin.
              - Cover tablet/desktop: width 100% dalam container (efektif 720px).
              - Tinggi gambar selalu proporsional asli — tidak ada crop.
-           ALTERNATIF DITOLAK: Full-width di semua breakpoint (terlalu lebar untuk baca di desktop);
+             ALTERNATIF DITOLAK: Full-width di semua breakpoint (terlalu lebar untuk baca di desktop);
                                max-width 640px (terlalu sempit untuk cover image).
  
 [04-06-2026] KEPUTUSAN: Komponen the-card sebagai zona metadata terpisah di halaman artikel  ← SESI #48
@@ -1459,6 +1459,11 @@ Format pengisian:
              - Token semantik di `app/globals.css` alias ke RGB triplets V2 (`--color-paper`, dll.)
              - Atom di `components/ui/`; molekul di `components/feed/` dan `components/artikel/`
              - Changelog versi: Design System V3.0 (Sesi #49)
+
+[08-07-2026] KEPUTUSAN: Hapus hover border & shadow dari ArticleCard ← SESI #50
+             ALASAN: Hover border box (`hover:border-border-accent/40 hover:shadow-sm`) yang membingkai kartu artikel di halaman utama kurang rapi dan mengganggu estetika (khususnya ketika di-tap di perangkat mobile). Tampilan tetap interaktif karena judul artikel sudah memiliki efek hover perubahan warna (`group-hover:text-text-link`).
+             ALTERNATIF DITOLAK: Mempertahankan hover border box, menambahkan padding (menambah jarak elemen tapi tidak memecahkan masalah estetika hover box yang tidak diinginkan).
+             CATATAN IMPLEMENTASI: Kelas dihapus dari `<Link>` di `components/feed/ArticleCard.tsx`.
 
 ---
 
@@ -1941,6 +1946,17 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — Design System V3.
 Status akhir: Selesai di branch feature/design-system-v3. `next lint` dan `tsc` bersih.
 Next step: Vercel Preview → merge ke main setelah verifikasi pemilik.
+---
+
+[08-07-2026] SESI #50 — HAPUS HOVER BORDER CARD
+Branch: feature/remove-hover-border
+Tujuan sesi: Menghilangkan border box hover dan shadow pada kartu artikel di beranda agar tampilan lebih bersih dan rapi, terutama pada perangkat mobile saat di-tap.
+Yang dikerjakan:
+  [ARTICLE CARD VISUAL UPDATE]
+  - components/feed/ArticleCard.tsx: Menghapus kelas `rounded-md border border-transparent hover:border-border-accent/40 hover:shadow-sm` dari komponen `<Link>`.
+Keputusan baru: Lihat Seksi 11 — Hapus hover border & shadow dari ArticleCard.
+Status akhir: Selesai. Visual lebih bersih, judul tetap responsif terhadap hover.
+Next step: Merge ke main.
 ---
 
 ## 13. REFERENSI & RESOURCE
