@@ -94,4 +94,7 @@ export const RATE_LIMITS = {
 
   // Opinions — publish artikel, jarang dilakukan
   opinions: { limit: 3, windowMs: 60_000 }, // 3 per menit
+
+  // Search — pencarian artikel/argumen
+  search: { limit: 30, windowMs: 60_000 }, // 30 per menit per IP
 } as const
