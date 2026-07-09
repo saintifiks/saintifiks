@@ -754,6 +754,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] **Redesain footer** ← PR #101
 - [x] **Design System V3: token semantik + atom UI + molekul** ← Sesi #49
 - [x] **Redesain halaman Argumen (Opinions)** ← Sesi #49 Fase F
+- [x] **Halaman /koreksi publik lintas-tipe-konten (Editorial + Argumen) dengan pencarian live** ← Sesi #52
 - [ ] **Rearsitekturisasi halaman penulisan artikel** ← sesi mendatang
 ---
 
@@ -1474,6 +1475,17 @@ Format pengisian:
 
 ---
 
+[09-07-2026] KEPUTUSAN: Halaman /koreksi sebagai form publik lintas-tipe-konten (Editorial + Argumen) ← SESI #52
+              ALASAN: Menyediakan akses mudah bagi publik untuk mengirimkan usulan koreksi dan klarifikasi, baik untuk artikel editorial (redaksi) maupun artikel argumen (opini pembaca) secara terpadu dalam satu halaman.
+              ALTERNATIF DITOLAK: Memisahkan form koreksi artikel dan argumen ke halaman terpisah (menyulitkan pembaca dan menduplikasi logika UI).
+              CATATAN IMPLEMENTASI:
+                - Endpoint pencarian gabungan di `app/api/koreksi/search/route.ts` dengan perlindungan rate limiting sebelum pemeriksaan parameter minimal.
+                - Form client-side di `components/koreksi/KoreksiForm.tsx` menggunakan manual debounce (300ms) tanpa dependensi eksternal, validasi client-side, dan verifikasi sesi.
+                - Integrasi dua jalur pengiriman: Server Action `submitCorrection` untuk artikel editorial, dan fetch POST ke `/api/opinion-corrections` untuk argumen pembaca.
+                - Halaman `app/koreksi/page.tsx` menyajikan form publik ini secara elegan dengan Design System V3.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -1978,6 +1990,23 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — Redesain Layout Depan Editor Opinions.
 Status akhir: Selesai. Build clean, lint clean.
 Next step: Merge ke main setelah verifikasi pemilik.
+---
+
+[09-07-2026] SESI #52 — HALAMAN KOREKSI GABUNGAN & FORM PUBLIK (TAHAP 1 & 2)
+Branch: feature/koreksi-search-api
+Tujuan sesi: Membuat halaman koreksi publik (/koreksi) gabungan yang memungkinkan pembaca mengusulkan koreksi untuk artikel editorial maupun artikel argumen (opini) secara terpadu, didukung pencarian live lintas-tipe dan validasi sesi Google OAuth.
+Yang dikerjakan:
+  [API & BACKEND UPDATE]
+  - app/api/koreksi/search/route.ts: Memindahkan checkRateLimit() sebelum pengecekan panjang karakter input query (q.length < 2) untuk mencegah bypass rate limiter menggunakan query pendek.
+  [UI & KOMPONEN BARU]
+  - components/koreksi/KoreksiForm.tsx: Membuat form koreksi client-side dengan fitur pencarian live gabungan (editorial + argumen), debounce manual 300ms, serta visualisasi data badge tipe konten (Artikel/Argumen) dan username penulis untuk opini.
+  - Form koreksi mengadopsi Design System V3 (semantic tokens, font Libre Baskerville & IBM Plex Sans, dan status banner signal-success/signal-danger).
+  - Mengimplementasikan alur verifikasi sesi auth di sisi client sebelum submit usulan koreksi; memicu signInWithOAuth (Google provider) jika user belum masuk dengan redirect kembali ke /koreksi.
+  - Integrasi dual submission: memanggil Server Action `submitCorrection` jika tipe konten adalah artikel editorial, dan memicu POST fetch request ke `/api/opinion-corrections` jika tipe konten adalah argumen pembaca.
+  - app/koreksi/page.tsx: Menggantikan tampilan `UnderMaintenance` dengan halaman /koreksi publik yang menyertakan header bermisi editorial (Prinsip #3) dan merender `KoreksiForm`.
+Keputusan baru: Lihat Seksi 11 — Halaman /koreksi sebagai form publik lintas-tipe-konten.
+Status akhir: Selesai. Build clean, typecheck dan lint clean.
+Next step: Merge ke main.
 ---
 
 ## 13. REFERENSI & RESOURCE

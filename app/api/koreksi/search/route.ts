@@ -8,10 +8,6 @@ export async function GET(request: NextRequest) {
   try {
     const q = request.nextUrl.searchParams.get('q') || ''
 
-    if (q.length < 2) {
-      return NextResponse.json({ results: [] })
-    }
-
     // Rate Limiting
     const clientIP = getClientIP(request)
     const rateLimit = checkRateLimit(
@@ -25,6 +21,10 @@ export async function GET(request: NextRequest) {
         { error: 'Terlalu banyak permintaan pencarian. Silakan coba lagi nanti.' },
         { status: 429 }
       )
+    }
+
+    if (q.length < 2) {
+      return NextResponse.json({ results: [] })
     }
 
     const supabase = await createClient()
