@@ -6,11 +6,20 @@ import { createClient } from '@/lib/supabase/client'
 import { submitCorrection } from '@/app/(admin)/dashboard/koreksi/actions'
 import { Button, Input, Label, Badge } from '@/components/ui'
 
+type SearchResultItem = {
+  type: 'artikel' | 'argumen'
+  id: string
+  title: string
+  slug: string
+  excerpt: string
+  authorUsername?: string
+}
+
 export default function KoreksiForm() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<SearchResultItem[]>([])
   const [isSearching, setIsSearching] = useState(false)
-  const [selected, setSelected] = useState<any>(null)
+  const [selected, setSelected] = useState<SearchResultItem | null>(null)
   
   const [originalText, setOriginalText] = useState('')
   const [correctedText, setCorrectedText] = useState('')
@@ -54,6 +63,11 @@ export default function KoreksiForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    
+    if (!selected) {
+      setMessage({ type: 'error', text: 'Silakan pilih artikel atau argumen terlebih dahulu.' })
+      return
+    }
     
     if (!originalText.trim() || !correctedText.trim()) {
       setMessage({ type: 'error', text: 'Teks asli dan teks yang diusulkan wajib diisi.' })
@@ -197,7 +211,7 @@ export default function KoreksiForm() {
             query.trim().length >= 2 && !isSearching && (
               <div className="py-8 text-center border border-border-default/15 rounded bg-surface-sunken/10">
                 <p className="font-interface text-sm text-text-secondary">
-                  Tidak ditemukan artikel atau argumen dengan judul "{query}"
+                  Tidak ditemukan artikel atau argumen dengan judul &quot;{query}&quot;
                 </p>
               </div>
             )
