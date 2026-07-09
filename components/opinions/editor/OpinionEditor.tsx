@@ -10,6 +10,7 @@ import TipTapEditor, { type TipTapEditorHandle } from './TipTapEditor'
 import TableWizard from './TableWizard'
 import ImageModal from './ImageModal'
 import ChartWizard from './ChartWizard'
+import CoverImageUpload from './CoverImageUpload'
 
 type ChartConfig = {
   chart_id: string
@@ -281,7 +282,13 @@ export default function OpinionEditor({
         <div className="flex-1 flex flex-col">
 
           {/* Metadata artikel */}
-          <div className="px-6 pt-6 pb-4 border-b border-primary-dark/10 space-y-3">
+          <div className="px-6 pt-6 pb-4 border-b border-primary-dark/10 space-y-4">
+            {/* Cover Image Upload */}
+            <CoverImageUpload
+              currentUrl={coverImageUrl}
+              onChange={setCoverImageUrl}
+            />
+
             {/* Judul */}
             <textarea
               value={title}
@@ -292,39 +299,15 @@ export default function OpinionEditor({
               className="w-full font-libre text-2xl font-bold text-primary-dark bg-transparent focus:outline-none resize-none leading-snug placeholder:text-primary-dark/20"
             />
 
-            {/* Expand: excerpt + cover image (lipat/buka) */}
-            <details className="group">
-              <summary className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest cursor-pointer hover:text-primary-dark transition-colors duration-150 list-none">
-                + Metadata opsional (excerpt, gambar cover)
-              </summary>
-              <div className="mt-3 space-y-3">
-                <div>
-                  <label className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-1.5">
-                    Excerpt
-                  </label>
-                  <textarea
-                    value={excerpt}
-                    onChange={(e) => setExcerpt(e.target.value)}
-                    placeholder="Ringkasan singkat artikel (tampil di listing)"
-                    rows={2}
-                    maxLength={300}
-                    className="w-full border border-primary-dark/15 bg-white px-3 py-2 font-helvetica text-sm text-primary-dark placeholder:text-primary-dark/25 focus:outline-none focus:border-primary-dark/40 resize-none"
-                  />
-                </div>
-                <div>
-                  <label className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-1.5">
-                    URL Gambar Cover
-                  </label>
-                  <input
-                    type="url"
-                    value={coverImageUrl}
-                    onChange={(e) => setCoverImageUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full border border-primary-dark/15 bg-white px-3 py-2 font-helvetica text-sm text-primary-dark placeholder:text-primary-dark/25 focus:outline-none focus:border-primary-dark/40"
-                  />
-                </div>
-              </div>
-            </details>
+            {/* Subjudul / Excerpt */}
+            <textarea
+              value={excerpt}
+              onChange={(e) => setExcerpt(e.target.value)}
+              placeholder="Subjudul atau ringkasan singkat..."
+              rows={2}
+              maxLength={300}
+              className="w-full font-libre text-lg text-text-secondary bg-transparent focus:outline-none resize-none leading-relaxed placeholder:text-text-secondary/30"
+            />
           </div>
 
           {/* TipTap WYSIWYG Editor — toolbar + area tulis terintegrasi */}
