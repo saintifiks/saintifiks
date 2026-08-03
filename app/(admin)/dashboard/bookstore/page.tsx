@@ -3,6 +3,13 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
+// Definisikan tipe agar TypeScript bahagia
+type VariantData = {
+  id: string
+  format: string
+  stock_qty: number
+}
+
 export default async function BookstoreAdminPage() {
   const supabase = await createClient()
 
@@ -97,28 +104,29 @@ export default async function BookstoreAdminPage() {
               </div>
 
               {daftarBuku.map((book) => {
-                // @ts-expect-error Pengecualian untuk JSON Supabase
-                const authorName = book.authors?.name ?? '-'
-                // @ts-expect-error Pengecualian untuk JSON Supabase
-                const variants = book.book_variants || []
-                // @ts-expect-error Pengecualian untuk JSON Supabase
+                // Ekstraksi data secara aman menggunakan TypeScript
+                const rawAuthor = Array.isArray(book.authors) ? book.authors[0] : book.authors
+                const authorName = (rawAuthor as unknown as { name: string } | null)?.name ?? '-'
+                const variants = (book.book_variants as unknown as VariantData[]) || []
                 const totalStock = variants.reduce((sum, v) => sum + v.stock_qty, 0)
 
                 return (
-                  <div key={book.id} className="grid grid-cols-[2fr_1fr_1fr_1.5fr_100px] px-5 py-4 border-b border-primary-dark/10 last:border-b-0 items-center">
+                  <div key={book.id} className="grid grid-cols-[2fr_1fr_1fr_1.5fr_100px] px-5 py-4 border-b border-primary-dark/10 last:border-b-0 items-center hover:bg-primary-dark/[0.015] transition-colors">
                     <div>
                       <p className="font-libre text-base font-bold text-primary-dark leading-snug line-clamp-1">{book.title}</p>
                       <p className="font-helvetica text-xs text-primary-dark/50 mt-1">{authorName}</p>
                     </div>
                     <div>
-                      <span className="inline-flex font-helvetica text-[10px] uppercase tracking-widest px-2 py-1 rounded-sm bg-signal-success/10 text-signal-success">
+                      <span className={`inline-flex font-helvetica text-[10px] uppercase tracking-widest px-2 py-1 rounded-sm ${
+                        book.status === 'active' ? 'bg-signal-success/10 text-signal-success' : 'bg-primary-dark/10 text-primary-dark'
+                      }`}>
                         {book.status}
                       </span>
                     </div>
                     <div className="text-center font-helvetica text-sm text-primary-dark/70">{variants.length}</div>
                     <div className="font-helvetica text-sm text-primary-dark/70">{totalStock} unit</div>
                     <div className="text-right">
-                      <Link href={`/dashboard/bookstore/buku/${book.id}`} className="font-helvetica text-xs text-accent-blue hover:opacity-60">Kelola</Link>
+                      <Link href={`/dashboard/bookstore/buku/${book.id}`} className="font-helvetica text-xs text-accent-blue hover:opacity-60 transition-opacity">Kelola</Link>
                     </div>
                   </div>
                 )
