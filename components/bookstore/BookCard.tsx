@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import Link from 'next/link'
@@ -21,10 +22,12 @@ type Book = {
 }
 
 export default function BookCard({ book }: { book: Book }) {
-  const authorName = book.authors?.name ?? 'Penulis Tidak Diketahui'
+  // Ekstraksi data author dengan aman
+  const rawAuthor = Array.isArray(book.authors) ? book.authors[0] : book.authors
+  const authorName = (rawAuthor as unknown as { name: string } | null)?.name ?? 'Penulis Tidak Diketahui'
   
   // Filter varian yang aktif
-  const activeVariants = book.book_variants?.filter(v => v.is_active) || []
+  const activeVariants = (book.book_variants as unknown as BookVariant[])?.filter(v => v.is_active) || []
   
   // Hitung total stok dari semua varian
   const totalStock = activeVariants.reduce((sum, v) => sum + v.stock_qty, 0)
@@ -41,7 +44,6 @@ export default function BookCard({ book }: { book: Book }) {
     >
       <div className="relative aspect-[3/4] w-full bg-surface-sunken overflow-hidden">
         {book.cover_image_url ? (
-        /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={book.cover_image_url}
             alt={book.title}

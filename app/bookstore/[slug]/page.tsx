@@ -6,7 +6,6 @@ import BookDetailActions from '@/components/bookstore/BookDetailActions'
 
 export const dynamic = 'force-dynamic'
 
-// Definisikan tipe untuk mengatasi error "any" dari ESLint
 type VariantData = {
   id: string
   sku: string
@@ -40,9 +39,12 @@ export default async function BookDetailPage({ params }: { params: { slug: strin
 
   if (error || !book) notFound()
 
-  // Casting tipe dengan aman menggunakan TypeScript untuk menghindari error "any"
-  const authorName = (book.authors as { name: string } | null)?.name ?? 'Penulis Tidak Diketahui'
-  const variants = (book.book_variants as VariantData[] | null)?.filter((v) => v.is_active) || []
+  // Ekstraksi data author dengan aman menggunakan "unknown" untuk memuaskan TypeScript
+  const rawAuthor = Array.isArray(book.authors) ? book.authors[0] : book.authors
+  const authorName = (rawAuthor as unknown as { name: string } | null)?.name ?? 'Penulis Tidak Diketahui'
+  
+  // Ekstraksi varian dengan aman
+  const variants = (book.book_variants as unknown as VariantData[] | null)?.filter((v) => v.is_active) || []
 
   return (
     <main className="min-h-screen bg-surface-page">
