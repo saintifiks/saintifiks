@@ -8,6 +8,7 @@ import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import IndexStrip from "@/components/widgets/IndexStrip";
 import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import { CartProvider } from "@/components/bookstore/CartProvider";
 
 // Load Libre Baskerville (display/headline font) dari Google Fonts
 // Libre Baskerville hanya tersedia weight 400 & 700 (tidak ada 600/SemiBold)
@@ -106,12 +107,14 @@ export default function RootLayout({
             IndexStrip (Server Component) dilempar sebagai prop ke ConditionalIndexStrip
             (Client Component) — pola resmi Next.js App Router untuk kasus ini. */}
         <LocationProvider>
-          <ConditionalIndexStrip strip={<IndexStrip />} />
+          <CartProvider>
+            <ConditionalIndexStrip strip={<IndexStrip />} />
 
-          <Header />
-          <div id="main-content" tabIndex={-1}>
-            {children}
-          </div>
+            <Header />
+            <div id="main-content" tabIndex={-1}>
+              {children}
+            </div>
+          </CartProvider>
         </LocationProvider>
         <Footer />
       </body>
