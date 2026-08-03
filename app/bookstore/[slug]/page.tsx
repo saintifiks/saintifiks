@@ -6,6 +6,17 @@ import BookDetailActions from '@/components/bookstore/BookDetailActions'
 
 export const dynamic = 'force-dynamic'
 
+// Definisikan tipe untuk mengatasi error "any" dari ESLint
+type VariantData = {
+  id: string
+  sku: string
+  format: string
+  price_amount: number
+  list_price: number | null
+  stock_qty: number
+  is_active: boolean
+}
+
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
   const { data: book } = await supabase.from('books').select('title, description').eq('slug', params.slug).maybeSingle()
@@ -16,7 +27,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function BookDetailPage({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
 
-  // Query Skema Baru
   const { data: book, error } = await supabase
     .from('books')
     .select(`
@@ -30,10 +40,9 @@ export default async function BookDetailPage({ params }: { params: { slug: strin
 
   if (error || !book) notFound()
 
-  // @ts-expect-error Pengecualian sementara untuk JSON Supabase
-  const authorName = book.authors?.name ?? 'Penulis Tidak Diketahui'
-  // @ts-expect-error Pengecualian sementara untuk JSON Supabase
-  const variants = book.book_variants?.filter((v: any) => v.is_active) || []
+  // Casting tipe dengan aman menggunakan TypeScript untuk menghindari error "any"
+  const authorName = (book.authors as { name: string } | null)?.name ?? 'Penulis Tidak Diketahui'
+  const variants = (book.book_variants as VariantData[] | null)?.filter((v) => v.is_active) || []
 
   return (
     <main className="min-h-screen bg-surface-page">
@@ -45,6 +54,7 @@ export default async function BookDetailPage({ params }: { params: { slug: strin
         <div className="grid md:grid-cols-[300px_1fr] gap-8 md:gap-12 items-start">
           <div className="rounded-md border border-border-default/20 overflow-hidden bg-surface-elevated w-full aspect-[3/4] relative">
             {book.cover_image_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img src={book.cover_image_url} alt={book.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center font-interface text-text-tertiary">Tanpa Cover</div>
