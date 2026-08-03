@@ -2,19 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Badge, Divider } from '@/components/ui'
 import Link from '@/components/ui/Link'
-import { formatIdr } from '@/lib/indices/format'
 import BookDetailActions from '@/components/bookstore/BookDetailActions'
 
 export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
-  const { data: book } = await supabase
-    .from('books')
-    .select('title, description')
-    .eq('slug', params.slug)
-    .maybeSingle()
-    
+  const { data: book } = await supabase.from('books').select('title, description').eq('slug', params.slug).maybeSingle()
   if (!book) return { title: 'Buku Tidak Ditemukan' }
   return { title: `${book.title} — Saintifiks Bookstore`, description: book.description }
 }
@@ -22,16 +16,24 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function BookDetailPage({ params }: { params: { slug: string } }) {
   const supabase = await createClient()
 
+  // Query Skema Baru
   const { data: book, error } = await supabase
     .from('books')
-    .select('*')
+    .select(`
+      id, title, description, cover_image_url,
+      authors ( name ),
+      book_variants ( id, sku, format, price_amount, list_price, stock_qty, is_active )
+    `)
     .eq('slug', params.slug)
-    .eq('is_active', true)
+    .eq('status', 'active')
     .maybeSingle()
 
-  if (error || !book) {
-    notFound()
-  }
+  if (error || !book) notFound()
+
+  // @ts-expect-error Pengecualian sementara untuk JSON Supabase
+  const authorName = book.authors?.name ?? 'Penulis Tidak Diketahui'
+  // @ts-expect-error Pengecualian sementara untuk JSON Supabase
+  const variants = book.book_variants?.filter((v: any) => v.is_active) || []
 
   return (
     <main className="min-h-screen bg-surface-page">
@@ -43,32 +45,28 @@ export default async function BookDetailPage({ params }: { params: { slug: strin
         <div className="grid md:grid-cols-[300px_1fr] gap-8 md:gap-12 items-start">
           <div className="rounded-md border border-border-default/20 overflow-hidden bg-surface-elevated w-full aspect-[3/4] relative">
             {book.cover_image_url ? (
-              <img
-                src={book.cover_image_url}
-                alt={book.title}
-                className="w-full h-full object-cover"
-              />
+              <img src={book.cover_image_url} alt={book.title} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center font-interface text-text-tertiary">
-                Tanpa Cover
-              </div>
+              <div className="w-full h-full flex items-center justify-center font-interface text-text-tertiary">Tanpa Cover</div>
             )}
           </div>
 
           <div>
-            <Badge variant="kicker" className="mb-4">Buku Fisik</Badge>
+            <Badge variant="kicker" className="mb-4">Buku Fisik & Digital</Badge>
             <h1 className="font-display text-3xl md:text-4xl font-bold text-text-primary leading-tight mb-2">
               {book.title}
             </h1>
             <p className="font-interface text-lg text-text-secondary mb-6">
-              Ditulis oleh <span className="font-semibold text-text-primary">{book.author}</span>
+              Oleh <span className="font-semibold text-text-primary">{authorName}</span>
             </p>
 
-            <p className="font-interface text-2xl font-bold text-interactive-primary">
-              {formatIdr(book.price)}
-            </p>
-
-            <BookDetailActions book={book} />
+            <BookDetailActions 
+              bookId={book.id} 
+              title={book.title} 
+              author={authorName} 
+              coverImageUrl={book.cover_image_url ?? ''} 
+              variants={variants} 
+            />
 
             <Divider spacing="lg" />
 
