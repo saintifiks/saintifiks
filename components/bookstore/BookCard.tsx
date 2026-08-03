@@ -41,6 +41,7 @@ export default function BookCard({ book }: { book: Book }) {
     >
       <div className="relative aspect-[3/4] w-full bg-surface-sunken overflow-hidden">
         {book.cover_image_url ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={book.cover_image_url}
             alt={book.title}
