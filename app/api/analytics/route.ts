@@ -22,14 +22,13 @@ export async function POST(request: Request) {
     const body = await request.json()
     const supabase = await createClient()
 
-    // Verifikasi user — getUser() memvalidasi token ke server Supabase
-    const { data: { user } } = await supabase.auth.getUser()
-
+    // Privacy-first: analytics pembaca tidak boleh dikaitkan dengan akun.
+    // Client Supabase tetap dipakai untuk insert, tetapi identitas sesi
+    // autentikasi sengaja tidak dibaca dan tidak disimpan.
     const payload = {
       event_type: body.event_type,
       path: body.path,
       session_id: body.session_id || 'anonymous',
-      user_id: user?.id || null,
       metadata: body.metadata || {}
     }
 
