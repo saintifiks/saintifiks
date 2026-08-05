@@ -8,6 +8,12 @@ export default function AnalyticsTracker() {
   const sessionIdRef = useRef<string>('')
 
   useEffect(() => {
+    // Detail artikel Opinions memiliki tracker khusus untuk statistik penulis.
+    // Lewati tracker site-wide agar satu kunjungan tidak direkam dua kali.
+    const segments = pathname.split('/').filter(Boolean)
+    const isOpinionArticle = segments.length === 3 && segments[0] === 'opinions'
+    if (isOpinionArticle) return
+
     // Generate session ID unik per load halaman
     if (!sessionIdRef.current) {
       sessionIdRef.current = crypto.randomUUID()

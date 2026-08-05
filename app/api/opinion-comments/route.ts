@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await adminSupabase
       .from('opinion_comments')
-      .select('id, content, created_at, user_id')
+      .select('id, content, created_at')
       .eq('opinion_article_id', articleId)
       .order('created_at', { ascending: false })
 
@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
       id: c.id,
       content: c.content,
       created_at: c.created_at,
-      user_id: c.user_id,
       user_name: 'Pembaca',
       user_avatar: null,
     }))
@@ -110,7 +109,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         content: content.trim(),
       })
-      .select('id, content, created_at, user_id')
+      .select('id, content, created_at')
       .single()
 
     if (error) {

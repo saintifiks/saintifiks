@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.5 | Status: Live | Terakhir diperbarui: 05-08-2026
+> Versi: 2.6 | Status: Live | Terakhir diperbarui: 06-08-2026
+>
+> Perubahan v2.6 (Sesi #54): Minimalisasi identitas pada analitik, komentar publik, dan pencatatan share.
 >
 > Perubahan v2.5 (Sesi #53): AdminShell responsif, Beranda operasional, dan indeks artikel admin eksplisit.
 >
@@ -389,21 +391,21 @@ articles          — konten artikel (judul, slug, isi Markdown, status publikas
 article_charts    — konfigurasi Chart.js per artikel (type, data, options sebagai JSON; relasi ke articles via foreign key)
 likes             — data interaksi likes pembaca (user_id, article_id, timestamp)
 article_corrections — koreksi dan klarifikasi publik (dari pembaca, di-approve admin)
-comments          — komentar publik (privacy: ditampilkan sebagai "Pembaca")
-shares            — tracking share per platform (instagram, twitter, facebook, whatsapp, copy)
-analytics_events  — event tracking internal (page_view, scroll_depth, dll — BUKAN untuk dijual)
+comments          — komentar publik (identitas internal tidak dikirim melalui API publik)
+shares            — hitungan share anonim per platform (instagram, twitter, facebook, whatsapp, copy)
+analytics_events  — event tracking internal tanpa user_id (page_view, scroll_depth, dll — BUKAN untuk dijual)
 users             — akun pembaca (dikelola otomatis oleh Supabase Auth saat login pertama)
 ```
 
 **Catatan koreksi:** Tabel `article_corrections` memiliki kolom `status` (pending/approved/rejected) untuk moderasi.
 
-**Catatan komentar:** Privacy-first — nama pengguna tidak di-expose, semua komentar ditampilkan sebagai "Pembaca".
+**Catatan komentar:** Privacy-first — nama pengguna dan `user_id` internal tidak di-expose melalui respons API publik; semua komentar ditampilkan sebagai "Pembaca". `user_id` tetap disimpan secara internal ketika komentar dibuat untuk autentikasi, moderasi, dan akuntabilitas.
 
-**Catatan shares:** Tracking anonymized — hanya mencatat platform dan article_id, tidak mencatat siapa yang share.
+**Catatan shares:** Event baru hanya mencatat platform dan ID artikel/opini; kolom `user_id` yang nullable sengaja tidak diisi. Jumlah share tetap tersedia dan mencakup pengunjung anonim. Data historis yang sudah terhubung ke akun belum dihapus oleh perubahan kode ini.
 
 **Catatan chart:** Setiap artikel bisa memiliki satu atau lebih chart. Config Chart.js disimpan sebagai JSON di `article_charts`, di-render client-side via Chart.js saat halaman artikel dibuka. Chart bersifat interaktif.
 
-**Catatan analytics:** `analytics_events` adalah tracking pertama untuk pemilik saja — bukan untuk dijual atau dikirim ke pihak ketiga. Events yang ditrack: page view, scroll depth (milestone 25/50/75/100%), time on page, klik like.
+**Catatan analytics:** `analytics_events` dan `opinion_analytics_events` tidak lagi mengisi `user_id`. Event site-wide tidak dijalankan pada halaman detail Opinions karena halaman tersebut memiliki tracker khusus. `session_id` masih dipakai sebagai penanda pseudonim jangka pendek; kebijakan retensi dan desain agregasi lanjutan tetap menjadi pekerjaan P1.
 
 ### Aturan RLS (Row Level Security) — WAJIB
 
@@ -532,15 +534,15 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │   │           └── page.tsx              ← Halaman artikel opini individual (generateMetadata lengkap)
 │   └── api/
 │       ├── analytics/
-│       │   └── route.ts                  ← POST analytics events (gunakan getUser() bukan getSession())
+│       │   └── route.ts                  ← POST analytics anonim; tidak membaca/menyimpan user_id [Sesi #54]
 │       ├── comments/
-│       │   └── route.ts                  ← GET/POST komentar publik (gunakan getUser() bukan getSession())
+│       │   └── route.ts                  ← GET/POST komentar; user_id internal tidak dikirim ke publik [Sesi #54]
 │       ├── likes/
 │       │   ├── route.ts                  ← GET/POST/DELETE likes (admin client, bypass RLS)
 │       │   └── count/
 │       │       └── route.ts              ← GET jumlah like publik (admin client)
 │       ├── shares/
-│       │   └── route.ts                  ← POST tracking share (gunakan getUser() bukan getSession())
+│       │   └── route.ts                  ← POST hitungan share anonim tanpa user_id [Sesi #54]
 │       ├── indices/
 │       │   └── route.ts                  ← Polling data strip indeks (force-dynamic)
 │       ├── keep-alive/
@@ -1517,6 +1519,29 @@ Format pengisian:
 
 ---
 
+[06-08-2026] KEPUTUSAN: Minimalisasi identitas P0 pada analitik, komentar publik, dan pencatatan share ← SESI #54
+              ALASAN: Aras idealita privasi Saintifiks mengharuskan pengumpulan data dibatasi pada yang benar-benar
+                      diperlukan. Hitungan operasional tetap berguna, tetapi tidak perlu membentuk histori perilaku
+                      yang terhubung ke akun pembaca atau membocorkan pengenal internal melalui API publik.
+              CATATAN IMPLEMENTASI:
+                - Event baru di `analytics_events` dan `opinion_analytics_events` tidak mengisi `user_id`.
+                - Tracker site-wide dilewati pada detail `/opinions/[username]/[slug]`; tracker Opinions tetap menjadi
+                  satu-satunya sumber statistik kunjungan bagi penulis pada halaman tersebut.
+                - Respons publik komentar editorial dan Opinions tidak memilih atau mengirim `user_id`.
+                  Identitas tetap disimpan internal saat POST untuk autentikasi, moderasi, dan akuntabilitas.
+                - Event share baru hanya menyimpan ID konten dan platform. Pengunjung tidak wajib login,
+                  sedangkan IP hanya dipakai sementara oleh rate limiter in-memory dan tidak dimasukkan ke database.
+                - Insert share memakai admin client hanya di server API; `service_role` tidak pernah dikirim ke browser.
+                - Perubahan ini tidak menghapus data historis dan tidak mengubah schema atau RLS.
+              SUPERSEDES SEBAGIAN: Keputusan [24-05-2026] tentang kewajiban `getUser()` tidak lagi berlaku untuk
+                                   endpoint analitik dan share karena keduanya kini sengaja anonim. Endpoint yang
+                                   memang membutuhkan autentikasi, termasuk POST komentar, tetap wajib memakai `getUser()`.
+              BATAS P0: `session_id`, retensi data, penghapusan histori, dan pelaporan agregat menjadi tindak lanjut P1.
+              ALTERNATIF DITOLAK: Menghentikan seluruh hitungan share; mempertahankan `user_id` hanya karena tersedia;
+                                  mengirim identitas internal komentar lalu sekadar menyembunyikannya di UI.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -2066,6 +2091,29 @@ Status akhir: TypeScript bersih; ESLint tanpa error baru (satu warning pre-exist
               Build lokal mencapai bundling tetapi environment pnpm sementara tidak me-resolve import CSS transitif
               `katex` dan `highlight.js`; keduanya tercatat di package-lock npm dan bukan perubahan sesi ini.
 Next step: Verifikasi Vercel Preview; lanjutkan migrasi Analytics, Opinions, dan Bookstore ke PageHeader bersama.
+---
+
+[06-08-2026] SESI #54 — MINIMALISASI IDENTITAS P0
+Branch: codex/privacy-p0-minimization
+Tujuan sesi: Menjalankan tindakan P0 dari Laporan Riset Privasi Saintifiks tanpa mematikan metrik operasional.
+Yang dikerjakan:
+  [ANALITIK]
+  - `app/api/analytics/route.ts` dan `app/api/opinions/analytics/event/route.ts`: event baru tidak mengisi `user_id`.
+  - `components/analytics/AnalyticsTracker.tsx`: halaman detail Opinions tidak lagi direkam oleh dua tracker.
+
+  [KOMENTAR PUBLIK]
+  - API komentar editorial dan Opinions tidak lagi memilih atau mengirim `user_id` dalam respons publik.
+  - Tipe data komponen komentar diselaraskan dengan kontrak API publik yang baru.
+
+  [SHARE]
+  - API share editorial dan Opinions menerima pencatatan anonim serta menyimpan hanya ID konten dan platform.
+  - Hitungan share tetap berjalan; rate limiting berbasis IP tetap sementara dan in-memory.
+
+Keputusan baru: Lihat Seksi 11 — Minimalisasi identitas P0.
+Status akhir: `next lint` tanpa error baru; `tsc --noEmit --incremental false` bersih; build berhasil dikompilasi,
+              tetapi prerender lokal berhenti karena variabel publik Supabase tidak tersedia di environment pengujian.
+              Tidak ada migration database pada sesi ini.
+Next step: Audit RLS dan retensi data historis, lalu desain agregasi/session identifier P1.
 ---
 
 ## 13. REFERENSI & RESOURCE

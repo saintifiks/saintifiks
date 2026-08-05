@@ -36,15 +36,11 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
-    // user_id opsional — pengunjung anonim boleh kirim event
-    const { data: { user } } = await supabase.auth.getUser()
-
     const { error } = await supabase
       .from('opinion_analytics_events')
       .insert({
         opinion_article_id: opinionArticleId,
         event_type: eventType,
-        user_id: user?.id ?? null,
         session_id: sessionId,
       })
 

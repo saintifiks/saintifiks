@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 
 // GET /api/shares?articleId=xxx - Ambil jumlah share per platform
-// POST /api/shares - Catat share baru (harus login)
+// POST /api/shares - Catat share anonim tanpa mengaitkannya dengan akun
 
 export async function GET(request: NextRequest) {
   try {
@@ -76,18 +77,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
-    
-    // Cek auth user — getUser() memverifikasi token ke server Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Harus login untuk mencatat share' },
-        { status: 401 }
-      )
-    }
-
     const body = await request.json()
     const { article_id, platform } = body
 
@@ -106,15 +95,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { data, error } = await supabase
+    // Insert dilakukan server-side. Kolom user_id sengaja tidak diisi agar
+    // hitungan share tersedia tanpa membentuk histori perilaku akun.
+    const supabase = createAdminClient()
+    const { error } = await supabase
       .from('shares')
       .insert({
         article_id,
-        user_id: user.id,
         platform,
       })
-      .select()
-      .single()
 
     if (error) {
       console.error('Error inserting share:', error)
@@ -124,7 +113,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ share: data }, { status: 201 })
+    return NextResponse.json({ success: true }, { status: 201 })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json(
