@@ -3,22 +3,29 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-// Definisikan tipe agar TypeScript bahagia
+// 1. Definisikan tipe varian
 type VariantData = {
   id: string
   format: string
   stock_qty: number
 }
 
+// 2. Definisikan tipe buku secara eksplisit agar TypeScript tidak menebak-nebak (no implicitly 'any')
+type BookData = {
+  id: string
+  title: string
+  status: string
+  authors: { name: string } | { name: string }[] | null
+  book_variants: VariantData[] | null
+}
+
 export default async function BookstoreAdminPage() {
   const supabase = await createClient()
 
-  // Ambil statistik dasar
   const { count: booksCount } = await supabase.from('books').select('*', { count: 'exact', head: true })
   const { count: authorsCount } = await supabase.from('authors').select('*', { count: 'exact', head: true })
   const { count: publishersCount } = await supabase.from('publishers').select('*', { count: 'exact', head: true })
 
-  // Ambil daftar buku beserta relasinya
   const { data: books } = await supabase
     .from('books')
     .select(`
@@ -31,32 +38,24 @@ export default async function BookstoreAdminPage() {
     `)
     .order('created_at', { ascending: false })
 
-  const daftarBuku = books ?? []
+  // 3. Paksa TypeScript untuk mengenali daftar ini sebagai sekumpulan BookData, bukan 'any'
+  const daftarBuku = (books as unknown as BookData[]) ?? []
 
   return (
     <main className="min-h-screen bg-primary-light">
       <div className="max-w-5xl mx-auto px-6 py-12">
         
-        {/* Header Panel */}
         <div className="flex items-start justify-between mb-10">
           <div>
-            <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">
-              Admin Panel
-            </p>
-            <h1 className="font-libre text-3xl font-bold text-primary-dark mt-2">
-              Manajemen Bookstore
-            </h1>
-            <p className="font-helvetica text-sm text-primary-dark/50 mt-1">
-              PIM (Product Information Management) & Inventaris
-            </p>
+            <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Admin Panel</p>
+            <h1 className="font-libre text-3xl font-bold text-primary-dark mt-2">Manajemen Bookstore</h1>
+            <p className="font-helvetica text-sm text-primary-dark/50 mt-1">PIM (Product Information Management) & Inventaris</p>
           </div>
-
           <Link href="/dashboard" className="font-helvetica text-sm text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 mt-2">
             ← Kembali ke Dashboard Utama
           </Link>
         </div>
 
-        {/* Statistik Cepat */}
         <div className="grid grid-cols-3 gap-4 mb-10">
           <div className="border border-primary-dark/10 bg-white px-5 py-4">
             <p className="font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Total Buku</p>
@@ -72,7 +71,6 @@ export default async function BookstoreAdminPage() {
           </div>
         </div>
 
-        {/* Navigasi Aksi */}
         <div className="flex items-center gap-4 mb-6">
           <Link href="/dashboard/bookstore/buku/baru" className="font-helvetica text-sm bg-primary-dark text-primary-light px-5 py-2.5 hover:opacity-80 transition-opacity">
             + Tambah Buku
@@ -85,7 +83,6 @@ export default async function BookstoreAdminPage() {
           </Link>
         </div>
 
-        {/* Tabel Daftar Buku */}
         <section>
           {daftarBuku.length === 0 ? (
             <div className="border border-primary-dark/10 py-20 text-center bg-white">
@@ -103,11 +100,11 @@ export default async function BookstoreAdminPage() {
                 <span></span>
               </div>
 
+              {/* Looping sekarang mengenali tipe book dengan sempurna */}
               {daftarBuku.map((book) => {
-                // Ekstraksi data secara aman menggunakan TypeScript
                 const rawAuthor = Array.isArray(book.authors) ? book.authors[0] : book.authors
-                const authorName = (rawAuthor as unknown as { name: string } | null)?.name ?? '-'
-                const variants = (book.book_variants as unknown as VariantData[]) || []
+                const authorName = rawAuthor?.name ?? '-'
+                const variants = book.book_variants || []
                 const totalStock = variants.reduce((sum, v) => sum + v.stock_qty, 0)
 
                 return (
