@@ -1,7 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
 > Versi: 2.7 | Status: Live | Terakhir diperbarui: 06-08-2026
 >
-> Perubahan v2.7 (Sesi #55): Blueprint UI/UX Pusat Privasi berlapis dengan publication gate dan status noindex.
+> Perubahan v2.7 (Sesi #55): UI/UX dan naskah publik Pusat Privasi berlapis dengan publication gate dan status noindex.
 >
 > Perubahan v2.6 (Sesi #54): Minimalisasi identitas pada analitik, komentar publik, dan pencatatan share.
 >
@@ -1545,30 +1545,34 @@ Format pengisian:
 ---
 
 [06-08-2026] KEPUTUSAN: `/kebijakan-privasi` menjadi Pusat Privasi berlapis, bukan satu tembok teks legal ← SESI #55
-              ALASAN: Transparansi yang dapat digunakan pembaca membutuhkan ringkasan, status bukti, navigasi per tujuan,
-                      serta pemisahan antara praktik terverifikasi dan fakta yang belum diketahui. Halaman legal tunggal
-                      tanpa jalur hak atau konteks produk tidak memenuhi aras idealita riset privasi Saintifiks.
+              ALASAN: Transparansi yang dapat digunakan pembaca membutuhkan ringkasan, navigasi per tujuan, konteks
+                      setiap tindakan, serta bahasa yang menjawab data apa, untuk apa, terlihat oleh siapa, dan bagaimana
+                      hak dijalankan. Checklist audit dan istilah implementasi internal bukan konten untuk pembaca.
               ARSITEKTUR INFORMASI:
                 - Route kanonikal tetap `/kebijakan-privasi`; tidak membuat duplikasi `/privacy`.
-                - Halaman memakai progressive disclosure: ringkasan, membaca, pengukuran, akun/interaksi, retensi,
-                  vendor/transfer, hak, jurnalisme, keamanan/insiden, dan kesiapan kebijakan lengkap.
+                - Halaman memakai progressive disclosure: ringkasan, data berdasarkan aktivitas, pengukuran,
+                  akun/interaksi, perangkat/pihak lain, retensi/penghapusan, hak, jurnalisme, keamanan/anak,
+                  serta perubahan dan kontak.
                 - Desktop memakai navigasi lokal sticky dan content measure maksimal 65ch; mobile memakai `<details>`
                   "Daftar isi", layout satu kolom, target sentuh minimal 44px, dan transformasi tabel menjadi definition list.
                 - Contextual notice untuk login, komentar, publikasi Opinions, dan share kelak ditempatkan pada titik tindakan,
                   bukan ditumpuk sebagai pengganti notice di Pusat Privasi.
+                - Naskah yang dirender hanya berbicara kepada pengguna. Evidence status, acceptance criteria, P0/P1,
+                  nama file, kontrak API, dan arahan developer tetap berada di laporan riset/README.
               DESIGN SYSTEM:
                 - Libre Baskerville untuk heading, Lora untuk bacaan panjang, IBM Plex Sans untuk UI dan metadata.
                 - Seluruh warna memakai token semantik V3; mendukung dark mode, keyboard focus, struktur landmark,
                   semantic table, dan reduced-motion global tanpa dependensi atau CSS global baru.
                 - Tidak menggunakan ilustrasi gembok, trust score, badge keamanan absolut, atau klaim teatrikal.
               PUBLICATION GATE:
-                - Draf memakai metadata `noindex, nofollow` dan status "Belum siap dipublikasikan".
+                - Draf memakai metadata `noindex, nofollow` dan status "pratinjau naskah".
                 - Tidak ada tombol hak, formulir, angka retensi, atau klaim vendor yang ditampilkan sebagai aktif sebelum
                   alur dan buktinya tersedia. Placeholder hukum tidak boleh masuk produksi.
                 - Sitemap sengaja tidak ditambah sampai identitas pengendali, vendor, retensi, deletion workflow,
                   kanal hak, Google scopes/claims, child assessment, dan review legal selesai.
               ALTERNATIF DITOLAK: Mengganti placeholder dengan kebijakan generik; membuat route `/privacy` kedua;
-                                  mempublikasikan tombol/form yang belum berfungsi; memasukkan halaman draf ke sitemap.
+                                  mempublikasikan tombol/form yang belum berfungsi; menampilkan checklist internal kepada
+                                  pembaca; memasukkan halaman draf ke sitemap.
 
 ---
 
@@ -2152,10 +2156,18 @@ Tujuan sesi: Mengubah placeholder `/kebijakan-privasi` menjadi preview Pusat Pri
               Design System V3, dan batas bukti yang tersedia—tanpa mengarang fakta legal atau vendor.
 Yang dikerjakan:
   [ANATOMI HALAMAN]
-  - `app/kebijakan-privasi/page.tsx`: hero "Privasi untuk kebebasan membaca", status draf, tiga prinsip ringkas,
-    daftar isi responsif, navigasi lokal desktop, sembilan bagian informasi, tabel status bukti, publication checklist,
+  - `app/kebijakan-privasi/page.tsx`: hero "Privasi untuk kebebasan membaca", status pratinjau, tiga prinsip ringkas,
+    daftar isi responsif, navigasi lokal desktop, sembilan bagian informasi, ringkasan data berdasarkan aktivitas,
     dan version footer.
   - Metadata draf memakai `noindex, nofollow`; route belum dimasukkan ke sitemap.
+
+  [NASKAH PUBLIK]
+  - Copy ditulis dari sudut pandang pengguna: data apa yang timbul, alasan pemrosesan, keterlihatan, penerima,
+    penyimpanan, penghapusan, hak, jurnalisme, keamanan, anak, perubahan, dan kontak.
+  - Analytics menjelaskan event aktual, session identifier, rate limiting berbasis IP, batas anonimitas, dan tujuan.
+  - Komentar, likes, shares, koreksi, laporan, profil, Opinions, localStorage, gambar eksternal, dan vendor dijelaskan
+    terpisah sesuai konsekuensi masing-masing.
+  - Checklist audit, status kode, istilah P0/P1, dan arahan developer dihapus dari tampilan publik.
 
   [RESPONSIVE DAN AKSESIBILITAS]
   - Desktop: grid navigasi 240px + konten maksimal 680px/65ch.
@@ -2164,15 +2176,14 @@ Yang dikerjakan:
     font stack resmi, dan dark mode existing dipertahankan.
 
   [BATAS KLAIM]
-  - Praktik yang terbukti di kode dibedakan dari fakta produksi yang belum diaudit.
+  - Pernyataan praktik dibatasi pada perilaku yang dapat ditopang kode dan laporan riset.
   - Tidak ada angka retensi, status vendor, kanal hak, kontrol keamanan, atau klaim penghapusan yang direka.
   - Form dan tombol hak tidak ditampilkan sebelum workflow benar-benar tersedia.
 
 Keputusan baru: Lihat Seksi 11 — `/kebijakan-privasi` sebagai Pusat Privasi berlapis dengan publication gate.
 Status akhir: `next lint` tanpa error baru (satu warning pre-existing di LikeButton); TypeScript bersih;
               audit source memastikan tidak ada static hex dan hanya dua file sesi yang berubah.
-              Uji runtime lokal membuka dev server tetapi request route timeout, sehingga visual runtime tidak diklaim lulus.
-Next step: Tinjau UI melalui Vercel Preview; lengkapi evidence P0 sebelum menghapus noindex atau menambah sitemap.
+Next step: Tinjau naskah dan UI melalui Vercel Preview; lengkapi evidence P0 sebelum menghapus noindex atau menambah sitemap.
 ---
 
 ## 13. REFERENSI & RESOURCE
