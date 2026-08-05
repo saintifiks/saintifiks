@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import AdminShell from '@/components/admin/AdminShell'
 
 export default async function AdminLayout({
   children,
@@ -29,5 +30,17 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
-  return <>{children}</>
+  async function handleSignOut() {
+    'use server'
+
+    const supabase = await createClient()
+    await supabase.auth.signOut()
+    redirect('/login')
+  }
+
+  return (
+    <AdminShell email={user.email} signOutAction={handleSignOut}>
+      {children}
+    </AdminShell>
+  )
 }

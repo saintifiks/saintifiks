@@ -6,12 +6,16 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Menu } from 'lucide-react'
 import ThemeToggle from '@/components/layout/ThemeToggle'
 import Drawer from '@/components/layout/Drawer'
 
 export default function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const pathname = usePathname()
+
+  if (pathname.startsWith('/dashboard')) return null
 
   return (
     <header className="bg-surface-page sticky top-0 z-sticky border-b border-border-default/10">
