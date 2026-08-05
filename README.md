@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.4 | Status: Live | Terakhir diperbarui: 07-06-2026
+> Versi: 2.5 | Status: Live | Terakhir diperbarui: 05-08-2026
+>
+> Perubahan v2.5 (Sesi #53): AdminShell responsif, Beranda operasional, dan indeks artikel admin eksplisit.
 >
 > Perubahan v2.4 (Sesi #49): Design System V3 — token semantik, atom UI, molekul, penyelarasan organisme.
 >
@@ -496,7 +498,10 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │   │   ├── layout.tsx                        ← Auth guard admin
 │   │   └── dashboard/
 │   │       ├── page.tsx                      ← Dashboard utama
+│   │       ├── loading.tsx                   ← Loading boundary yang mempertahankan AdminShell [Sesi #53]
+│   │       ├── error.tsx                     ← Error boundary dashboard dengan retry [Sesi #53]
 │   │       ├── artikel/
+│   │       │   ├── page.tsx                  ← Indeks artikel admin responsif [Sesi #53 — pengecualian Red Zone disetujui]
 │   │       │   ├── baru/page.tsx
 │   │       │   └── [id]/edit/page.tsx
 │   │       └── koreksi/
@@ -562,6 +567,9 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │           └── [username]/route.ts       ← GET profil publik + daftar artikel
 │
 ├── components/
+│   ├── admin/
+│   │   ├── AdminShell.tsx                    ← Sidebar, mobile drawer, active navigation, account controls [Sesi #53]
+│   │   └── PageHeader.tsx                    ← Anatomi heading dan breadcrumb halaman admin [Sesi #53]
 │   │   ├── layout/
 │   │   ├── Header.tsx                        ← Header global 3-kolom (ThemeToggle | wordmark | drawer icon). Menggantikan Navbar. [Sesi #47]
 │   │   ├── Drawer.tsx                        ← Menu full-screen turun-dari-atas; accordion lokasi + navigasi. [Sesi #47]
@@ -645,7 +653,7 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 | `app/api/keep-alive/route.ts` | Risiko eksistensial — database bisa hibernate jika rusak |
 | `lib/indices/` | Widget indeks sudah di-tune untuk rate limiting |
 | `components/widgets/` | Polling 15 detik sudah stabil |
-| `app/(admin)/dashboard/artikel/` | Workflow editorial sudah stabil |
+| `app/(admin)/dashboard/artikel/` | Workflow editorial sudah stabil. Pengecualian eksplisit pemilik pada 05-08-2026 hanya untuk file indeks baru `page.tsx`; `baru/`, `[id]/edit/`, dan `actions.ts` tetap Red Zone. |
 
 ### Catatan Kritis: Supabase Clients
 
@@ -1486,6 +1494,29 @@ Format pengisian:
 
 ---
 
+[05-08-2026] KEPUTUSAN: Dashboard admin menggunakan AdminShell operasional terpisah dari chrome situs publik ← SESI #53
+              ALASAN: Dashboard lama tumbuh sebagai kumpulan halaman dengan navigasi dan tindakan bercampur,
+                      sementara Header dan Footer publik tetap ikut dirender. Shell persisten memberi orientasi,
+                      active state, tindakan global, akses akun, dan pola responsif yang sama pada seluruh route admin.
+              CATATAN IMPLEMENTASI:
+                - `app/(admin)/layout.tsx` tetap menjadi auth guard dan kini membungkus child route dengan `AdminShell`.
+                - `components/admin/AdminShell.tsx` menyediakan sidebar desktop, modal drawer mobile dengan focus trap,
+                  skip link, global action "Artikel baru", navigasi aktif berbasis pathname, identitas admin, dan logout.
+                - `components/layout/Header.tsx` dan `components/footer/index.tsx` tidak dirender pada pathname `/dashboard`.
+                - `/dashboard` menjadi beranda operasional: ringkasan artikel, draf yang perlu dilanjutkan,
+                  area kerja, dan aktivitas terbaru.
+                - `/dashboard/artikel` menjadi indeks eksplisit dengan native table desktop dan resource list mobile.
+                - `PageHeader`, loading boundary, dan error boundary menjadi fondasi anatomi halaman admin.
+              DESIGN SYSTEM: Seluruh warna memakai token semantik V3; tidak ada static hex baru. Touch target,
+                             focus-visible, semantic table, reduced motion global, dan mobile transformation dipertahankan.
+              PENGECUALIAN RED ZONE: Pemilik menyetujui pada 05-08-2026 penambahan file indeks baru
+                                     `app/(admin)/dashboard/artikel/page.tsx`. File workflow existing
+                                     `baru/`, `[id]/edit/`, dan `actions.ts` tidak disentuh.
+              ALTERNATIF DITOLAK: Mempertahankan tombol navigasi per halaman; memasukkan dashboard ke Header/Drawer publik;
+                                  rewrite sekaligus seluruh halaman admin.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -2007,6 +2038,34 @@ Yang dikerjakan:
 Keputusan baru: Lihat Seksi 11 — Halaman /koreksi sebagai form publik lintas-tipe-konten.
 Status akhir: Selesai. Build clean, typecheck dan lint clean.
 Next step: Merge ke main.
+---
+
+[05-08-2026] SESI #53 — FONDASI DASHBOARD ADMIN OPERASIONAL
+Branch: feature/admin-dashboard-shell
+Tujuan sesi: Mengubah dashboard dari daftar artikel pasif menjadi ruang kerja operasional dan membentuk shell admin
+              yang konsisten, responsif, dapat diakses, serta terpisah dari chrome situs publik.
+Yang dikerjakan:
+  [ADMIN SHELL]
+  - components/admin/AdminShell.tsx (baru): sidebar desktop, mobile drawer, focus trap, active navigation,
+    global action Artikel baru, account block, logout, dan skip link.
+  - components/admin/PageHeader.tsx (baru): heading, description, actions, dan breadcrumb reusable.
+  - app/(admin)/layout.tsx: auth guard dipertahankan; sign-out dipusatkan dan seluruh route dibungkus AdminShell.
+  - components/layout/Header.tsx dan components/footer/index.tsx: chrome publik disembunyikan pada route dashboard.
+
+  [BERANDA DAN ARTIKEL]
+  - app/(admin)/dashboard/page.tsx: command center dengan summary, daftar draf, area kerja, dan aktivitas terbaru.
+  - app/(admin)/dashboard/artikel/page.tsx (baru): indeks artikel dengan semantic table pada desktop dan cards pada mobile.
+  - Pengecualian Red Zone untuk file indeks baru disetujui eksplisit oleh pemilik; editor dan actions tidak disentuh.
+
+  [RESILIENCE]
+  - app/(admin)/dashboard/loading.tsx (baru): loading state shell-aware.
+  - app/(admin)/dashboard/error.tsx (baru): error state dengan pesan keamanan data dan aksi retry.
+
+Keputusan baru: Lihat Seksi 11 — AdminShell operasional terpisah dari chrome situs publik.
+Status akhir: TypeScript bersih; ESLint tanpa error baru (satu warning pre-existing di LikeButton Red Zone).
+              Build lokal mencapai bundling tetapi environment pnpm sementara tidak me-resolve import CSS transitif
+              `katex` dan `highlight.js`; keduanya tercatat di package-lock npm dan bukan perubahan sesi ini.
+Next step: Verifikasi Vercel Preview; lanjutkan migrasi Analytics, Opinions, dan Bookstore ke PageHeader bersama.
 ---
 
 ## 13. REFERENSI & RESOURCE

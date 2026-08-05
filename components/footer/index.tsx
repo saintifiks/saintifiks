@@ -5,8 +5,13 @@
 
 import FooterMobile from './FooterMobile';
 import FooterDesktop from './FooterDesktop';
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  if (pathname.startsWith('/dashboard')) return null;
+
   return (
     <>
       {/* Mobile version — tampil di layar kecil (< 1024px) */}
