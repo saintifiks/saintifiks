@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.6 | Status: Live | Terakhir diperbarui: 06-08-2026
+> Versi: 2.7 | Status: Live | Terakhir diperbarui: 06-08-2026
+>
+> Perubahan v2.7 (Sesi #55): Blueprint UI/UX Pusat Privasi berlapis dengan publication gate dan status noindex.
 >
 > Perubahan v2.6 (Sesi #54): Minimalisasi identitas pada analitik, komentar publik, dan pencatatan share.
 >
@@ -521,7 +523,7 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │   ├── koreksi/page.tsx                      ← Under maintenance. [Sesi #47]
 │   ├── kebijakan-iklan/page.tsx              ← Under maintenance. [Sesi #47]
 │   ├── keamanan/page.tsx                     ← Under maintenance (Laporkan Masalah Keamanan). [Sesi #47]
-│   ├── kebijakan-privasi/page.tsx            ← Under maintenance. [Sesi #47]
+│   ├── kebijakan-privasi/page.tsx            ← Draf Pusat Privasi berlapis; noindex sampai publication gate terpenuhi [Sesi #55]
 │   ├── bookstore/page.tsx                    ← Under maintenance (E-Commerce Toko Buku). [Sesi #47]
 │   └── bagikan-ide/page.tsx                  ← Under maintenance. [Sesi #47]
 │   ├── sitemap.ts                        ← Dynamic sitemap untuk SEO (ISR 24h) — mencakup editorial + opinions
@@ -1542,6 +1544,34 @@ Format pengisian:
 
 ---
 
+[06-08-2026] KEPUTUSAN: `/kebijakan-privasi` menjadi Pusat Privasi berlapis, bukan satu tembok teks legal ← SESI #55
+              ALASAN: Transparansi yang dapat digunakan pembaca membutuhkan ringkasan, status bukti, navigasi per tujuan,
+                      serta pemisahan antara praktik terverifikasi dan fakta yang belum diketahui. Halaman legal tunggal
+                      tanpa jalur hak atau konteks produk tidak memenuhi aras idealita riset privasi Saintifiks.
+              ARSITEKTUR INFORMASI:
+                - Route kanonikal tetap `/kebijakan-privasi`; tidak membuat duplikasi `/privacy`.
+                - Halaman memakai progressive disclosure: ringkasan, membaca, pengukuran, akun/interaksi, retensi,
+                  vendor/transfer, hak, jurnalisme, keamanan/insiden, dan kesiapan kebijakan lengkap.
+                - Desktop memakai navigasi lokal sticky dan content measure maksimal 65ch; mobile memakai `<details>`
+                  "Daftar isi", layout satu kolom, target sentuh minimal 44px, dan transformasi tabel menjadi definition list.
+                - Contextual notice untuk login, komentar, publikasi Opinions, dan share kelak ditempatkan pada titik tindakan,
+                  bukan ditumpuk sebagai pengganti notice di Pusat Privasi.
+              DESIGN SYSTEM:
+                - Libre Baskerville untuk heading, Lora untuk bacaan panjang, IBM Plex Sans untuk UI dan metadata.
+                - Seluruh warna memakai token semantik V3; mendukung dark mode, keyboard focus, struktur landmark,
+                  semantic table, dan reduced-motion global tanpa dependensi atau CSS global baru.
+                - Tidak menggunakan ilustrasi gembok, trust score, badge keamanan absolut, atau klaim teatrikal.
+              PUBLICATION GATE:
+                - Draf memakai metadata `noindex, nofollow` dan status "Belum siap dipublikasikan".
+                - Tidak ada tombol hak, formulir, angka retensi, atau klaim vendor yang ditampilkan sebagai aktif sebelum
+                  alur dan buktinya tersedia. Placeholder hukum tidak boleh masuk produksi.
+                - Sitemap sengaja tidak ditambah sampai identitas pengendali, vendor, retensi, deletion workflow,
+                  kanal hak, Google scopes/claims, child assessment, dan review legal selesai.
+              ALTERNATIF DITOLAK: Mengganti placeholder dengan kebijakan generik; membuat route `/privacy` kedua;
+                                  mempublikasikan tombol/form yang belum berfungsi; memasukkan halaman draf ke sitemap.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -2114,6 +2144,35 @@ Status akhir: `next lint` tanpa error baru; `tsc --noEmit --incremental false` b
               tetapi prerender lokal berhenti karena variabel publik Supabase tidak tersedia di environment pengujian.
               Tidak ada migration database pada sesi ini.
 Next step: Audit RLS dan retensi data historis, lalu desain agregasi/session identifier P1.
+---
+
+[06-08-2026] SESI #55 — BLUEPRINT UI/UX PUSAT PRIVASI
+Branch: codex/privacy-center-ui (diturunkan dari codex/privacy-p0-minimization)
+Tujuan sesi: Mengubah placeholder `/kebijakan-privasi` menjadi preview Pusat Privasi yang mengikuti laporan riset,
+              Design System V3, dan batas bukti yang tersedia—tanpa mengarang fakta legal atau vendor.
+Yang dikerjakan:
+  [ANATOMI HALAMAN]
+  - `app/kebijakan-privasi/page.tsx`: hero "Privasi untuk kebebasan membaca", status draf, tiga prinsip ringkas,
+    daftar isi responsif, navigasi lokal desktop, sembilan bagian informasi, tabel status bukti, publication checklist,
+    dan version footer.
+  - Metadata draf memakai `noindex, nofollow`; route belum dimasukkan ke sitemap.
+
+  [RESPONSIVE DAN AKSESIBILITAS]
+  - Desktop: grid navigasi 240px + konten maksimal 680px/65ch.
+  - Mobile: daftar isi native `<details>`, single-column layout, serta data table diubah menjadi definition list.
+  - Seluruh warna memakai token semantik V3; touch target 44px, focus-visible, semantic headings/table/landmarks,
+    font stack resmi, dan dark mode existing dipertahankan.
+
+  [BATAS KLAIM]
+  - Praktik yang terbukti di kode dibedakan dari fakta produksi yang belum diaudit.
+  - Tidak ada angka retensi, status vendor, kanal hak, kontrol keamanan, atau klaim penghapusan yang direka.
+  - Form dan tombol hak tidak ditampilkan sebelum workflow benar-benar tersedia.
+
+Keputusan baru: Lihat Seksi 11 — `/kebijakan-privasi` sebagai Pusat Privasi berlapis dengan publication gate.
+Status akhir: `next lint` tanpa error baru (satu warning pre-existing di LikeButton); TypeScript bersih;
+              audit source memastikan tidak ada static hex dan hanya dua file sesi yang berubah.
+              Uji runtime lokal membuka dev server tetapi request route timeout, sehingga visual runtime tidak diklaim lulus.
+Next step: Tinjau UI melalui Vercel Preview; lengkapi evidence P0 sebelum menghapus noindex atau menambah sitemap.
 ---
 
 ## 13. REFERENSI & RESOURCE
