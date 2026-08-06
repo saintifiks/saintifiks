@@ -379,7 +379,7 @@ export default function StudioEditor({
   const slashIndexRef = useRef(0)
   const filteredCommandsRef = useRef<SlashCommand[]>([])
   const editorRef = useRef<Editor | null>(null)
-  const slashMenuOpen = slashState !== null
+  const slashQueryKey = slashState ? `${slashState.from}\u0000${slashState.query}` : null
 
   const openSemanticDialog = useCallback((
     type: ConfigurableNodeType,
@@ -699,45 +699,33 @@ export default function StudioEditor({
   }, [editor, updateFloatingMenus])
 
   useEffect(() => {
-    if (!slashState) return
+    if (slashQueryKey === null) return
     setSlashIndex(0)
-  }, [slashState])
-
-  useEffect(() => {
-    if (!slashMenuOpen) return
-
-    const body = globalThis.document.body
-    const root = globalThis.document.documentElement
-    const previousBodyOverflow = body.style.overflow
-    const previousBodyPaddingRight = body.style.paddingRight
-    const previousRootOverscroll = root.style.overscrollBehavior
-    const scrollbarWidth = Math.max(0, window.innerWidth - root.clientWidth)
-
-    if (scrollbarWidth > 0) {
-      const currentPadding = Number.parseFloat(window.getComputedStyle(body).paddingRight) || 0
-      body.style.paddingRight = `${currentPadding + scrollbarWidth}px`
-    }
-    body.style.overflow = 'hidden'
-    root.style.overscrollBehavior = 'none'
-
-    return () => {
-      body.style.overflow = previousBodyOverflow
-      body.style.paddingRight = previousBodyPaddingRight
-      root.style.overscrollBehavior = previousRootOverscroll
-    }
-  }, [slashMenuOpen])
+  }, [slashQueryKey])
 
   useEffect(() => {
     if (!editor) return
-    function closeOnScroll(event: Event) {
+    const activeEditor = editor
+    let frame: number | null = null
+
+    function handleScroll(event: Event) {
       if (event.target instanceof Node && slashMenuRef.current?.contains(event.target)) return
-      setSlashState(null)
-      setSelectionMenu(null)
+      if (frame !== null) window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        frame = null
+        if (slashStateRef.current) {
+          setSlashState(getSlashState(activeEditor))
+          setSelectionMenu(null)
+          return
+        }
+        setSelectionMenu(null)
+      })
     }
 
-    window.addEventListener('scroll', closeOnScroll, { capture: true })
+    window.addEventListener('scroll', handleScroll, { capture: true })
     return () => {
-      window.removeEventListener('scroll', closeOnScroll, { capture: true })
+      window.removeEventListener('scroll', handleScroll, { capture: true })
+      if (frame !== null) window.cancelAnimationFrame(frame)
     }
   }, [editor])
 
