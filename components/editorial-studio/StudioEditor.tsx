@@ -374,10 +374,12 @@ export default function StudioEditor({
   const [semanticDialog, setSemanticDialog] = useState<SemanticDialogState | null>(null)
   const [semanticError, setSemanticError] = useState<string | null>(null)
   const linkInputRef = useRef<HTMLInputElement>(null)
+  const slashMenuRef = useRef<HTMLDivElement>(null)
   const slashStateRef = useRef<SlashState | null>(null)
   const slashIndexRef = useRef(0)
   const filteredCommandsRef = useRef<SlashCommand[]>([])
   const editorRef = useRef<Editor | null>(null)
+  const slashMenuOpen = slashState !== null
 
   const openSemanticDialog = useCallback((
     type: ConfigurableNodeType,
@@ -702,8 +704,33 @@ export default function StudioEditor({
   }, [slashState])
 
   useEffect(() => {
+    if (!slashMenuOpen) return
+
+    const body = globalThis.document.body
+    const root = globalThis.document.documentElement
+    const previousBodyOverflow = body.style.overflow
+    const previousBodyPaddingRight = body.style.paddingRight
+    const previousRootOverscroll = root.style.overscrollBehavior
+    const scrollbarWidth = Math.max(0, window.innerWidth - root.clientWidth)
+
+    if (scrollbarWidth > 0) {
+      const currentPadding = Number.parseFloat(window.getComputedStyle(body).paddingRight) || 0
+      body.style.paddingRight = `${currentPadding + scrollbarWidth}px`
+    }
+    body.style.overflow = 'hidden'
+    root.style.overscrollBehavior = 'none'
+
+    return () => {
+      body.style.overflow = previousBodyOverflow
+      body.style.paddingRight = previousBodyPaddingRight
+      root.style.overscrollBehavior = previousRootOverscroll
+    }
+  }, [slashMenuOpen])
+
+  useEffect(() => {
     if (!editor) return
-    function closeOnScroll() {
+    function closeOnScroll(event: Event) {
+      if (event.target instanceof Node && slashMenuRef.current?.contains(event.target)) return
       setSlashState(null)
       setSelectionMenu(null)
     }
@@ -713,6 +740,19 @@ export default function StudioEditor({
       window.removeEventListener('scroll', closeOnScroll, { capture: true })
     }
   }, [editor])
+
+  useEffect(() => {
+    if (!slashState) return
+    const selected = filteredCommands[slashIndex]
+    if (!selected) return
+
+    const frame = window.requestAnimationFrame(() => {
+      globalThis.document
+        .getElementById(`studio-command-${selected.id}`)
+        ?.scrollIntoView({ block: 'nearest' })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [filteredCommands, slashIndex, slashState])
 
   useEffect(() => {
     if (!editor) return
@@ -1085,19 +1125,20 @@ export default function StudioEditor({
 
       {slashState && (
         <div
+          ref={slashMenuRef}
           id="studio-slash-menu"
           role="listbox"
           aria-label="Sisipkan blok"
           style={{ top: slashState.top, left: slashState.left } as CSSProperties}
-          className="fixed z-modal w-[min(344px,calc(100vw-24px))] overflow-hidden rounded-xl border border-border-default/20 bg-surface-elevated shadow-lg"
+          className="fixed z-modal flex max-h-[calc(100dvh-24px)] w-[min(344px,calc(100vw-24px))] flex-col overflow-hidden rounded-xl border border-border-default/20 bg-surface-elevated shadow-lg"
         >
-          <div className="border-b border-border-default/15 px-4 py-3">
+          <div className="shrink-0 border-b border-border-default/15 px-4 py-3">
             <p className="font-interface text-xs font-semibold text-text-primary">
               {slashState.query ? `Hasil untuk "${slashState.query}"` : 'Sisipkan blok'}
             </p>
             <p className="mt-0.5 font-interface text-[11px] text-text-tertiary">Panah untuk memilih | Enter untuk menyisipkan | Esc untuk menutup</p>
           </div>
-          <div className="max-h-[356px] overflow-y-auto p-2">
+          <div className="min-h-0 max-h-[356px] flex-1 touch-pan-y overflow-y-auto overscroll-contain p-2 [scrollbar-gutter:stable]">
             {filteredCommands.length > 0 ? filteredCommands.map((command, index) => {
               const Icon = command.icon
               const selected = index === slashIndex
