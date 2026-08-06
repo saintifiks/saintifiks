@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:studio": "tsc -p tsconfig.studio-test.json && node --test .studio-test-dist/scripts/editorial-studio-contract.test.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

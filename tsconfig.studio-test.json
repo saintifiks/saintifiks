@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "outDir": ".studio-test-dist",
+    "rootDir": "."
+  },
+  "include": [
+    "lib/editorial-studio/document.ts",
+    "lib/editorial-studio/fixture.ts",
+    "lib/editorial-studio/persistence.ts",
+    "lib/editorial-studio/sync-contract.ts",
+    "scripts/editorial-studio-contract.test.ts"
+  ]
+}
