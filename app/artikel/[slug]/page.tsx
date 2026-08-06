@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
+import StudioRenderer from '@/components/editorial-studio/StudioRenderer'
+import { migrateStudioDocument, type StudioDocument } from '@/lib/editorial-studio/document'
 import ArticleInteractions from '@/components/artikel/ArticleInteractions'
 import ReadingProgress from '@/components/artikel/ReadingProgress'
 import BylineBlock from '@/components/artikel/BylineBlock'
@@ -128,6 +130,21 @@ export default async function ArtikelPage({ params }: Props) {
 
   const artikel = article as Article
   const charts = artikel.article_charts || []
+  let studioDocument: StudioDocument | null = null
+  const { data: publication } = await supabase
+    .from('editorial_studio_publications')
+    .select('snapshot_id')
+    .eq('article_id', artikel.id)
+    .maybeSingle()
+  if (publication?.snapshot_id) {
+    const { data: snapshot } = await supabase
+      .from('editorial_studio_published_snapshots')
+      .select('content')
+      .eq('id', publication.snapshot_id)
+      .maybeSingle()
+    const migrated = migrateStudioDocument(snapshot?.content)
+    if (migrated.ok) studioDocument = migrated.document
+  }
 
   // [PERBAIKAN SESI #15]
   // Hanya tampilkan koreksi yang sudah disetujui admin (status = 'approved').
@@ -264,7 +281,9 @@ export default async function ArtikelPage({ params }: Props) {
           ============================================================ */}
       <article className="px-4 md:px-0 md:max-w-[720px] md:mx-auto mt-6 pb-16">
         {/* Content Renderer - body text menggunakan Lora 17px */}
-        <ArticleRenderer content={artikel.content} charts={charts} />
+        {studioDocument
+          ? <StudioRenderer document={studioDocument} />
+          : <ArticleRenderer content={artikel.content} charts={charts} />}
 
         {/* Section Interaksi — Client Component wrapper */}
         <div className="mt-8">

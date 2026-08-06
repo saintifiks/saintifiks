@@ -11,6 +11,8 @@ import {
   validateStudioDocument,
 } from '../lib/editorial-studio/document'
 import { editorialStudioFixture } from '../lib/editorial-studio/fixture'
+import { markdownToStudioDocument, studioDocumentToMarkdown } from '../lib/editorial-studio/markdown-adapter'
+import { preflightStudioArticle } from '../lib/editorial-studio/preflight'
 import {
   fingerprintStudioDraft,
   parseStudioDraftRecord,
@@ -192,6 +194,27 @@ test('validator menolak struktur node yang tidak sesuai content model', () => {
   if (!result.ok) {
     assert.equal(result.issues.some((issue) => issue.message.includes('langsung di dalam paragraph')), true)
   }
+})
+
+test('validator menerima blok produksi di dalam item daftar sesuai content model editor', () => {
+  const document = createStudioDocument({
+    type: 'doc',
+    content: [{
+      type: 'bulletList',
+      content: [{
+        type: 'listItem',
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: 'Penjelasan' }] },
+          {
+            type: 'equation',
+            attrs: { latex: 'E = mc^2', label: 'Kesetaraan massa dan energi' },
+          },
+        ],
+      }],
+    }],
+  }, { idFactory: sequentialIds() })
+
+  assert.equal(validateStudioDocument(document).ok, true)
 })
 
 test('jalur migrasi v0 menambahkan wrapper dan metadata node v1', () => {
@@ -444,4 +467,125 @@ test('migration sync memiliki serialisasi, idempotency, konflik optimistis, dan 
   assert.match(migration, /'duplicate'::text/)
   assert.match(migration, /'conflict'::text/)
   assert.doesNotMatch(migration, /\bpublished_at\b|\bpublish_editorial|\bstatus\s+text/)
+})
+
+test('metadata artikel canonical tervalidasi bersama dokumen', () => {
+  const document = createStudioDocument(undefined, {
+    article: {
+      kind: 'article',
+      articleId: null,
+      slug: 'artikel-uji',
+      coverImageUrl: 'https://example.com/cover.webp',
+      category: 'Sains',
+      kicker: 'Analisis',
+      coverIllustrator: 'Saintifiks',
+      country: 'Indonesia',
+    },
+  })
+  assert.equal(validateStudioDocument(document).ok, true)
+  assert.equal(validateStudioDocument({
+    ...document,
+    article: { ...document.article, coverImageUrl: 'javascript:alert(1)' },
+  }).ok, false)
+})
+
+test('adapter Markdown menjaga struktur dasar dan fallback terbitan', () => {
+  const document = markdownToStudioDocument([
+    '## Bagian utama',
+    '',
+    'Paragraf dengan **tebal** dan [tautan](https://example.com).',
+    '',
+    '- Satu',
+    '- Dua',
+    '',
+    '| Konsep | Makna |',
+    '| --- | --- |',
+    '| Rayleigh | Hamburan |',
+    '',
+    '![Deskripsi](https://example.com/image.webp "Keterangan")',
+  ].join('\n'), { documentId: 'doc-markdown-adapter' })
+
+  assert.equal(validateStudioDocument(document).ok, true)
+  const fallback = studioDocumentToMarkdown(document)
+  assert.match(fallback, /## Bagian utama/)
+  assert.match(fallback, /\*\*tebal\*\*/)
+  assert.equal(document.root.content?.some((node) => node.type === 'table'), true)
+  assert.match(fallback, /\| --- \| --- \|/)
+  assert.match(fallback, /!\[Deskripsi\]\(https:\/\/example\.com\/image\.webp "Keterangan"\)/)
+})
+
+test('preflight hanya meloloskan blok produksi yang lengkap', () => {
+  const document = markdownToStudioDocument('Isi artikel yang siap dibaca.', {
+    documentId: 'doc-preflight-ready',
+    article: {
+      kind: 'article',
+      articleId: null,
+      slug: 'artikel-siap',
+      coverImageUrl: null,
+      category: '',
+      kicker: '',
+      coverIllustrator: '',
+      country: '',
+    },
+  })
+  assert.equal(preflightStudioArticle('Judul siap', 'Ringkasan siap.', document).ok, true)
+  assert.equal(preflightStudioArticle('', '', document).ok, false)
+})
+
+test('chart Markdown lama dipertahankan sebagai blok terstruktur dan diblokir sampai workflow tersedia', () => {
+  const document = markdownToStudioDocument('Paragraf.\n\n{{chart:pertumbuhan}}', {
+    documentId: 'doc-chart-legacy',
+    article: {
+      kind: 'article',
+      articleId: null,
+      slug: 'grafik-lama',
+      coverImageUrl: null,
+      category: '',
+      kicker: '',
+      coverIllustrator: '',
+      country: '',
+    },
+  })
+  assert.equal(document.root.content?.some((node) => node.type === 'chartReference'), true)
+  const preflight = preflightStudioArticle('Grafik lama', 'Ringkasan', document)
+  assert.equal(preflight.ok, false)
+  assert.equal(preflight.blockers.some((issue) => issue.code === 'future-chartReference'), true)
+})
+
+test('adapter mengubah display math menjadi equation dan menahan HTML mentah lama', () => {
+  const document = markdownToStudioDocument('$$\nE = mc^2\n$$\n\n<div>warisan</div>', {
+    documentId: 'doc-legacy-special-blocks',
+    article: {
+      kind: 'article',
+      articleId: null,
+      slug: 'blok-warisan',
+      coverImageUrl: null,
+      category: '',
+      kicker: '',
+      coverIllustrator: '',
+      country: '',
+    },
+  })
+
+  assert.equal(document.root.content?.some((node) => node.type === 'equation'), true)
+  const preflight = preflightStudioArticle('Blok warisan', 'Ringkasan', document)
+  assert.equal(preflight.blockers.some((issue) => issue.code === 'legacy-raw-html'), true)
+})
+
+test('migration publikasi memakai snapshot immutable, pointer publik, dan RPC service-role atomik', () => {
+  const migration = readFileSync(
+    resolve(process.cwd(), 'supabase/migrations/20260807010000_editorial_studio_publication.sql'),
+    'utf8'
+  ).toLowerCase()
+
+  assert.match(migration, /create table if not exists public\.editorial_studio_published_snapshots/)
+  assert.match(migration, /before update or delete[\s\S]+prevent_studio_snapshot_mutation/)
+  assert.match(migration, /create table if not exists public\.editorial_studio_publications/)
+  assert.match(migration, /using \(exists \([\s\S]+public\.editorial_studio_publications/)
+  assert.match(migration, /create or replace function public\.publish_editorial_studio_article/)
+  assert.match(migration, /requested_article_id is null and btrim\(new\.title\) = ''/)
+  assert.match(migration, /for update/)
+  assert.match(migration, /on conflict \(article_id\) do update/)
+  assert.match(migration, /revoke all on function public\.publish_editorial_studio_article[\s\S]+from public, anon, authenticated/)
+  assert.match(migration, /grant execute on function public\.publish_editorial_studio_article[\s\S]+to service_role/)
 })
