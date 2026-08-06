@@ -1,5 +1,11 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.7 | Status: Live | Terakhir diperbarui: 06-08-2026
+> Versi: 2.10 | Status: Live | Terakhir diperbarui: 06-08-2026
+>
+> Perubahan v2.10 (Sesi #60): Server revision, outbox sinkronisasi, dan konflik optimistis Editorial Studio.
+>
+> Perubahan v2.9 (Sesi #59): Autosave local-first, recovery, snapshot, dan proteksi konflik Editorial Studio.
+>
+> Perubahan v2.8 (Sesi #58): Kontrak canonical JSON v1 dan laboratorium terisolasi Editorial Studio.
 >
 > Perubahan v2.7 (Sesi #55): UI/UX dan naskah publik Pusat Privasi berlapis dengan publication gate dan status noindex.
 >
@@ -1612,6 +1618,97 @@ Format pengisian:
 
 ---
 
+[06-08-2026] KEPUTUSAN: Editorial Studio memakai canonical JSON milik Saintifiks; TipTap hanya mesin penyunting ← SESI #58
+              KONFIRMASI OWNER: Owner menyetujui implementasi Phase 0/POC multi-file setelah menerima hasil deep
+                               research dan prinsip "power maksimal di belakang layar, kesederhanaan maksimal di depan".
+              ALASAN: Markdown tidak cukup untuk menjaga hubungan blok dengan sumber, catatan, media, dataset,
+                      visualisasi, komentar editorial, dan revisi. Sebaliknya, menjadikan format internal TipTap sebagai
+                      sumber kebenaran akan mengikat data Saintifiks pada satu library editor.
+              KONTRAK DOKUMEN V1:
+                - Dokumen dimiliki Saintifiks sebagai wrapper versioned berisi `schemaVersion`, `documentId`, dan root
+                  JSON semantik. TipTap menerima/melepaskan root melalui adapter, bukan menjadi database konten.
+                - Paragraf, heading, list, callout, tabel, media, sitasi, catatan kaki, rumus, chart, dan dataset memiliki
+                  stable ID serta versi node untuk anchoring dan migrasi deterministik di masa depan.
+                - Validator memakai allowlist node/mark, menolak raw HTML dan protokol URL berbahaya, mendeteksi ID
+                  duplikat, serta membatasi jumlah dan kedalaman node. Media dirujuk melalui `assetId`, bukan URL bebas.
+                - Renderer v2 memetakan JSON langsung ke elemen React aman; ia tidak memakai `dangerouslySetInnerHTML`
+                  dan tidak melewati Markdown sebagai format perantara.
+              BATAS PHASE 0:
+                - `/dashboard/studio-lab` adalah laboratorium admin yang tidak ditautkan ke navigasi, tidak menyimpan
+                  ke database, tidak memiliki autosave, dan tidak dapat menerbitkan artikel.
+                - Artikel produksi lama tetap Markdown dan seluruh Red Zone artikel lama tidak disentuh. Migrasi harus
+                  additive, renderer baru harus paralel, dan tidak boleh ada big-bang conversion.
+                - Publish format v2 baru boleh dibuka setelah autosave local-first, recovery, immutable revision,
+                  backup, dan publish atomik selesai serta diuji. Durability mendahului publication.
+              ALTERNATIF DITOLAK: Menambal textarea produksi secara langsung; TipTap JSON tanpa wrapper/versi milik
+                                  Saintifiks; mengonversi seluruh Markdown lama sekaligus; mengaktifkan publish pada POC;
+                                  memakai class legacy Opinions yang tidak terjamin terkompilasi.
+
+---
+
+[06-08-2026] KEPUTUSAN: Durability lokal Editorial Studio mendahului sinkronisasi dan publication ← SESI #59
+              KONFIRMASI OWNER: Owner memerintahkan kelanjutan setelah Phase 0 selesai; implementasi tetap dibatasi
+                               pada laboratorium terisolasi tanpa schema, API, atau route artikel produksi.
+              ALASAN: Editor yang nyaman tetapi dapat kehilangan tulisan belum layak dipakai. Sebelum server sync dan
+                      publish dibuka, naskah harus selamat dari reload, tab tertutup, koneksi offline, dan tab ganda
+                      tanpa menyampaikan status penyimpanan yang menyesatkan.
+              PENYIMPANAN LOKAL:
+                - IndexedDB `saintifiks-editorial-studio` menyimpan current draft dan snapshot immutable terpisah;
+                  `localStorage` tidak dipakai untuk isi artikel.
+                - Autosave berjalan 1 detik setelah perubahan dan saat halaman disembunyikan. `Ctrl/Cmd+S` serta tombol
+                  Simpan sekarang membuat checkpoint eksplisit. Status selalu menyebut "di perangkat", bukan "aman".
+                - Setiap write membaca revision terakhir dan membandingkannya dengan expected revision dalam transaksi
+                  read-write yang sama. Mismatch menghentikan autosave agar revisi tab lain tidak tertimpa.
+                - SHA-256 fingerprint mendeteksi perubahan/checksum; fallback non-kriptografis hanya dipakai bila
+                  Web Crypto tidak tersedia. Fingerprint bukan enkripsi dan tidak boleh dipromosikan sebagai keamanan data.
+              RECOVERY DAN HISTORI:
+                - Draf terakhir dipulihkan otomatis ketika laboratorium dibuka kembali. Offline tidak menghentikan
+                  penyimpanan perangkat.
+                - Snapshot dibuat pada save pertama, save manual, restore, dan maksimal setiap lima menit autosave;
+                  retensi dibatasi 50 snapshot per dokumen. Restore selalu membuat revisi baru.
+                - BroadcastChannel memberi peringatan keberadaan tab lain. Revision check IndexedDB tetap menjadi
+                  pengaman otoritatif; saat konflik pengguna memilih memuat versi terbaru atau membuat naskah salinan.
+                - Penghapusan draf beserta snapshot lokal memerlukan konfirmasi eksplisit dan tidak menghapus isi layar.
+              BATAS PHASE 1: Belum ada Supabase sync, server revision, outbox, backup object storage, kolaborasi,
+                             atau publish. IndexedDB satu perangkat bukan backup dan belum memenuhi durability produksi.
+              ALTERNATIF DITOLAK: Menyimpan body di localStorage; autosave tanpa revision compare; last-write-wins antar-tab;
+                                  menampilkan status "tersimpan" tanpa menyebut scope perangkat; membuka publish sebelum
+                                  server revision, recovery, dan backup selesai.
+
+---
+
+[06-08-2026] KEPUTUSAN: Sinkronisasi draf Editorial Studio memakai server revision + outbox; publish tetap tertutup ← SESI #60
+              KONFIRMASI OWNER: Owner memerintahkan kelanjutan Phase 2 setelah Phase 1 selesai dan menerima kebutuhan
+                               migration Supabase manual. Scope tetap tidak mencakup penerbitan atau editor produksi.
+              ALASAN: Penyimpanan perangkat harus tetap menjadi garis pertahanan pertama, tetapi naskah juga perlu
+                      salinan lintas-reload/server yang tidak bergantung pada keberhasilan jaringan setiap saat.
+                      Sinkronisasi tidak boleh memakai last-write-wins karena dapat menghapus pekerjaan tanpa disadari.
+              KONTRAK SERVER:
+                - `editorial_studio_documents` menyimpan pointer revisi terkini; `editorial_studio_revisions` menyimpan
+                  revision append-only secara logis, mutation UUID unik, base revision, canonical document, dan SHA-256.
+                - RLS aktif dan dipaksa pada kedua tabel. `anon`/`authenticated` tidak memperoleh akses langsung;
+                  hanya API admin tervalidasi yang memakai `service_role` untuk memanggil satu RPC sinkronisasi.
+                - RPC memakai advisory transaction lock, idempotency berdasarkan mutation ID, row lock, dan optimistic
+                  revision compare. Request duplikat aman; mismatch mengembalikan versi server tanpa menimpa perangkat.
+                - Fingerprint memakai serialisasi JSON kanonikal dengan kunci terurut agar round-trip PostgreSQL `jsonb`
+                  tidak menghasilkan checksum palsu hanya karena urutan kunci berubah.
+              OUTBOX DAN UX:
+                - IndexedDB naik ke storage v2 secara kompatibel; record v1 tetap dapat dipulihkan. Satu outbox per
+                  dokumen menggabungkan perubahan tertunda terbaru, sementara snapshot lokal menjaga histori antara.
+                - Local save selalu diselesaikan lebih dulu. Offline/network/server failure mempertahankan outbox dan
+                  menampilkan scope status terpisah: perangkat versus server; kegagalan server tidak menghentikan menulis.
+                - Conflict server menghentikan drain otomatis. Pengguna harus memilih versi server atau menjadikan isi
+                  perangkat sebagai dokumen baru; tidak ada tombol overwrite terselubung.
+              AKTIVASI DATABASE: Migration dijalankan owner melalui Supabase SQL Editor pada 06-08-2026 dan selesai
+                                  dengan hasil `Success. No rows returned`. Verifikasi UI runtime menunggu branch preview.
+              BATAS PHASE 2: Belum ada publish, editor artikel produksi, object-storage backup, kolaborasi realtime,
+                             komentar editorial, atau konversi artikel Markdown lama. Server revision bukan pengganti
+                             backup database.
+              ALTERNATIF DITOLAK: Last-write-wins; request server tanpa outbox; akses tabel dari anon/authenticated;
+                                  checksum bergantung urutan kunci; mengaktifkan publish bersamaan dengan fondasi sync.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -2284,6 +2381,116 @@ Status akhir: TypeScript strict + unused check bersih; `next lint` tanpa error b
               LikeButton Red Zone); production build berhasil compile, lint, typecheck, dan menghasilkan 35 halaman,
               lalu berhenti pada prerender karena environment Supabase lokal tidak tersedia.
 Next step: Tinjau diff, commit/push branch setelah disetujui, lalu lanjutkan riset aras idealita editor Saintifiks.
+---
+
+[06-08-2026] SESI #58 — EDITORIAL STUDIO PHASE 0
+Branch: codex/editorial-studio-phase-0 (diturunkan dari codex/dead-code-cleanup)
+Tujuan sesi: Membuktikan kontrak dokumen, integrasi TipTap, dan renderer baru secara terisolasi sebelum menyentuh
+              penyimpanan, publishing, schema produksi, atau Red Zone artikel lama.
+Yang dikerjakan:
+  [KONTRAK DOKUMEN]
+  - `lib/editorial-studio/document.ts`: canonical JSON v1, stable ID, normalizer, runtime validator, jalur migrasi,
+    batas 20.000 node/64 tingkat, allowlist node/mark, validasi URL, dan pemeriksaan ID duplikat.
+  - `lib/editorial-studio/fixture.ts`: golden fixture mencakup teks/mark, sitasi, footnote, callout, list, figure,
+    tabel, rumus, chart, dan dataset tanpa bergantung pada database.
+
+  [POC EDITOR DAN RENDERER]
+  - `components/editorial-studio/`: extension semantik TipTap, toolbar berbahasa Indonesia, ID normalization,
+    kanvas WYSIWYG berbasis token V3, serta renderer React exhaustif tanpa raw HTML.
+  - `app/(admin)/dashboard/studio-lab/page.tsx`: laboratorium di balik admin guard dengan mode tulis/render,
+    status validasi, inspeksi JSON, dan uji simpan–muat in-memory. Route tidak ditambahkan ke navigasi admin.
+  - POC secara eksplisit menampilkan status "Tidak disimpan" dan tidak mempunyai aksi publish.
+
+  [VERIFIKASI]
+  - Sepuluh contract test memakai Node test runner: golden fixture, round-trip identik, stable ID bersarang,
+    preservasi ID, unsafe URL/raw node rejection, duplicate ID, content model, migrasi v0, dokumen 5.000 paragraf,
+    dan hard limit.
+  - TypeScript strict + unused check bersih; lint tanpa error baru; Tailwind berhasil mengompilasi selector dan token
+    Studio. Tidak ada class legacy/static hex dan tidak ada file Red Zone yang berubah.
+
+Keputusan baru: Lihat Seksi 11 — canonical JSON milik Saintifiks; TipTap hanya mesin penyunting.
+Status akhir: POC terisolasi selesai di source. Production build lokal berhenti sebelum bundling Studio karena instalasi
+              pnpm tidak me-resolve import CSS existing `katex` dan `highlight.js`; ini baseline dependency yang sama
+              dengan Sesi #53 dan tidak diperbaiki di scope ini.
+Next step: Verifikasi interaksi POC melalui branch preview, lalu lanjutkan Phase 1 persistence terisolasi hanya setelah
+           owner menyetujui model dokumen dan ergonomi editor.
+---
+
+[06-08-2026] SESI #59 — EDITORIAL STUDIO PHASE 1 LOCAL-FIRST
+Branch: codex/editorial-studio-phase-0
+Tujuan sesi: Menambahkan perlindungan kehilangan tulisan pada Studio Lab tanpa menyentuh database, publishing,
+              route artikel produksi, atau Red Zone.
+Yang dikerjakan:
+  [PERSISTENCE CONTRACT]
+  - `lib/editorial-studio/persistence.ts`: repository IndexedDB versioned untuk current draft dan snapshot, SHA-256
+    fingerprint, parser record fail-closed, revision compare atomik, autosnapshot lima menit, serta retensi 50 versi.
+  - Current draft menyimpan judul, dek, canonical document, revision, writer, checksum, dan waktu save. Snapshot selalu
+    append-only; restore tidak memodifikasi snapshot lama.
+
+  [AUTOSAVE DAN RECOVERY]
+  - `components/editorial-studio/useStudioDraftPersistence.ts`: hydrate draf terakhir, debounce autosave satu detik,
+    save manual/Ctrl-Cmd+S, save saat tab disembunyikan, status online/offline, dan error state yang tidak menyembunyikan
+    fakta bahwa isi belum terkirim ke server.
+  - BroadcastChannel mendeteksi tab lain; optimistic revision check mencegah lost update. Konflik menawarkan load latest
+    atau salinan documentId baru, bukan overwrite diam-diam.
+
+  [UI LAB]
+  - Status bar membedakan loading, dirty, saving, saved-on-device, error, unavailable, dan conflict.
+  - Recovery otomatis, histori lokal, restore non-destruktif, reset fixture, serta penghapusan lokal dua langkah tersedia
+    dalam bahasa pengguna. Tidak ada klaim backup, cloud sync, atau publish.
+
+  [VERIFIKASI]
+  - Contract test bertambah dari 10 menjadi 15: fingerprint deterministik, parser corrupt metadata/document mismatch,
+    interval checkpoint, snapshot retention, dan allowlist alasan snapshot ditambahkan ke pengujian Phase 0.
+  - Runtime IndexedDB diuji di browser melalui route sementara: save, read-after-write, revision increment, stale-writer
+    conflict, append snapshot, dan delete seluruhnya lulus. Route dan environment dummy dihapus setelah pengujian.
+  - TypeScript strict + unused check dan lint dijalankan; tidak ada error/warning baru di Studio.
+
+Keputusan baru: Lihat Seksi 11 — durability lokal mendahului sinkronisasi dan publication.
+Status akhir: Phase 1 terisolasi selesai; 15 contract test dan transaksi IndexedDB browser lulus. Verifikasi memakai
+              status DOM tekstual, bukan screenshot sebagai artefak/bukti. Admin UI lengkap tetap memerlukan branch preview.
+Next step: Uji save–reload, offline, restore, dan dua tab pada Studio Lab melalui branch preview yang memiliki Supabase;
+           setelah lolos, desain server revision/outbox Phase 2 tanpa mengaktifkan publish.
+---
+
+[06-08-2026] SESI #60 — EDITORIAL STUDIO PHASE 2 SERVER REVISION + OUTBOX
+Branch: codex/editorial-studio-phase-0
+Tujuan sesi: Menambahkan sinkronisasi draf server yang tahan offline, idempoten, dan conflict-safe pada Studio Lab
+              tanpa membuka penerbitan atau menyentuh editor/artikel produksi dan Red Zone.
+Yang dikerjakan:
+  [DATABASE DAN KEAMANAN]
+  - Migration additive `supabase/migrations/20260806230000_editorial_studio_draft_sync.sql` menambahkan tabel dokumen
+    dan revisi Studio, indeks, RLS fail-closed, serta satu RPC khusus `service_role`.
+  - RPC menserialisasi request per dokumen, menerima mutation UUID idempoten, membandingkan base revision secara
+    optimistis, dan mengembalikan revisi server ketika konflik. Tidak ada kolom, status, atau fungsi publish.
+  - API `POST /api/admin/editorial-studio/sync` memverifikasi admin di server, memvalidasi ulang canonical document,
+    membatasi payload, menghitung SHA-256 sendiri, memakai cache no-store, dan tidak mengirim detail error database.
+
+  [OUTBOX LOCAL-FIRST]
+  - IndexedDB naik dari v1 ke v2 dengan store outbox; draf/snapshot Phase 1 tetap terbaca dan bermigrasi saat write.
+  - Setiap local save mengganti satu pending mutation terbaru per dokumen. Acknowledgement menghapus hanya mutation
+    yang cocok; jika tulisan baru muncul saat request berjalan, base server outbox baru dimajukan tanpa menghapusnya.
+  - Retry jaringan mempertahankan isi/outbox, berhenti ketika offline atau konflik, dan tidak pernah mengubah kegagalan
+    menjadi status tersinkron. Fingerprint JSON kanonikal tetap kompatibel dengan checksum Phase 1 lama.
+
+  [UI KONFLIK DAN STATUS]
+  - Status perangkat dan status server dipisahkan. UI membedakan idle, queued, syncing, synced, offline, conflict,
+    dan error; editor tetap dapat digunakan ketika server gagal.
+  - Konflik menawarkan dua aksi eksplisit: gunakan revisi server atau simpan versi perangkat sebagai documentId baru.
+    Resolusi dipagari dari klik ganda; delete lokal menjelaskan bahwa server tidak ikut dihapus dan outbox ikut hilang.
+  - Studio Lab tetap tersembunyi dari navigasi admin dan menyatakan secara eksplisit bahwa publish belum tersedia.
+
+  [VERIFIKASI]
+  - Contract test bertambah menjadi 23: migrasi record v1, metadata server all-or-none, canonical checksum lintas urutan
+    kunci, parser outbox, request/response sync, serta invariant keamanan/idempotency migration ditambahkan.
+  - TypeScript strict bersih; lint tanpa error baru (satu warning pre-existing di LikeButton Red Zone); Tailwind
+    berhasil dikompilasi; audit source tidak menemukan static hex/class legacy di Studio atau perubahan Red Zone.
+
+Keputusan baru: Lihat Seksi 11 — server revision + outbox mendahului publication.
+Status akhir: Implementasi source selesai dan migration Supabase berhasil dijalankan owner. Verifikasi runtime menunggu
+              branch preview yang memakai environment admin sebenarnya; belum ada publish.
+Next step: Commit/push branch setelah persetujuan owner, uji online/offline/dua browser di branch preview, lalu baru
+           rancang Phase 3 attachment pipeline dan recovery operasional tanpa menghubungkan publish.
 ---
 
 ## 13. REFERENSI & RESOURCE
