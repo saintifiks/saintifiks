@@ -2261,6 +2261,31 @@ Next step: Jalankan migration melalui Supabase SQL Editor, merge branch, lalu si
            uji melalui Dashboard → Konten → Halaman Situs sebelum mengelola halaman lain.
 ---
 
+[06-08-2026] SESI #57 — DEAD CODE CLEANUP
+Branch: codex/dead-code-cleanup
+Tujuan sesi: Menghapus kode dan aset yang terbukti tidak memiliki pemakai tanpa mengubah perilaku aktif, API dorman,
+              Red Zone, atau migrasi design token.
+Yang dikerjakan:
+  [KODE MATI]
+  - Footer layout lama, helper textarea `insertAtCursor`/`insertFootnote`, action `reviewCorrection`, dan named
+    re-export footer yang tidak memiliki caller dihapus; helper tabel Markdown dan alur submit koreksi dipertahankan.
+  - Endpoint lama `/api/likes/count` dihapus setelah source dan riwayat proyek mengonfirmasi fetch jumlah like sudah
+    dikeluarkan dari UI. Endpoint likes utama dan seluruh API dorman lainnya dipertahankan.
+
+  [CSS DAN ASET]
+  - Sistem class `.btn-*`/`.input-field` dan animasi like, bottom sheet, serta dropdown lama dihapus setelah tidak
+    ditemukan pemakai pada source maupun CSS hasil kompilasi.
+  - Tujuh aset di folder `logo/` dan dua simbol duplikat/tidak terpakai di `public/logo/` dihapus; `app/icon.svg`
+    tetap menjadi ikon aplikasi.
+
+Keputusan baru: Tidak ada keputusan arsitektur baru. Migrasi 1.047 penggunaan class legacy ke token V3 tetap menjadi
+                pekerjaan terpisah; API admin Opinions, chart update/delete, dan profil publik tidak ikut dihapus.
+Status akhir: TypeScript strict + unused check bersih; `next lint` tanpa error baru (satu warning pre-existing di
+              LikeButton Red Zone); production build berhasil compile, lint, typecheck, dan menghasilkan 35 halaman,
+              lalu berhenti pada prerender karena environment Supabase lokal tidak tersedia.
+Next step: Tinjau diff, commit/push branch setelah disetujui, lalu lanjutkan riset aras idealita editor Saintifiks.
+---
+
 ## 13. REFERENSI & RESOURCE
 
 | Resource | URL | Kegunaan |

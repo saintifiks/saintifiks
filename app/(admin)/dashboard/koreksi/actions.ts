@@ -31,27 +31,3 @@ export async function submitCorrection(data: {
 
   return { sukses: true }
 }
-
-// Admin approve/reject koreksi
-export async function reviewCorrection(correction_id: string, status: 'approved' | 'rejected') {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  const adminEmail = process.env.ADMIN_EMAIL
-  
-  if (!user || user.email !== adminEmail) {
-    return { error: 'Hanya admin yang boleh mereview koreksi.' }
-  }
-
-  const { error } = await supabase
-    .from('article_corrections')
-    .update({ 
-      status,
-      approved_at: status === 'approved' ? new Date().toISOString() : null 
-    })
-    .eq('id', correction_id)
-
-  if (error) return { error: error.message }
-
-  return { sukses: true }
-}
