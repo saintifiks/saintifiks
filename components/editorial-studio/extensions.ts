@@ -3,6 +3,7 @@ import type { StudioJsonNode, StudioNodeType } from '@/lib/editorial-studio/docu
 import {
   STUDIO_SCHEMA_VERSION,
   createStudioId,
+  nodeRequiresStableId,
   normalizeStudioRoot,
 } from '@/lib/editorial-studio/document'
 
@@ -195,17 +196,39 @@ function createReferenceNode(options: {
   })
 }
 
-export const FigureNode = createReferenceNode({
+export const FigureNode = Node.create({
   name: 'figure',
-  tag: 'figure',
-  dataAttribute: 'data-studio-figure',
-  attributes: {
-    assetId: { default: null },
-    alt: { default: null },
-    caption: { default: null },
-    credit: { default: null },
+  group: 'block',
+  atom: true,
+  selectable: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      assetId: { default: null },
+      src: { default: null },
+      alt: { default: null },
+      caption: { default: null },
+      credit: { default: null },
+    }
   },
-  label: (attrs) => `Gambar — ${attrs.alt ?? 'tanpa deskripsi'}`,
+
+  parseHTML() {
+    return [{ tag: 'figure[data-studio-figure]' }]
+  },
+
+  renderHTML({ node, HTMLAttributes }) {
+    const caption = [node.attrs.caption, node.attrs.credit].filter(Boolean).join(' — ')
+    return [
+      'figure',
+      mergeAttributes(HTMLAttributes, {
+        'data-studio-figure': '',
+        contenteditable: 'false',
+      }),
+      ['img', { src: node.attrs.src, alt: node.attrs.alt ?? '' }],
+      ...(caption ? [['figcaption', {}, caption]] : []),
+    ]
+  },
 })
 
 export const EquationNode = createReferenceNode({
@@ -241,7 +264,31 @@ export function createSemanticNodeAttrs(nodeType: StudioNodeType) {
 
 export function ensureEditorNodeIds(editor: Editor): StudioJsonNode {
   const currentRoot = editor.getJSON() as StudioJsonNode
-  const normalizedRoot = normalizeStudioRoot(currentRoot)
+  const rootWithIds = normalizeStudioRoot(currentRoot)
+  const seenIds = new Set<string>()
+
+  function ensureUniqueIds(node: StudioJsonNode): StudioJsonNode {
+    let attrs = node.attrs ? { ...node.attrs } : undefined
+    if (nodeRequiresStableId(node.type)) {
+      const currentId = typeof attrs?.id === 'string' ? attrs.id : ''
+      if (!currentId || seenIds.has(currentId)) {
+        attrs = {
+          ...attrs,
+          id: createStudioId(node.type),
+          schemaVersion: STUDIO_SCHEMA_VERSION,
+        }
+      }
+      seenIds.add(String(attrs?.id))
+    }
+
+    return {
+      ...node,
+      ...(attrs ? { attrs } : {}),
+      ...(node.content ? { content: node.content.map(ensureUniqueIds) } : {}),
+    }
+  }
+
+  const normalizedRoot = ensureUniqueIds(rootWithIds)
 
   if (JSON.stringify(currentRoot) !== JSON.stringify(normalizedRoot)) {
     const selection = editor.state.selection

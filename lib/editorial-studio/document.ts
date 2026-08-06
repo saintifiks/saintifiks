@@ -43,10 +43,22 @@ export type StudioJsonNode = {
   text?: string
 }
 
+export type StudioArticleMetadata = {
+  kind: 'article'
+  articleId: string | null
+  slug: string
+  coverImageUrl: string | null
+  category: string
+  kicker: string
+  coverIllustrator: string
+  country: string
+}
+
 export type StudioDocument = {
   schemaVersion: typeof STUDIO_SCHEMA_VERSION
   documentId: string
   root: StudioJsonNode
+  article?: StudioArticleMetadata
 }
 
 export type StudioValidationIssue = {
@@ -111,14 +123,10 @@ const TOP_LEVEL_BLOCKS = new Set<StudioNodeType>([
   'datasetReference',
   'table',
 ])
-const LIST_ITEM_BLOCKS = new Set<StudioNodeType>([
-  'paragraph',
-  'blockquote',
-  'bulletList',
-  'orderedList',
-  'codeBlock',
-  'callout',
-])
+// Selaras dengan content model TipTap `listItem` (`paragraph block*`).
+// Dengan demikian gambar, rumus, tabel, atau heading yang sah dibuat dari UI
+// tidak berubah menjadi dokumen invalid hanya karena berada di dalam daftar.
+const LIST_ITEM_BLOCKS = TOP_LEVEL_BLOCKS
 const ALLOWED_CHILDREN: Partial<Record<StudioNodeType, ReadonlySet<StudioNodeType>>> = {
   doc: TOP_LEVEL_BLOCKS,
   paragraph: INLINE_NODES,
@@ -203,13 +211,51 @@ export function normalizeStudioRoot(
 
 export function createStudioDocument(
   root: StudioJsonNode = { type: 'doc', content: [{ type: 'paragraph' }] },
-  options: { documentId?: string; idFactory?: StudioIdFactory } = {}
+  options: {
+    documentId?: string
+    idFactory?: StudioIdFactory
+    article?: StudioArticleMetadata
+  } = {}
 ): StudioDocument {
   const idFactory = options.idFactory ?? createStudioId
   return {
     schemaVersion: STUDIO_SCHEMA_VERSION,
     documentId: options.documentId ?? idFactory('document'),
     root: normalizeStudioRoot(root, idFactory),
+    ...(options.article ? { article: { ...options.article } } : {}),
+  }
+}
+
+function validateArticleMetadata(value: unknown, issues: StudioValidationIssue[]) {
+  if (value === undefined) return
+  if (!isRecord(value) || value.kind !== 'article') {
+    pushIssue(issues, '$.article', 'Metadata artikel tidak valid.')
+    return
+  }
+
+  const limits: Record<string, number> = {
+    slug: 220,
+    category: 120,
+    kicker: 240,
+    coverIllustrator: 180,
+    country: 120,
+  }
+  for (const [key, limit] of Object.entries(limits)) {
+    if (typeof value[key] !== 'string' || value[key].length > limit) {
+      pushIssue(issues, `$.article.${key}`, `${key} harus berupa teks maksimal ${limit} karakter.`)
+    }
+  }
+  if (value.articleId !== null && typeof value.articleId !== 'string') {
+    pushIssue(issues, '$.article.articleId', 'articleId harus berupa UUID atau null.')
+  }
+  if (typeof value.articleId === 'string' && !/^[0-9a-f-]{36}$/i.test(value.articleId)) {
+    pushIssue(issues, '$.article.articleId', 'articleId tidak berbentuk UUID.')
+  }
+  if (value.coverImageUrl !== null && typeof value.coverImageUrl !== 'string') {
+    pushIssue(issues, '$.article.coverImageUrl', 'coverImageUrl harus berupa URL atau null.')
+  }
+  if (typeof value.coverImageUrl === 'string' && value.coverImageUrl) {
+    validateUrl(value.coverImageUrl, '$.article.coverImageUrl', issues)
   }
 }
 
@@ -339,6 +385,7 @@ export function validateStudioDocument(input: unknown): StudioValidationResult {
   if (!isNonEmptyString(input.documentId)) {
     pushIssue(issues, '$.documentId', 'documentId wajib diisi.')
   }
+  validateArticleMetadata(input.article, issues)
 
   function visit(nodeInput: unknown, path: string, depth: number) {
     nodeCount += 1

@@ -40,6 +40,20 @@ type StudioChannelMessage =
   | { type: 'leaving'; writerId: string }
   | { type: 'saved'; writerId: string; revision: number }
 
+function copyDocument(content: StudioDraftContent): StudioDraftContent['document'] {
+  return {
+    ...content.document,
+    documentId: createStudioId('document'),
+    ...(content.document.article ? {
+      article: {
+        ...content.document.article,
+        articleId: null,
+        slug: '',
+      },
+    } : {}),
+  }
+}
+
 function writerId() {
   return `writer-${createStudioId('document')}`
 }
@@ -319,10 +333,7 @@ export function useStudioDraftPersistence({
     const copy: StudioDraftContent = {
       ...current,
       title: current.title ? `${current.title} — salinan` : 'Naskah tanpa judul — salinan',
-      document: {
-        ...current.document,
-        documentId: createStudioId('document'),
-      },
+      document: copyDocument(current),
     }
     setConflict(null)
     setState('dirty')
@@ -375,10 +386,7 @@ export function useStudioDraftPersistence({
     const copy: StudioDraftContent = {
       ...current,
       title: current.title ? `${current.title} — salinan` : 'Naskah tanpa judul — salinan',
-      document: {
-        ...current.document,
-        documentId: createStudioId('document'),
-      },
+      document: copyDocument(current),
     }
     setState('dirty')
     setErrorMessage(null)

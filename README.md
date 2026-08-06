@@ -1,7 +1,9 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.10 | Status: Live | Terakhir diperbarui: 06-08-2026
+> Versi: 2.12 | Status: Live | Terakhir diperbarui: 06-08-2026
 >
-> Perubahan v2.10 (Sesi #60): Server revision, outbox sinkronisasi, dan konflik optimistis Editorial Studio.
+> Perubahan v2.12 (Sesi #62): Editorial Studio menjadi editor artikel produksi dengan publish snapshot atomik dan fallback Markdown.
+>
+> Perubahan v2.11 (Sesi #61): Writer Surface Editorial Studio yang fokus menulis, aksesibel, dan tetap terisolasi dari produksi.
 >
 > Perubahan v2.9 (Sesi #59): Autosave local-first, recovery, snapshot, dan proteksi konflik Editorial Studio.
 >
@@ -1709,6 +1711,66 @@ Format pengisian:
 
 ---
 
+[06-08-2026] KEPUTUSAN: Phase 3A memakai writer-first surface dengan progressive disclosure ← SESI #61
+              KONFIRMASI OWNER: Owner memerintahkan kelanjutan Phase 3A setelah Phase 0–2 digabung ke `main`. Scope
+                               tetap pada `/dashboard/studio-lab`; editor artikel produksi dan Red Zone tidak disentuh.
+              ALASAN: Fondasi dokumen dan durability sudah tersedia, tetapi pengalaman menulis masih terasa seperti
+                      laboratorium teknis. Ruang kerja harus mendekati ergonomi Paragraph/Substack tanpa menyalin
+                      fitur brand, komunitas, monetisasi, atau distribusi yang belum dibutuhkan Saintifiks.
+              WRITER SURFACE:
+                - Judul, dek, dan isi berada dalam satu kanvas editorial lapang. Toolbar utama sticky dan ringkas;
+                  format kontekstual muncul saat teks dipilih; slash menu dapat dicari serta dikendalikan dengan
+                  Arrow Up/Down, Enter, dan Escape.
+                - H1 dikhususkan untuk judul artikel. Isi menyediakan H2/H3, teks, daftar, kutipan, callout, kode,
+                  persamaan, divider, footnote, tabel, referensi gambar, sitasi, dataset, dan chart Saintifiks.
+                - Kontrol teknis—status perangkat/server, integritas dokumen, canonical JSON, histori, pemulihan,
+                  reset, dan penghapusan lokal—dipindahkan ke panel `Alat naskah`, bukan memenuhi permukaan menulis.
+                - Editor dimulai sebagai draf kosong; status penyimpanan tetap menyebut scope perangkat dan server.
+                  Preview memakai renderer canonical yang sama, sehingga bentuk naskah tidak dipalsukan oleh preview.
+              INTEGRITAS DAN AKSESIBILITAS:
+                - Transaksi editor memperbaiki stable ID yang hilang atau terduplikasi setelah block split.
+                - Target interaksi minimum 44px, focus-visible, nama aksesibel pada kontrol ikon desktop/seluler,
+                  dialog ber-focus trap, dan Escape untuk menutup permukaan sementara dipertahankan.
+                - Implementasi memakai ekstensi TipTap yang sudah terpasang serta menu milik Saintifiks; tidak ada
+                  dependency baru atau ketergantungan pada komponen menu opsional.
+              BATAS PHASE 3A: Belum ada upload attachment, object-storage pipeline, kolaborasi, newsletter/paywall,
+                               publish, migrasi artikel Markdown lama, atau penggantian `/dashboard/artikel/baru`.
+              ALTERNATIF DITOLAK: Menyalin seluruh fitur commerce/community Paragraph dan Substack; menampilkan semua
+                                  blok sebagai toolbar permanen; tombol upload/media palsu; alignment arbitrer;
+                                  memindahkan Studio ke editor produksi sebelum writer surface dan durability diuji.
+
+---
+
+[06-08-2026] KEPUTUSAN: Editor produksi memakai canonical Studio + snapshot publik immutable ← SESI #62
+              KONFIRMASI OWNER: Owner memberi izin eksplisit untuk integrasi multi-file, perubahan Red Zone
+                               `app/(admin)/dashboard/artikel/`, dan penyelesaian alur yang benar-benar dapat dipakai
+                               sebelum branch dipush.
+              SOURCE OF TRUTH:
+                - Draf Studio tetap local-first dan tersinkron sebagai revision append-only. Metadata artikel—identitas,
+                  slug, cover, kategori, kicker, kredit ilustrasi, dan negara—ikut berada di canonical document.
+                - Publish hanya menerima revisi server yang tepat dan lolos preflight. Satu transaksi PostgreSQL membuat
+                  atau memakai snapshot immutable, memindahkan pointer publik, lalu memperbarui fallback Markdown dan
+                  metadata `articles`. Kegagalan tidak mengubah versi publik yang sedang tayang.
+                - Halaman publik melakukan dual-read: snapshot canonical bila pointer tersedia, selain itu renderer
+                  Markdown lama. Artikel lama tetap dapat diedit melalui adapter konservatif dan tidak wajib dimigrasi
+                  serentak.
+              WRITER WORKFLOW:
+                - `/dashboard/artikel/baru` dan `/dashboard/artikel/[id]/edit` memakai Editorial Studio; URL draf baru
+                  menyimpan `documentId` agar refresh sebelum publish tetap dapat memulihkan draf yang sama.
+                - Gambar isi, catatan kaki, rumus, tabel, cover, outline, preview, status simpan/sinkron, serta
+                  publish–unpublish mempunyai kontrol nyata; blok atom dapat dibuka ulang dan diperbarui.
+                - Sitasi, dataset, dan chart generasi baru disembunyikan dari editor produksi sampai workflow datanya
+                  selesai. Token chart artikel lama dipertahankan sebagai blok terstruktur dan menjadi blocker publish,
+                  sehingga visual lama tidak diam-diam berubah menjadi teks biasa.
+              KEAMANAN PUBLIKASI: Snapshot tidak dapat di-update/delete; client tidak mendapat hak mutasi; fungsi
+                                  publish/unpublish hanya executable oleh `service_role`; public hanya dapat membaca
+                                  snapshot yang sedang ditunjuk pointer publikasi.
+              STATUS OPERASIONAL: Migration `20260807010000_editorial_studio_publication.sql` berhasil diterapkan di
+                                  Supabase pada 6 Agustus 2026. Skema snapshot immutable, pointer publikasi, dan RPC
+                                  publish/unpublish telah tersedia untuk deployment Phase 3A.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -2491,6 +2553,78 @@ Status akhir: Implementasi source selesai dan migration Supabase berhasil dijala
               branch preview yang memakai environment admin sebenarnya; belum ada publish.
 Next step: Commit/push branch setelah persetujuan owner, uji online/offline/dua browser di branch preview, lalu baru
            rancang Phase 3 attachment pipeline dan recovery operasional tanpa menghubungkan publish.
+---
+
+[06-08-2026] SESI #61 — EDITORIAL STUDIO PHASE 3A WRITER SURFACE
+Branch: codex/editorial-studio-phase-3a
+Tujuan sesi: Mengubah Studio Lab dari permukaan laboratorium teknis menjadi ruang menulis editorial yang nyaman,
+              cepat, aksesibel, dan khas Saintifiks tanpa mengaktifkan publish atau mengganti editor produksi.
+Yang dikerjakan:
+  [RUANG MENULIS]
+  - `StudioEditor` disusun ulang menjadi kanvas judul–dek–isi dengan tipografi editorial, toolbar sticky, pemilih
+    gaya blok, format inline, word count, placeholder, dan toolbar kontekstual pada seleksi.
+  - Slash menu searchable menyediakan 16 perintah relevan Saintifiks, termasuk sitasi, dataset, chart, footnote,
+    equation, callout, tabel, dan referensi gambar. Navigasi keyboard dan ARIA listbox diterapkan.
+  - Stable ID blok dinormalisasi setiap transaksi agar split paragraph tidak menghasilkan dua node ber-ID sama.
+
+  [PROGRESSIVE DISCLOSURE]
+  - Header kerja memusatkan status draf, preview, simpan, dan akses ke alat naskah. Canonical JSON, integritas,
+    histori lokal, restore/reset, serta detail sinkronisasi dipindahkan ke panel samping ber-focus trap.
+  - Preview memakai `StudioRenderer` yang sama dengan kontrak dokumen. Draf baru tetap kosong dan seluruh alur
+    durability Phase 1–2—recovery, autosave, outbox, dan konflik—dipertahankan.
+  - Tombol ikon yang kehilangan nama ketika label visual disembunyikan pada breakpoint seluler diberi label aksesibel.
+
+  [VERIFIKASI]
+  - Runtime browser berbasis DOM/keyboard memverifikasi slash command H2, penghapusan query slash, stable ID unik,
+    toolbar seleksi, format bold, preview canonical, panel alat, Escape, serta kontrol seluler; tidak memakai screenshot.
+  - 23 contract test Studio lulus; TypeScript strict bersih; lint tidak menambah error/warning; Tailwind terkompilasi;
+    audit source tidak menemukan static hex, class legacy baru, mojibake baru, atau perubahan Red Zone artikel.
+
+Keputusan baru: Lihat Seksi 11 — writer-first surface memakai progressive disclosure dan tetap terisolasi.
+Status akhir: Source Phase 3A selesai pada Studio Lab. Editor produksi `/dashboard/artikel/baru` sengaja masih belum
+              berubah sampai owner meninjau Studio dan secara eksplisit menyetujui fase integrasi berikutnya.
+Next step: Review branch preview `/dashboard/studio-lab`; sesudah lolos, tetapkan Phase 3B untuk outline/find-replace,
+           paste normalization, dan attachment pipeline nyata tanpa membuka publish secara prematur.
+---
+
+[06-08-2026] SESI #62 — EDITORIAL STUDIO PRODUCTION RELEASE SLICE
+Branch: codex/editorial-studio-phase-3a
+Tujuan sesi: Menjadikan Writer Surface sebagai editor artikel produksi yang aman, mudah, dan utuh dari draf lama
+              sampai snapshot publik tanpa mengorbankan kompatibilitas artikel Markdown.
+Yang dikerjakan:
+  [EDITOR PRODUKSI]
+  - Route artikel baru/edit memakai `StudioLab` production. Metadata artikel, cover upload, slug otomatis, outline,
+    preview cover, status publikasi, preflight, dan publish–unpublish tersedia melalui progressive disclosure.
+  - Slash menu produksi hanya menawarkan blok yang benar-benar memiliki workflow. Gambar, footnote, dan equation
+    memakai dialog tervalidasi serta dapat diedit ulang; tabel memiliki kontrol tambah/hapus baris dan kolom.
+  - Paste HTML dinormalisasi dengan membuang script, iframe, event handler, class, dan inline style. Content model
+    canonical diselaraskan dengan TipTap untuk blok sah di dalam list item.
+
+  [DURABILITY DAN KOMPATIBILITAS]
+  - Metadata artikel ikut tersimpan dalam canonical JSON dan fingerprint/outbox yang sudah ada. `serverRevision`
+    diekspos ke UI agar publish selalu menunjuk revisi server yang tepat.
+  - Adapter Markdown mengimpor artikel lama secara konservatif dan menghasilkan fallback Markdown setiap publish.
+    Public page memakai snapshot Studio bila ada, lalu otomatis kembali ke renderer lama bila belum ada.
+  - Identitas draf baru dimasukkan ke query URL sehingga reload sebelum publish kembali ke `documentId` yang sama.
+
+  [PUBLIKASI ATOMIK]
+  - Migration menambahkan relasi Studio–article, snapshot immutable, pointer current-publication, RLS read-only, trigger
+    link draf, dan RPC service-role untuk publish/unpublish atomik.
+  - API admin memverifikasi auth, revisi, canonical schema, preflight, slug, dan hasil RPC; cache beranda, daftar
+    artikel, serta halaman artikel direvalidasi setelah perubahan publikasi.
+
+  [VERIFIKASI]
+  - Runtime browser tanpa screenshot memverifikasi penulisan, slug otomatis, metadata, menu produksi, pencarian dan
+    keyboard slash command, insert/edit equation, outline, preview, tabel 3x3 + tambah baris, publish preflight,
+    panel mobile, focus awal, Escape, dan pengembalian fokus.
+  - 30 contract test lulus; TypeScript strict bersih; lint tidak menambah warning baru. Warning `LikeButton` lama
+    tetap satu dan file Red Zone renderer/interaksi yang dilarang tidak diubah.
+
+Keputusan baru: Lihat Seksi 11 — canonical Studio + snapshot publik immutable dan dual-read legacy.
+Status akhir: Source release slice siap direview, belum dipush. Supabase migration berhasil diterapkan oleh owner dengan
+              hasil `Success. No rows returned`; database telah siap menerima alur publish/unpublish Phase 3A.
+Next step: Commit/push branch atas perintah owner agar preview deployment dapat dibangun, lalu lakukan smoke test publish
+           satu draf uji dan verifikasi URL publik pada environment preview.
 ---
 
 ## 13. REFERENSI & RESOURCE

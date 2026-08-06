@@ -205,22 +205,25 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
         </sup>
       )
     }
-    case 'figure':
+    case 'figure': {
+      const figureSource = safeHref(stringAttr(node, 'src'))
       return (
         <figure key={key} data-block-id={stableId} className="my-9">
-          <div
-            role="img"
-            aria-label={stringAttr(node, 'alt')}
-            className="flex min-h-56 items-center justify-center rounded-lg border border-dashed border-border-default/30 bg-surface-sunken/55 p-8 text-center"
-          >
-            <div>
-              <ImageIcon aria-hidden="true" className="mx-auto mb-3 text-text-tertiary" size={28} />
-              <p className="font-interface text-sm text-text-secondary">{stringAttr(node, 'alt')}</p>
-              <p className="mt-1 font-mono text-[10px] text-text-tertiary">
-                assetId: {stringAttr(node, 'assetId')}
-              </p>
+          {figureSource ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={figureSource} alt={stringAttr(node, 'alt')} className="h-auto w-full rounded-lg" />
+          ) : (
+            <div
+              role="img"
+              aria-label={stringAttr(node, 'alt')}
+              className="flex min-h-56 items-center justify-center rounded-lg border border-dashed border-border-default/30 bg-surface-sunken/55 p-8 text-center"
+            >
+              <div>
+                <ImageIcon aria-hidden="true" className="mx-auto mb-3 text-text-tertiary" size={28} />
+                <p className="font-interface text-sm text-text-secondary">{stringAttr(node, 'alt')}</p>
+              </div>
             </div>
-          </div>
+          )}
           {(stringAttr(node, 'caption') || stringAttr(node, 'credit')) && (
             <figcaption className="mt-3 font-interface text-caption text-text-secondary">
               {stringAttr(node, 'caption')}
@@ -229,6 +232,7 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
           )}
         </figure>
       )
+    }
     case 'equation':
       return (
         <figure key={key} data-block-id={stableId} className="my-8 rounded-lg bg-surface-sunken px-6 py-7 text-center">
@@ -338,7 +342,7 @@ export default function StudioRenderer({ document }: StudioRendererProps) {
   }
 
   return (
-    <article className="mx-auto max-w-content font-body text-body-base leading-reading text-text-primary">
+    <div className="mx-auto max-w-content font-body text-body-base leading-reading text-text-primary">
       {renderNode(document.root, context, 'document-root')}
       {footnotes.length > 0 && (
         <section aria-labelledby="studio-footnotes-title" className="mt-14 border-t border-border-default/25 pt-7">
@@ -360,6 +364,6 @@ export default function StudioRenderer({ document }: StudioRendererProps) {
           </ol>
         </section>
       )}
-    </article>
+    </div>
   )
 }

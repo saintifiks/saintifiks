@@ -43,6 +43,7 @@ export function useStudioServerSync({
 }: UseStudioServerSyncOptions) {
   const [state, setState] = useState<StudioServerSyncState>('idle')
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
+  const [serverRevision, setServerRevision] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [conflict, setConflict] = useState<StudioServerDraft | null>(null)
   const [resolvingConflict, setResolvingConflict] = useState(false)
@@ -68,6 +69,7 @@ export function useStudioServerSync({
         const draft = await getStudioDraft(requestedDocumentId)
         if (currentDocumentIdRef.current !== requestedDocumentId) return
         setLastSyncedAt(draft?.lastSyncedAt ?? null)
+        setServerRevision(draft?.serverRevision ?? null)
         setState(draft?.serverRevision ? 'synced' : 'idle')
         setErrorMessage(null)
         retryableRef.current = false
@@ -158,6 +160,7 @@ export function useStudioServerSync({
       )
       setConflict(null)
       setLastSyncedAt(parsedResponse.syncedAt)
+      setServerRevision(parsedResponse.serverRevision)
       setState('synced')
       setErrorMessage(null)
       retryableRef.current = false
@@ -196,6 +199,7 @@ export function useStudioServerSync({
     setResolvingConflict(false)
     setErrorMessage(null)
     setLastSyncedAt(null)
+    setServerRevision(null)
     setState(hydrated ? 'queued' : 'idle')
   }, [documentId, hydrated])
 
@@ -226,6 +230,7 @@ export function useStudioServerSync({
       conflictRef.current = false
       setConflict(null)
       setLastSyncedAt(conflict.syncedAt)
+      setServerRevision(conflict.serverRevision)
       setErrorMessage(null)
       setState('synced')
       setRetrySignal((value) => value + 1)
@@ -247,6 +252,7 @@ export function useStudioServerSync({
       conflictRef.current = false
       setConflict(null)
       setLastSyncedAt(null)
+      setServerRevision(null)
       setErrorMessage(null)
       setState('queued')
     } catch {
@@ -261,6 +267,7 @@ export function useStudioServerSync({
   return {
     state,
     lastSyncedAt,
+    serverRevision,
     errorMessage,
     conflict,
     resolvingConflict,

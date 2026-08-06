@@ -12,6 +12,8 @@
     "lib/editorial-studio/document.ts",
     "lib/editorial-studio/fixture.ts",
     "lib/editorial-studio/persistence.ts",
+    "lib/editorial-studio/markdown-adapter.ts",
+    "lib/editorial-studio/preflight.ts",
     "lib/editorial-studio/sync-contract.ts",
     "scripts/editorial-studio-contract.test.ts"
   ]
