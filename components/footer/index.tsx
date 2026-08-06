@@ -26,9 +26,3 @@ export default function Footer() {
     </>
   );
 }
-
-// Re-export komponen individual jika diperlukan
-export { default as FooterMobile } from './FooterMobile';
-export { default as FooterDesktop } from './FooterDesktop';
-export { default as DiamondLogo } from './DiamondLogo';
-export { footerNavigation, socialLinks, copyrightText } from './footer.config';
