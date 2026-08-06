@@ -1576,6 +1576,42 @@ Format pengisian:
 
 ---
 
+[06-08-2026] KEPUTUSAN: Halaman institusional memakai CMS terstruktur dengan template yang tetap dimiliki kode ← SESI #56
+              KONFIRMASI OWNER: Owner menyetujui implementasi dan memberi pengecualian eksplisit terhadap aturan
+                               satu-file-per-respons karena fondasi ini memerlukan migrasi database, layanan server,
+                               renderer publik, dan antarmuka admin yang saling bergantung.
+              ALASAN: Konten Tentang Kami, Pusat Privasi, Panduan Editorial, Kebijakan Iklan, Kontak, Keamanan,
+                      dan Bagikan Ide harus dapat dikelola tanpa mengedit TSX atau melakukan deployment, sementara
+                      struktur visual, validasi, aksesibilitas, dan kemampuan fungsional tidak boleh berubah bebas.
+              ARSITEKTUR:
+                - `site_pages` menyimpan identitas route serta pointer draf/terbit; `site_page_revisions` menyimpan
+                  revisi immutable berupa JSONB terstruktur, metadata SEO, pencipta, ringkasan, dan waktu publikasi.
+                - Template `editorial`, `policy`, dan `standard` dirender oleh komponen kode; admin hanya mengelola
+                  bidang, bagian, dan blok terkontrol, tanpa HTML, Tailwind, TSX, atau JSON mentah.
+                - Simpan selalu membuat versi baru melalui RPC `create_site_page_draft` yang mengunci page agar nomor
+                  versi dan pointer draf konsisten. Publish memakai RPC `publish_site_page` agar promosi revisi dan
+                  pointer halaman berlangsung atomik; rollback menyalin versi lama menjadi draf baru sehingga histori
+                  tidak ditulis ulang.
+                - Tentang Kami dan Pusat Privasi mempunyai fallback kode yang identik secara substansi sampai revisi
+                  pertama diterbitkan. Lima halaman kosong tetap menampilkan maintenance sampai mempunyai versi terbit.
+                - Metadata dan sitemap hanya memakai revisi terbit. `revalidatePath` dijalankan untuk route publik,
+                  dashboard, dan sitemap setelah publish.
+              KEAMANAN:
+                - Layout admin sekarang fail-closed ketika `ADMIN_EMAIL` tidak dikonfigurasi.
+                - Setiap mutasi CMS memanggil `requireAdmin()` lagi di server sebelum memakai service-role client.
+                - RLS membolehkan anon/authenticated membaca hanya halaman dan revisi yang sedang diterbitkan; tidak
+                  ada policy mutasi publik, dan RPC publish hanya dapat dijalankan role `service_role`.
+                - Bagian wajib pada Tentang Kami/Privasi divalidasi server dan tidak dapat dihapus melalui editor.
+                - Publish memerlukan konfirmasi bahwa klaim formulir, kontak, penghapusan, atau keamanan memang aktif.
+              OPERASIONAL: Jalankan `supabase/migrations/20260806190000_site_pages_cms.sql` satu kali di SQL Editor
+                           Supabase sebelum membuka Dashboard → Konten → Halaman Situs. Migrasi bersifat additive dan
+                           menanam tujuh identitas halaman tanpa langsung mengganti konten publik.
+              ALTERNATIF DITOLAK: Editor HTML/Markdown bebas; menyimpan konten langsung di satu row tanpa histori;
+                                  memberi dashboard kendali atas class/desain; mengekspos draf melalui RLS; memaksa
+                                  migrasi big-bang yang dapat mengosongkan halaman publik.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -1591,6 +1627,13 @@ Yang dikerjakan:
   - Pembuatan area admin terproteksi layout auth guard.
   - Implementasi form tulis/edit artikel dengan live preview Markdown dan sistem idempotent update untuk relasi chart.
   - Upload gambar dipusatkan di Supabase Storage bucket 'artikel-gambar'.
+  - Sesi #56: Fondasi CMS Halaman Situs ditambahkan untuk tujuh route institusional dengan editor blok terstruktur,
+    draf, pratinjau, publish atomik, histori versi, pemulihan, metadata SEO/robots, dan sinkronisasi sitemap.
+  - Sesi #56: Guard admin diubah menjadi fail-closed dan seluruh mutasi CMS memverifikasi admin kembali di server;
+    tabel/revisi dilindungi RLS dan tidak memberi akses tulis kepada anon/authenticated.
+  - Sesi #56: Tentang Kami dan Pusat Privasi dimigrasikan ke renderer template dengan fallback konten kode;
+    Panduan Editorial, Kebijakan Iklan, Kontak, Keamanan, dan Bagikan Ide siap menerima versi CMS tanpa menghilangkan
+    placeholder maintenance sebelum halaman benar-benar diterbitkan.
 
   [MESIN RENDER ARTIKEL & MARKDOWN]
   - Migrasi ArticleRenderer menjadi Server Component secara utuh untuk optimalisasi First Contentful Paint (FCP).
@@ -2184,6 +2227,38 @@ Keputusan baru: Lihat Seksi 11 — `/kebijakan-privasi` sebagai Pusat Privasi be
 Status akhir: `next lint` tanpa error baru (satu warning pre-existing di LikeButton); TypeScript bersih;
               audit source memastikan tidak ada static hex dan hanya dua file sesi yang berubah.
 Next step: Tinjau naskah dan UI melalui Vercel Preview; lengkapi evidence P0 sebelum menghapus noindex atau menambah sitemap.
+---
+
+[06-08-2026] SESI #56 — CMS HALAMAN SITUS
+Branch: codex/site-pages-cms
+Tujuan sesi: Memindahkan pengelolaan isi halaman institusional ke dashboard admin tanpa memberikan akses bebas
+              terhadap layout, kode, atau klaim fungsi yang belum tersedia.
+Yang dikerjakan:
+  [DATABASE DAN KEAMANAN]
+  - Migrasi additive `supabase/migrations/20260806190000_site_pages_cms.sql` membuat `site_pages`,
+    `site_page_revisions`, indeks, RLS, seed tujuh route, serta RPC save/publish atomik khusus `service_role`.
+  - Layout admin diubah menjadi fail-closed saat `ADMIN_EMAIL` kosong; semua aksi simpan, publish, dan restore
+    memanggil `requireAdmin()` di server sebelum membuka admin client.
+
+  [CMS ADMIN]
+  - Navigasi Konten memperoleh menu Halaman Situs dan status terbit/draf/perubahan untuk tujuh route.
+  - Editor terstruktur mendukung identitas halaman, fakta, sorotan, notice, bagian, paragraf, daftar, tautan,
+    callout, kartu, langkah, tabel, definisi, subbagian, urutan, SEO, robots, dan ringkasan perubahan.
+  - Draf, pratinjau admin, publish dengan pemeriksaan kemampuan aktual, histori 20 versi, dan pemulihan non-destruktif
+    tersedia tanpa menampilkan JSON, HTML, class Tailwind, atau TSX kepada admin.
+
+  [HALAMAN PUBLIK]
+  - Renderer kode menyediakan template editorial, policy, dan standard dengan token V3, responsive table/list,
+    navigasi lokal, 44px touch target, focus-visible, dark mode, serta teks yang selalu di-escape oleh React.
+  - Tentang Kami dan Pusat Privasi memakai konten fallback yang sudah disahkan sampai revisi CMS pertama terbit.
+  - Lima route lain tetap maintenance tanpa versi terbit; metadata dan sitemap membaca hanya versi terbit/indexable.
+
+Keputusan baru: Lihat Seksi 11 — CMS terstruktur dengan template yang tetap dimiliki kode.
+Status akhir: `next lint` tanpa error baru (satu warning pre-existing di LikeButton Red Zone); TypeScript bersih;
+              production build berhasil compile, lint, typecheck, dan menghasilkan 35 halaman, lalu berhenti pada
+              prerender karena seluruh environment Supabase lokal memang tidak tersedia—batas pengujian existing.
+Next step: Jalankan migration melalui Supabase SQL Editor, merge branch, lalu simpan/pratinjau/terbitkan satu halaman
+           uji melalui Dashboard → Konten → Halaman Situs sebelum mengelola halaman lain.
 ---
 
 ## 13. REFERENSI & RESOURCE

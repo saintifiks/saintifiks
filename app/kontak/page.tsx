@@ -1,11 +1,15 @@
 import type { Metadata } from 'next'
-import UnderMaintenance from '@/components/layout/UnderMaintenance'
+import ManagedSitePage from '@/components/site-pages/ManagedSitePage'
+import { buildSitePageMetadata } from '@/lib/site-pages/metadata'
 
-export const metadata: Metadata = {
+const fallbackMetadata: Metadata = {
   title: 'Kontak — Saintifiks',
   description: 'Halaman Kontak Saintifiks.',
 }
 
+export const revalidate = 3600
+export function generateMetadata() { return buildSitePageMetadata('kontak', fallbackMetadata) }
+
 export default function KontakPage() {
-  return <UnderMaintenance title="Kontak" />
+  return <ManagedSitePage slug="kontak" maintenanceTitle="Kontak" />
 }

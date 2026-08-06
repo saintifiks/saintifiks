@@ -8,6 +8,7 @@ import {
   BookOpen,
   ChevronRight,
   FileText,
+  Files,
   Home,
   LogOut,
   Menu,
@@ -46,6 +47,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Artikel', href: '/dashboard/artikel', icon: FileText },
       { label: 'Opinions', href: '/dashboard/opinions', icon: MessageSquareText },
+      { label: 'Halaman Situs', href: '/dashboard/halaman', icon: Files },
     ],
   },
   {

@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { MetadataRoute } from 'next'
+import { getPublishedSitePage } from '@/lib/site-pages/data'
+import { sitePageDefinitions } from '@/lib/site-pages/registry'
 
 // Revalidate setiap 24 jam (86400 detik)
 export const revalidate = 86400
@@ -29,6 +31,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
+  const sitePagePublications = await Promise.all(
+    sitePageDefinitions.map((definition) => getPublishedSitePage(definition.slug))
+  )
+  const managedPageUrls: MetadataRoute.Sitemap = sitePagePublications
+    .filter((publication) => publication?.revision.robots_index)
+    .map((publication) => ({
+      url: `${baseUrl}${publication!.page.path}`,
+      lastModified: new Date(publication!.page.updated_at),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    }))
+
   // Fetch published articles
   const supabase = await createClient()
   const { data: articles, error } = await supabase
@@ -39,7 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   if (error) {
     console.error('[Sitemap] Error fetching articles:', error)
-    return staticPages
+    return [...staticPages, ...managedPageUrls]
   }
 
   const articleUrls: MetadataRoute.Sitemap = (articles || []).map((article) => ({
@@ -58,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   if (opinionsError) {
     console.error('[Sitemap] Error fetching opinions:', opinionsError)
-    return [...staticPages, ...articleUrls]
+    return [...staticPages, ...managedPageUrls, ...articleUrls]
   }
 
   // Fetch profil penulis secara terpisah
@@ -88,5 +102,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     })
 
-  return [...staticPages, ...articleUrls, ...opinionUrls]
+  return [...staticPages, ...managedPageUrls, ...articleUrls, ...opinionUrls]
 }

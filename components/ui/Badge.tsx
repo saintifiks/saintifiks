@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 
-type BadgeVariant = 'default' | 'kicker' | 'category' | 'danger' | 'success'
+type BadgeVariant = 'default' | 'kicker' | 'category' | 'danger' | 'success' | 'warning'
 
 export type BadgeProps = {
   children: ReactNode
@@ -15,6 +15,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   category: 'text-text-link font-semibold text-sm bg-transparent',
   danger: 'text-signal-danger bg-signal-danger-surface',
   success: 'text-signal-success bg-signal-success-surface',
+  warning: 'text-text-primary bg-signal-warning-surface',
 }
 
 export default function Badge({ children, variant = 'default', className = '' }: BadgeProps) {
