@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.12 | Status: Live | Terakhir diperbarui: 06-08-2026
+> Versi: 2.13 | Status: Live | Terakhir diperbarui: 12-08-2026
+>
+> Perubahan v2.13 (Sesi #63): Phase 3A terkonfirmasi di `main`; perilaku scroll popup blok diselesaikan dan histori PR #119–#121 dilengkapi.
 >
 > Perubahan v2.12 (Sesi #62): Editorial Studio menjadi editor artikel produksi dengan publish snapshot atomik dan fallback Markdown.
 >
@@ -140,9 +142,9 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 | Visualisasi data | Chart.js (custom blocks terintegrasi) | Fleksibilitas penuh, kontrol atas visualisasi data ekonomi kompleks, tidak bergantung layanan pihak ketiga |
 | Styling | Tailwind CSS v3 | Utility-first, AI-friendly, konsisten dengan ekosistem Next.js |
 | Auth pembaca | Supabase Auth + Google OAuth | Login via Google; tidak perlu buat akun baru; Supabase menangani seluruh flow; saat pengguna login, tombol keluar digantikan ikon belah ketupat dengan huruf inisial nama |
-| Editor artikel admin | Markdown teks biasa | Resolved — lihat Seksi 11 untuk alasan lengkap |
-| Konten format | Markdown dengan chart placeholder | `{{chart:chart-id}}` — Next.js parsing dan render keduanya |
-| Markdown renderer | react-markdown + remark-gfm + remark-math + rehype-katex + rehype-highlight + rehype-raw + rehype-sanitize | Tabel GFM, formula LaTeX, syntax highlighting, XSS protection — ekosistem standar, client-side |
+| Editor artikel admin | Editorial Studio (TipTap sebagai mesin penyunting; canonical JSON Saintifiks sebagai sumber kebenaran) | Writer-first, local-first, server revision, preflight, dan publish snapshot atomik — lihat Seksi 11 Sesi #58–#63 |
+| Konten format | Canonical JSON Studio v1 untuk publikasi baru; Markdown untuk artikel legacy dan fallback kompatibilitas | Public page melakukan dual-read; tidak ada migrasi big-bang terhadap artikel lama |
+| Markdown renderer legacy/fallback | react-markdown + remark-gfm + remark-math + rehype-katex + rehype-highlight + rehype-raw + rehype-sanitize | Tabel GFM, formula LaTeX, syntax highlighting, dan XSS protection tetap dipertahankan untuk artikel lama/fallback |
 | JSON parser toleran | json5 | Parser JSON yang menoleransi cacat sintaks dari output AI (trailing comma, unquoted keys) untuk config chart |
 | WYSIWYG editor (Opinions) | @tiptap/react + @tiptap/starter-kit + tiptap-markdown | Editor visual untuk platform Opinions dengan output Markdown — lihat Seksi 11 |
 | Rate limiting | In-memory Map (lib/rate-limit.ts) | IP-based rate limiting per endpoint; trade-off: tidak persisten antar serverless invocation — acceptable untuk free tier |
@@ -775,7 +777,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] **Design System V3: token semantik + atom UI + molekul** ← Sesi #49
 - [x] **Redesain halaman Argumen (Opinions)** ← Sesi #49 Fase F
 - [x] **Halaman /koreksi publik lintas-tipe-konten (Editorial + Argumen) dengan pencarian live** ← Sesi #52
-- [ ] **Rearsitekturisasi halaman penulisan artikel** ← sesi mendatang
+- [x] **Rearsitekturisasi halaman penulisan artikel menjadi Editorial Studio produksi** ← Sesi #58–#63, PR #119–#121
 ---
 
 ## 10. MASALAH YANG DIKETAHUI
@@ -1771,6 +1773,27 @@ Format pengisian:
 
 ---
 
+[12-08-2026] KEPUTUSAN: Target scroll slash menu mengikuti posisi pointer tanpa menutup popup ← SESI #63
+              ALASAN: Menu “Sisipkan blok” mempunyai daftar internal yang lebih tinggi daripada viewport. Menangkap
+                      seluruh event scroll sebagai perintah menutup menu membuat item bagian bawah tidak dapat dicapai;
+                      mengunci body sepenuhnya juga menghalangi penulis menggeser halaman ketika pointer berada di luar menu.
+              PERILAKU FINAL:
+                - Scroll ketika pointer berada di atas popup hanya menggerakkan daftar blok. `overscroll-contain`,
+                  batas tinggi berbasis viewport, dan scrollbar gutter stabil mencegah scroll merambat ke halaman.
+                - Scroll ketika pointer berada di luar popup menggerakkan halaman utama. Popup tetap terbuka dan
+                  koordinatnya dihitung ulang satu kali per animation frame agar mengikuti anchor slash di editor.
+                - Perubahan koordinat tidak dianggap sebagai query baru; pilihan keyboard dan posisi scroll menu tidak
+                  kembali ke awal. Arrow Up/Down tetap memastikan pilihan aktif masuk ke area yang terlihat.
+                - Escape dan pemilihan perintah tetap menjadi cara eksplisit menutup popup.
+              AKSESIBILITAS: Semantik `listbox`/`option`, `aria-activedescendant`, navigasi keyboard, dan focus editor
+                             dipertahankan; tidak ada dependency baru atau perubahan Red Zone.
+              VERIFIKASI: Runtime browser tanpa screenshot membuktikan scroll popup `0 → 406` tanpa mengubah halaman
+                           (`848`), lalu scroll luar mengubah halaman `848 → 1088` sambil mempertahankan popup, pilihan
+                           “Gambar”, dan posisi menu `406`. TypeScript, lint, 30 contract test, dan diff check lulus.
+              HISTORI GITHUB: Implementasi produksi PR #119; containment awal PR #120; target-scroll final PR #121.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -2621,10 +2644,41 @@ Yang dikerjakan:
     tetap satu dan file Red Zone renderer/interaksi yang dilarang tidak diubah.
 
 Keputusan baru: Lihat Seksi 11 — canonical Studio + snapshot publik immutable dan dual-read legacy.
-Status akhir: Source release slice siap direview, belum dipush. Supabase migration berhasil diterapkan oleh owner dengan
-              hasil `Success. No rows returned`; database telah siap menerima alur publish/unpublish Phase 3A.
-Next step: Commit/push branch atas perintah owner agar preview deployment dapat dibangun, lalu lakukan smoke test publish
-           satu draf uji dan verifikasi URL publik pada environment preview.
+Status akhir: Release slice berhasil di-commit sebagai `ce69530`, digabung ke `main` melalui PR #119, dan migration
+              Supabase berhasil diterapkan owner dengan hasil `Success. No rows returned`.
+Next step: Tindak lanjut ergonomi slash menu dicatat pada Sesi #63; smoke test publish–unpublish end-to-end tetap menjadi
+           validasi operasional pada deployment yang memakai environment Supabase nyata.
+---
+
+[12-08-2026] SESI #63 — FINALISASI SCROLL POPUP & AUDIT DOKUMENTASI PHASE 3A
+Branch implementasi: codex/editorial-studio-phase-3a (PR #120 dan #121)
+Branch dokumentasi: codex/document-editorial-studio-phase-3a
+Tujuan sesi: Menyelesaikan konflik scroll popup “Sisipkan blok”, memastikan histori Phase 3A dapat diaudit di GitHub,
+              dan menyelaraskan README dengan keadaan `main` yang sebenarnya.
+Yang dikerjakan:
+  [PERBAIKAN INTERAKSI]
+  - PR #120 (`43a3942`) memisahkan scroll internal menu dari event scroll halaman, menambahkan containment viewport,
+    dan memastikan pilihan keyboard otomatis masuk ke area daftar yang terlihat.
+  - PR #121 (`e0b62ac`) menetapkan perilaku final berbasis posisi pointer: di atas popup menggulir popup; di luar popup
+    menggulir halaman. Popup mengikuti anchor editor tanpa mereset pilihan atau posisi daftar.
+
+  [VERIFIKASI]
+  - Browser runtime tanpa screenshot: menu `0 → 406` dengan halaman tetap `848`; scroll luar mengubah halaman
+    `848 → 1088` dengan popup tetap terbuka dan menu tetap `406`.
+  - TypeScript bersih; lint tanpa error baru (satu warning lama di `LikeButton` Red Zone); 30 contract test lulus;
+    `git diff --check` bersih.
+
+  [STATUS GITHUB]
+  - PR #119 (`ce69530`) — Editorial Studio production release slice — MERGED.
+  - PR #120 (`43a3942`) — scroll containment awal — MERGED.
+  - PR #121 (`e0b62ac`) — target-scroll final — MERGED.
+  - `origin/main` memuat ketiga commit melalui merge commit `a701ba7`, `e4be287`, dan `1346815`.
+
+Keputusan baru: Lihat Seksi 11 — target scroll slash menu mengikuti posisi pointer tanpa menutup popup.
+Status akhir: Kode Phase 3A dan dua perbaikan scroll sudah berada di `main`; dokumentasi arsitektur, sesi, verifikasi,
+              commit, dan PR telah diselaraskan.
+Next step: Setelah perubahan dokumentasi ini di-merge, lakukan smoke test publish–unpublish satu artikel uji pada
+           deployment aktif dan catat hasilnya sebagai bukti operasional terpisah.
 ---
 
 ## 13. REFERENSI & RESOURCE
