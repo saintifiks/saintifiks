@@ -2,7 +2,13 @@
 // KaTeX (~60KB) dan highlight.js (~10KB) tidak perlu dimuat di halaman lain (beranda, akun, dll)
 import 'katex/dist/katex.min.css'
 import 'highlight.js/styles/github.css'
+import ReadingProgress from '@/components/artikel/ReadingProgress'
 
 export default function ArtikelLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+  return (
+    <>
+      <ReadingProgress />
+      {children}
+    </>
+  )
 }

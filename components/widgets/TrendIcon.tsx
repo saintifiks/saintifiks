@@ -10,7 +10,7 @@ export default function TrendIcon({ trend, trendWindow }: TrendIconProps) {
   if (!trend || trend === 'unknown') {
     return (
       <span
-        className="inline-flex h-3 w-3 shrink-0 items-center justify-center text-primary-light/25"
+        className="inline-flex h-3 w-3 shrink-0 items-center justify-center text-paper/25"
         aria-hidden
       >
         <span className="block h-px w-2 bg-current" />
@@ -29,7 +29,7 @@ export default function TrendIcon({ trend, trendWindow }: TrendIconProps) {
   if (trend === 'flat') {
     return (
       <span
-        className="inline-flex h-3 w-3 shrink-0 items-center justify-center text-primary-light/40"
+        className="inline-flex h-3 w-3 shrink-0 items-center justify-center text-paper/40"
         aria-label={label}
         title={label}
       >
@@ -43,10 +43,10 @@ export default function TrendIcon({ trend, trendWindow }: TrendIconProps) {
   return (
     <span
       className={`inline-flex h-3 w-3 shrink-0 items-center justify-center ${
-        up ? 'text-accent-green' : 'text-accent-red'
+        up ? 'text-trend-up' : 'text-trend-down'
       }`}
-      aria-label={label}
-      title={label}
+    aria-label={label}
+    title={label}
     >
       <svg
         width="8"

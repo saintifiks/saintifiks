@@ -14,8 +14,8 @@ type ChartBlockProps = {
 export default function ChartBlock({ identifier, configString }: ChartBlockProps) {
   if (!configString) {
     return (
-      <div className="my-8 p-6 border border-accent-red/20 bg-accent-red/5 rounded flex items-center justify-center">
-        <p className="font-helvetica text-sm text-accent-red">
+      <div className="my-8 p-6 border border-trend-down/20 bg-trend-down/5 rounded flex items-center justify-center">
+        <p className="font-helvetica text-sm text-trend-down">
           [Chart config tidak ditemukan untuk penanda: {identifier}]
         </p>
       </div>
@@ -45,18 +45,18 @@ export default function ChartBlock({ identifier, configString }: ChartBlockProps
 
     return (
       <div className="my-10">
-        <div className="w-full h-auto bg-white p-4 border border-primary-dark/10 shadow-sm">
+        <div className="w-full h-auto bg-paper p-4 border border-ink/10 shadow-sm">
           <Chart type={chartType} data={config.data} options={config.options} />
         </div>
       </div>
     )
   } catch {
     return (
-      <div className="my-8 p-6 border border-accent-red/20 bg-accent-red/5 rounded flex items-center justify-center flex-col text-center">
-        <p className="font-helvetica text-sm text-accent-red font-bold mb-2">
+      <div className="my-8 p-6 border border-trend-down/20 bg-trend-down/5 rounded flex items-center justify-center flex-col text-center">
+        <p className="font-helvetica text-sm text-trend-down font-bold mb-2">
           [Gagal memuat chart: {identifier}]
         </p>
-        <p className="font-helvetica text-xs text-accent-red/80">
+        <p className="font-helvetica text-xs text-trend-down/80">
           Format kode dari model salah. Pastikan struktur murni JSON5 tanpa injeksi fungsi logika (callback/function).
         </p>
       </div>

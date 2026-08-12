@@ -1,51 +1,51 @@
 # HANDOVER CONTEXT — Visual System V2 Migration
 
 ## 📋 STATUS SAAT INI
-
+ 
 ### ✅ SELESAI: Fase 1 - Fondasi Design System V2
 Build sukses tanpa error. Semua perubahan fondasi sudah diterapkan di repositori asli (`c:\Users\putra\Projects\saintifiks`).
-
+ 
 **File yang sudah diupdate:**
 1. `tailwind.config.ts` - Token warna V2, font families (Marcellus), dark mode
 2. `app/globals.css` - CSS custom properties, dark mode media query, utility classes
 3. `app/layout.tsx` - Font loading (Marcellus, Source Serif 4, IBM Plex Sans, IBM Plex Mono)
 4. `components/layout/Navbar.tsx` - Token migration + dark mode variants
-
+ 
 ### 🎯 PERUBAHAN YANG SUDAH AKTIF
 - **Warna**: paper (#F7F5F0), ink (#1A1917), sea-deep (#0B5263), dll
 - **Font**: Marcellus (display), Source Serif 4 (body), IBM Plex Sans (interface), IBM Plex Mono (mono)
 - **Dark mode**: Otomatis via `prefers-color-scheme` (tidak ada toggle manual)
 - **Utility classes**: .article-body, .kicker siap digunakan
-
+ 
 ---
-
+ 
 ## 🔄 YANG HARUS DILAKUKAN SELANJUTNYA
-
+ 
 ### Opsi A: Lanjut Migrasi Komponen (Fase 2-9)
 Jika ingin melanjutkan migrasi lengkap Visual System V2 ke semua komponen:
-
+ 
 #### Fase 2 - Layout Components (Belum dimulai)
 - [ ] `components/layout/Footer.tsx` - Redesign + tambah link /tentang & /standar-editorial
 - [ ] `components/layout/HomepageTabs.tsx` - Token migration (bg-paper, text-ink, dll)
 - [ ] `app/page.tsx` - Homepage token migration + logo SVG update
-
+ 
 #### Fase 3 - Red Zone Files (Token-only, no logic change)
 - [ ] `components/artikel/ArticleRenderer.tsx` - Tambah .article-body class
 - [ ] `components/artikel/LikeButton.tsx` - Token migration
 - [ ] `components/artikel/CorrectionSection.tsx` - Token migration
 - [ ] `components/widgets/IndexStrip.tsx` - bg-ink
 - [ ] `components/widgets/IndexStripClient.tsx` - Token migration
-
+ 
 #### Fase 4 - Artikel Components
 - [ ] `components/artikel/ArticleInteractions.tsx`
-- [ ] `components/artikel/CommentsSection.tsx`
-- [ ] `components/artikel/ShareButton.tsx`
+- [ ] `components/artikel/CommentsSection.tsx` - ✅ SELESAI (Text visibility & interaction fixes)
+- [ ] `components/artikel/ShareButton.tsx` - ✅ SELESAI (Text visibility & interaction fixes)
 - [ ] `components/artikel/ChartBlock.tsx` - Update default Chart.js colors
-
+ 
 #### Fase 5 - Komponen Baru
 - [ ] Buat `components/artikel/ReadingProgressIndicator.tsx` (progress bar di artikel)
 - [ ] Integrasi ke `app/artikel/layout.tsx`
-
+ 
 #### Fase 6 - Opinions Platform
 - [ ] `components/opinions/OpinionLabel.tsx`
 - [ ] `components/opinions/AuthorByline.tsx`
@@ -55,18 +55,18 @@ Jika ingin melanjutkan migrasi lengkap Visual System V2 ke semua komponen:
 - [ ] `components/opinions/ReportButton.tsx`
 - [ ] `app/opinions/page.tsx`
 - [ ] `app/opinions/[username]/[slug]/page.tsx`
-
+ 
 #### Fase 7 - Halaman Baru
 - [ ] Buat `app/tentang/page.tsx` (stub konten)
 - [ ] Buat `app/standar-editorial/page.tsx` (stub konten)
 - [ ] Update `app/not-found.tsx` - Token migration
 - [ ] Update `app/error.tsx` - Token migration
 - [ ] Update `app/sitemap.ts` - Tambah /tentang & /standar-editorial
-
+ 
 #### Fase 8 - Admin Pages
 - [ ] `app/login/page.tsx` - Token migration
 - [ ] `app/(admin)/dashboard/page.tsx` - Token migration (minimal)
-
+ 
 #### Fase 9 - Final Verification
 - [ ] `npm run build` - Pastikan 0 errors
 - [ ] Visual review semua halaman
@@ -275,7 +275,8 @@ Lanjutkan dengan Fase 2 - mulai dari Footer.tsx.
 ```
 
 ---
-
+ 
 **Dibuat**: 2026-05-30 04:07
+**Diperbarui**: 2026-05-30 15:51
 **Status**: Fase 1 ✅ SELESAI
 **Next Step**: Lanjut Fase 2 atau Deploy ke Production

@@ -100,24 +100,24 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="h-10 w-10 border border-primary-dark/10 bg-primary-dark/5 animate-pulse rounded-full" />
-    )
-  }
+   if (isLoading) {
+     return (
+       <div className="h-10 w-10 border border-ink/10 bg-ink/5 animate-pulse rounded-full" />
+     );
+   }
 
   return (
-    <button
-      onClick={handleLikeClick}
-      disabled={isLoggingIn}
-      className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-150 ${
-        isLiked 
-          ? 'bg-accent-red text-primary-light' 
-          : 'bg-transparent border border-primary-dark/30 text-primary-dark hover:border-accent-red hover:text-accent-red'
-      } disabled:opacity-50`}
-      aria-label={isLiked ? 'Batalkan suka' : 'Sukai artikel'}
-      title={isLiked ? 'Telah disukai' : 'Sukai artikel'}
-    >
+     <button
+       onClick={handleLikeClick}
+       disabled={isLoggingIn}
+       className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-150 ${
+         isLiked 
+           ? 'bg-amber text-paper' 
+           : 'bg-transparent border border-ink/30 text-ink hover:border-amber hover:text-amber'
+       } disabled:opacity-50`}
+       aria-label={isLiked ? 'Batalkan suka' : 'Sukai artikel'}
+       title={isLiked ? 'Telah disukai' : 'Sukai artikel'}
+     >
       {isLoggingIn ? (
         <Loader2 size={18} className="animate-spin" />
       ) : (
