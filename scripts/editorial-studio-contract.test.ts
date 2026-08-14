@@ -30,6 +30,11 @@ import {
   preflightStudioArticleV2,
 } from '../lib/editorial-studio/preflight'
 import {
+  createStudioServerRetryCycle,
+  getStudioServerRetryDelay,
+  recordStudioServerRetryableFailure,
+} from '../lib/editorial-studio/server-retry-policy'
+import {
   evaluateStudioAutosaveGate,
   fingerprintStudioDraft,
   migrateVerifiedStudioDraftContentToV2,
@@ -784,6 +789,53 @@ test('migration publikasi memakai snapshot immutable, pointer publik, dan RPC se
   assert.match(migration, /on conflict \(article_id\) do update/)
   assert.match(migration, /revoke all on function public\.publish_editorial_studio_article[\s\S]+from public, anon, authenticated/)
   assert.match(migration, /grant execute on function public\.publish_editorial_studio_article[\s\S]+to service_role/)
+})
+
+test('retry sinkronisasi berhenti setelah 15 detik dan 60 detik untuk satu mutasi', () => {
+  let cycle = createStudioServerRetryCycle()
+
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+  assert.equal(cycle.failedRequestCount, 1)
+  assert.equal(getStudioServerRetryDelay(cycle.failedRequestCount), 15_000)
+
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+  assert.equal(cycle.failedRequestCount, 2)
+  assert.equal(getStudioServerRetryDelay(cycle.failedRequestCount), 60_000)
+
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+  assert.equal(cycle.failedRequestCount, 3)
+  assert.equal(getStudioServerRetryDelay(cycle.failedRequestCount), null)
+})
+
+test('mutasi baru dan retry manual memulai anggaran retry yang baru', () => {
+  let cycle = recordStudioServerRetryableFailure(
+    createStudioServerRetryCycle('mutation-a'),
+    'mutation-a'
+  )
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+
+  const newMutationCycle = recordStudioServerRetryableFailure(cycle, 'mutation-b')
+  assert.equal(newMutationCycle.mutationId, 'mutation-b')
+  assert.equal(newMutationCycle.failedRequestCount, 1)
+  assert.equal(getStudioServerRetryDelay(newMutationCycle.failedRequestCount), 15_000)
+
+  const manualCycle = createStudioServerRetryCycle(cycle.mutationId)
+  const manualFailure = recordStudioServerRetryableFailure(manualCycle, 'mutation-a')
+  assert.equal(manualFailure.failedRequestCount, 1)
+  assert.equal(getStudioServerRetryDelay(manualFailure.failedRequestCount), 15_000)
+})
+
+test('hook sinkronisasi memakai retry policy terbatas, bukan timer tanpa batas', () => {
+  const hook = readFileSync(
+    resolve(process.cwd(), 'components/editorial-studio/useStudioServerSync.ts'),
+    'utf8'
+  )
+
+  assert.match(hook, /recordStudioServerRetryableFailure\(/)
+  assert.match(hook, /getStudioServerRetryDelay\(retryCycleRef\.current\.failedRequestCount\)/)
+  assert.match(hook, /if \(retryDelay === null\) return/)
+  assert.doesNotMatch(hook, /const RETRY_DELAY_MS/)
 })
 
 test('boundary publish aktif memigrasikan revision ke v2 dan menjalankan preflight v2', () => {

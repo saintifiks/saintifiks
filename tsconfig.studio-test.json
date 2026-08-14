@@ -14,6 +14,7 @@
     "lib/editorial-studio/persistence.ts",
     "lib/editorial-studio/markdown-adapter.ts",
     "lib/editorial-studio/preflight.ts",
+    "lib/editorial-studio/server-retry-policy.ts",
     "lib/editorial-studio/sync-contract.ts",
     "scripts/editorial-studio-contract.test.ts"
   ]

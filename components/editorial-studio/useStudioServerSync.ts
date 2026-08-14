@@ -12,6 +12,12 @@ import {
   studioSyncRequestFromOutbox,
   type StudioServerDraft,
 } from '@/lib/editorial-studio/sync-contract'
+import {
+  alignStudioServerRetryCycle,
+  createStudioServerRetryCycle,
+  getStudioServerRetryDelay,
+  recordStudioServerRetryableFailure,
+} from '@/lib/editorial-studio/server-retry-policy'
 
 export type StudioServerSyncState =
   | 'idle'
@@ -30,8 +36,6 @@ type UseStudioServerSyncOptions = {
   onAdoptServer: (draft: StudioServerDraft) => Promise<void>
   onKeepLocalAsCopy: () => Promise<void>
 }
-
-const RETRY_DELAY_MS = 15_000
 
 export function useStudioServerSync({
   documentId,
@@ -53,6 +57,7 @@ export function useStudioServerSync({
   const conflictRef = useRef(false)
   const resolvingConflictRef = useRef(false)
   const retryableRef = useRef(false)
+  const retryCycleRef = useRef(createStudioServerRetryCycle())
   const currentDocumentIdRef = useRef(documentId)
   currentDocumentIdRef.current = documentId
 
@@ -73,8 +78,14 @@ export function useStudioServerSync({
         setState(draft?.serverRevision ? 'synced' : 'idle')
         setErrorMessage(null)
         retryableRef.current = false
+        retryCycleRef.current = createStudioServerRetryCycle()
         return
       }
+
+      retryCycleRef.current = alignStudioServerRetryCycle(
+        retryCycleRef.current,
+        pending.mutationId
+      )
 
       if (!online) {
         setState('offline')
@@ -135,7 +146,17 @@ export function useStudioServerSync({
         })
         setState('error')
         setErrorMessage(`${responseError} Salinan perangkat tetap tersimpan.`)
-        retryableRef.current = response.status >= 500
+        if (response.status >= 500) {
+          retryCycleRef.current = recordStudioServerRetryableFailure(
+            retryCycleRef.current,
+            pending.mutationId
+          )
+          retryableRef.current = getStudioServerRetryDelay(
+            retryCycleRef.current.failedRequestCount
+          ) !== null
+        } else {
+          retryableRef.current = false
+        }
         return
       }
       if (parsedResponse.status !== 'accepted' && parsedResponse.status !== 'duplicate') {
@@ -164,6 +185,7 @@ export function useStudioServerSync({
       setState('synced')
       setErrorMessage(null)
       retryableRef.current = false
+      retryCycleRef.current = createStudioServerRetryCycle()
       window.setTimeout(() => setRetrySignal((value) => value + 1), 0)
     } catch (error) {
       if (currentDocumentIdRef.current !== requestedDocumentId) return
@@ -177,6 +199,7 @@ export function useStudioServerSync({
         setLastSyncedAt(null)
         setErrorMessage(null)
         retryableRef.current = false
+        retryCycleRef.current = createStudioServerRetryCycle()
         return
       }
       if (pending) {
@@ -186,7 +209,17 @@ export function useStudioServerSync({
       }
       setState(online ? 'error' : 'offline')
       setErrorMessage(online ? `${message} Salinan perangkat tetap tersimpan.` : null)
-      retryableRef.current = online
+      if (online && pending) {
+        retryCycleRef.current = recordStudioServerRetryableFailure(
+          retryCycleRef.current,
+          pending.mutationId
+        )
+        retryableRef.current = getStudioServerRetryDelay(
+          retryCycleRef.current.failedRequestCount
+        ) !== null
+      } else {
+        retryableRef.current = false
+      }
     } finally {
       inFlightRef.current = false
     }
@@ -200,6 +233,8 @@ export function useStudioServerSync({
     setErrorMessage(null)
     setLastSyncedAt(null)
     setServerRevision(null)
+    retryableRef.current = false
+    retryCycleRef.current = createStudioServerRetryCycle()
     setState(hydrated ? 'queued' : 'idle')
   }, [documentId, hydrated])
 
@@ -209,11 +244,14 @@ export function useStudioServerSync({
 
   useEffect(() => {
     if (state !== 'error' || !retryableRef.current || !online) return
-    const timeout = window.setTimeout(() => setRetrySignal((value) => value + 1), RETRY_DELAY_MS)
+    const retryDelay = getStudioServerRetryDelay(retryCycleRef.current.failedRequestCount)
+    if (retryDelay === null) return
+    const timeout = window.setTimeout(() => setRetrySignal((value) => value + 1), retryDelay)
     return () => window.clearTimeout(timeout)
   }, [online, state])
 
   const retryNow = useCallback(() => {
+    retryCycleRef.current = createStudioServerRetryCycle(retryCycleRef.current.mutationId)
     retryableRef.current = true
     conflictRef.current = false
     setConflict(null)
@@ -232,6 +270,8 @@ export function useStudioServerSync({
       setLastSyncedAt(conflict.syncedAt)
       setServerRevision(conflict.serverRevision)
       setErrorMessage(null)
+      retryableRef.current = false
+      retryCycleRef.current = createStudioServerRetryCycle()
       setState('synced')
       setRetrySignal((value) => value + 1)
     } catch {
@@ -254,6 +294,8 @@ export function useStudioServerSync({
       setLastSyncedAt(null)
       setServerRevision(null)
       setErrorMessage(null)
+      retryableRef.current = false
+      retryCycleRef.current = createStudioServerRetryCycle()
       setState('queued')
     } catch {
       setErrorMessage('Salinan baru belum dapat dibuat. Draf perangkat dan antreannya tetap dipertahankan.')
