@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.19 | Status: Live | Terakhir diperbarui: 14-08-2026
+> Versi: 2.20 | Status: Live | Terakhir diperbarui: 14-08-2026
+>
+> Perubahan v2.20 (Sesi #70): F1A ditutup setelah RPC publish diperbaiki secara additive melalui PR #126 dan perpindahan pasca-Publish distabilkan melalui PR #127. Rehearsal production akhir membuktikan publish snapshot revision 3, URL edit permanen, direct reload, output source–citation, unpublish, serta keadaan akhir draf nonpublik dengan immutable snapshot tetap tersimpan.
 >
 > Perubahan v2.19 (Sesi #69): F1A dan hotfix sinkronisasi terkonfirmasi di production melalui PR #124–#125; retry dibatasi, fungsi `digest` diperbaiki tanpa memperlebar `search_path`, dan pilot source–citation berhasil tersinkron sebagai draf nonpublik. Rehearsal publish pertama gagal secara atomik dan mengonfirmasi ambiguity `published_at` pada RPC; hotfix additive sudah terverifikasi lokal, sementara publication snapshot tetap menjadi validation gate terbuka.
 >
@@ -794,8 +796,8 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] **Halaman /koreksi publik lintas-tipe-konten (Editorial + Argumen) dengan pencarian live** ← Sesi #52
 - [x] **Rearsitekturisasi halaman penulisan artikel menjadi Editorial Studio produksi** ← Sesi #58–#63, PR #119–#121
 - [x] **Fase 0 strategi UI/UX: stabilisasi aksesibilitas Drawer, dialog, grafik, dan footnote Editorial–Argumen** ← Sesi #64–#65, PR #123; merged dan smoke test production lulus pada jalur yang tersedia
-- [x] **F1A canonical evidence v2, source-first operator input, dan sinkronisasi draf production** ← Sesi #66–#69, PR #124–#125; pilot schema v2 dengan satu source berhasil tersinkron sebagai draf nonpublik
-- [ ] **F1A publication gate: publish snapshot, output sumber publik, direct reload, dan unpublish pilot** ← wajib lulus sebelum dataset/chart input dibuka atau F1B dimulai
+- [x] **F1A canonical evidence v2, source-first operator input, dan sinkronisasi draf production** ← Sesi #66–#70, PR #124–#127; vertical slice source–citation lulus end-to-end
+- [x] **F1A publication gate: publish snapshot, output sumber publik, direct reload, dan unpublish pilot** ← Sesi #70; production rehearsal lulus dan pilot kembali nonpublik
 ---
 
 ## 10. MASALAH YANG DIKETAHUI
@@ -1986,6 +1988,29 @@ Format pengisian:
                                warning lama `LikeButton.tsx`. Build memakai placeholder Supabase nonrahasia dan tidak
                                dianggap sebagai bukti koneksi database production.
 
+[14-08-2026] KEPUTUSAN: F1A harus menjamin perpindahan ke identitas artikel permanen setelah Publish ← SESI #70
+              KONFIRMASI OWNER: `D-IMP-18 A` disahkan melalui instruksi eksplisit untuk memperbaiki perpindahan,
+                                 mengulang publish–reload–unpublish, mendokumentasikan bukti, dan menutup F1A.
+              ROOT CAUSE:
+                - Rehearsal setelah hotfix RPC membuktikan publish berhasil, tetapi `router.replace(...)` langsung diikuti
+                  `router.refresh()` sehingga URL dapat tetap berada pada route draf `/dashboard/artikel/baru?draft=...`.
+                - Reload route draf tersebut membangun state lokal sebagai draf, sementara URL edit permanen dan database
+                  membaca status `published` dengan benar. Data tidak rusak, tetapi status operator menjadi menyesatkan.
+              PERBAIKAN:
+                - PR #127 menghapus refresh yang bersaing dan mempertahankan `router.replace` ke
+                  `/dashboard/artikel/{articleId}/edit` sebagai satu-satunya transisi setelah Publish berhasil.
+                - Contract test mengunci target URL tersebut dan menolak `router.refresh()` di dalam alur Publish.
+                - API publish/unpublish, database, renderer publik, persistence/sync, Design System V3, dan Red Zone
+                  tidak diubah.
+              ACCEPTANCE PRODUCTION:
+                - Setelah Publish revision 3, URL berpindah otomatis ke URL edit permanen; direct reload tetap menunjukkan
+                  `Diterbitkan` dan halaman publik menampilkan judul, deck, citation, registry sumber, serta tautan sumber.
+                - Republish revision yang sama memakai immutable snapshot yang sama: snapshot count tetap 1 dan publication
+                  pointer menunjuk snapshot tersebut tanpa membuat duplikat.
+                - Unpublish melalui UI berhasil; workflow kembali `draft`, `is_published=false`, publication pointer 0,
+                  halaman publik 404, dan immutable snapshot tetap disimpan sebagai audit fixture.
+              STATUS: F1A selesai. Pembukaan F1B tetap membutuhkan impact analysis dan persetujuan scope tersendiri.
+
 ---
 
 ## 12. LOG SESI
@@ -3162,6 +3187,65 @@ Status akhir: Merge, deployment, retry guard, migration digest, dan server sync 
               belum di-merge atau dijalankan di production. Pilot tetap draf nonpublik dan publication gate F1A terbuka.
 Next step: Selesaikan TypeScript/lint/build/diff audit, buat draft PR, merge/deploy, jalankan migration hotfix production,
            verifikasi definisi fungsi, lalu ulangi publish–output–reload–unpublish pada revision pilot yang sama.
+---
+
+[14-08-2026] SESI #70 — PENUTUPAN F1A PUBLICATION GATE
+Branch migration: codex/editorial-studio-publish-hotfix; PR #126
+Branch navigasi: codex/editorial-studio-publish-navigation; PR #127
+Branch dokumentasi: codex/document-f1a-closure
+Tujuan sesi: Menjalankan hotfix publish production, membuktikan vertical slice source–citation sampai output dan unpublish,
+              menutup ketidakkonsistenan navigasi operator, lalu menetapkan keadaan akhir F1A yang dapat diaudit.
+Yang dikerjakan:
+  [HOTFIX RPC PRODUCTION]
+  - PR #126 terkonfirmasi merged melalui commit `9b3272b`; deployment Vercel Production berstatus `Ready`.
+  - Migration `20260814230000_editorial_studio_publish_ambiguity_hotfix.sql` dijalankan sebagai satu transaksi setelah
+    merge/deploy. Supabase mengembalikan `Success. No rows returned`.
+  - Definisi aktif mengandung alias `target_article` dan
+    `published_at = coalesce(target_article.published_at, publication_time)`; pola ambigu lama tidak ada.
+  - `SECURITY DEFINER=true` dan `search_path=public` tetap dipertahankan. Tidak ada tabel, RLS, privilege, atau data
+    editorial lain yang diubah oleh migration.
+
+  [REHEARSAL SETELAH HOTFIX RPC]
+  - Pilot `doc-pilot-f1a-20260814` tetap canonical schema v2, revision 3, dan lolos preflight dengan satu warning
+    non-blocking tentang tanggal akses sumber.
+  - Publish berhasil membentuk snapshot immutable `e60f8104-425f-47c2-aa12-aa1d9460e488`, publication pointer, slug
+    `uji-teknis-f1a-20260814`, dan output publik yang memuat citation serta registry sumber yang dapat diperiksa.
+  - Unpublish UI berhasil dan mengembalikan pilot menjadi draf nonpublik tanpa menghapus snapshot.
+  - Ditemukan satu masalah operator: setelah Publish, URL tetap pada route draf. Direct reload route draf menampilkan
+    status draf lokal meskipun database masih published; URL edit permanen membaca status server dengan benar.
+
+  [HOTFIX NAVIGASI]
+  - Owner menyahkan `D-IMP-18 A`. PR #127 menghapus `router.refresh()` yang bersaing setelah `router.replace(...)` dan
+    menambah contract test regresi. Diff hanya menyentuh `StudioLab.tsx` dan test Editorial Studio.
+  - 68/68 contract test, TypeScript, lint, `git diff --check`, production build 36/36 halaman, dan Vercel Preview lulus.
+    Lint hanya membawa warning lama di Red Zone `LikeButton.tsx`.
+  - PR #127 terkonfirmasi merged melalui commit `9b0383e`; deployment Vercel Production berstatus `Ready`.
+
+  [REHEARSAL PRODUCTION AKHIR]
+  - Baseline sebelum tes: workflow `draft`, revision 3, `is_published=false`, snapshot count 1, dan publication count 0.
+  - POST publish tercatat 200 pada 23:47:54. UI berpindah otomatis dari route draf ke
+    `/dashboard/artikel/8da2627b-2e23-4a94-8d21-25942dacdf54/edit` dan menampilkan `Diterbitkan`.
+  - Direct reload URL edit tetap menampilkan `Diterbitkan`. Database mengonfirmasi workflow `published`, revision 3,
+    `is_published=true`, publication count 1, dan snapshot count tetap 1; republish tidak menduplikasi snapshot.
+  - Halaman publik menampilkan judul pilot, deck, isi canonical, citation `[GitHub, PR #124]`, registry `Sumber`, dan
+    tautan sumber ke PR #124. Anchor citation menuju ID source yang sama; klik anchor telah lulus pada rehearsal sebelumnya.
+  - POST unpublish tercatat 200 pada 23:50:52. UI kembali `Draf`; database mengonfirmasi `is_published=false`,
+    `published_at=NULL`, publication count 0, snapshot count 1, dan snapshot ID lama tetap tersimpan.
+  - Akses ulang slug publik menghasilkan `Artikel tidak ditemukan`/404. Vercel tidak mencatat 5xx pada publish atau
+    unpublish rehearsal akhir.
+
+  [BATAS DAN STATUS]
+  - Bukti production kini mencakup input source-first, durability lokal/server, canonical migration, preflight,
+    immutable snapshot, public source–citation output, perpindahan URL permanen, direct reload, dan unpublish.
+  - Pilot dan immutable snapshot dipertahankan sebagai audit fixture nonpublik sesuai `D-IMP-14 A`; tidak ada artikel uji
+    yang masih tayang.
+  - Dataset/chart input, F1B, Argumen, artikel legacy, dan perluasan renderer tetap di luar scope sesi ini.
+
+Keputusan baru: `D-IMP-18 A` menjadikan perpindahan ke URL edit permanen sebagai bagian dari publication acceptance gate.
+Status akhir: F1A CLOSED. Seluruh vertical slice source–citation telah lulus production end-to-end dan pilot kembali aman
+              sebagai draf nonpublik dengan satu immutable snapshot audit.
+Next step: Mulai impact analysis F1B hanya setelah scope dataset/chart input dibahas dan disetujui; jangan membuka command
+           production atau mengubah renderer sebagai kelanjutan otomatis dari penutupan F1A.
 ---
 
 ## 13. REFERENSI & RESOURCE
