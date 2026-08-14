@@ -820,6 +820,47 @@ test('hotfix digest mempertahankan search_path sempit dan tidak mengubah tabel a
   assert.equal(hotfixFunction.replace('extensions.digest(', 'digest('), originalFunction)
 })
 
+test('hotfix publish mengualifikasi kolom published_at tanpa mengubah kontrak RPC', () => {
+  const publicationMigration = readFileSync(
+    resolve(process.cwd(), 'supabase/migrations/20260807010000_editorial_studio_publication.sql'),
+    'utf8'
+  ).toLowerCase().replace(/\r\n/g, '\n')
+  const migration = readFileSync(
+    resolve(
+      process.cwd(),
+      'supabase/migrations/20260814230000_editorial_studio_publish_ambiguity_hotfix.sql'
+    ),
+    'utf8'
+  ).toLowerCase().replace(/\r\n/g, '\n')
+
+  assert.match(migration, /create or replace function public\.publish_editorial_studio_article/)
+  assert.match(migration, /security definer\s+set search_path = public/)
+  assert.match(migration, /update public\.articles as target_article/)
+  assert.match(
+    migration,
+    /published_at = coalesce\(target_article\.published_at, publication_time\)/
+  )
+  assert.doesNotMatch(migration, /coalesce\(\s*published_at\s*,\s*publication_time\)/)
+  assert.doesNotMatch(migration, /\b(?:create|alter|drop) table\b/)
+  assert.doesNotMatch(migration, /\b(?:grant|revoke)\b/)
+
+  const functionPattern = /create or replace function public\.publish_editorial_studio_article\([\s\S]*?\n\$\$;/
+  const originalFunction = publicationMigration.match(functionPattern)?.[0]
+  const hotfixFunction = migration.match(functionPattern)?.[0]
+  assert.ok(originalFunction)
+  assert.ok(hotfixFunction)
+  assert.equal(
+    hotfixFunction
+      .replace('update public.articles as target_article', 'update public.articles')
+      .replace(
+        'coalesce(target_article.published_at, publication_time)',
+        'coalesce(published_at, publication_time)'
+      )
+      .replace('where target_article.id = studio_document.article_id', 'where id = studio_document.article_id'),
+    originalFunction
+  )
+})
+
 test('retry sinkronisasi berhenti setelah 15 detik dan 60 detik untuk satu mutasi', () => {
   let cycle = createStudioServerRetryCycle()
 
