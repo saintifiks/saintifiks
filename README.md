@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.18 | Status: Live | Terakhir diperbarui: 14-08-2026
+> Versi: 2.19 | Status: Live | Terakhir diperbarui: 14-08-2026
+>
+> Perubahan v2.19 (Sesi #69): F1A dan hotfix sinkronisasi terkonfirmasi di production melalui PR #124–#125; retry dibatasi, fungsi `digest` diperbaiki tanpa memperlebar `search_path`, dan pilot source–citation berhasil tersinkron sebagai draf nonpublik. Rehearsal publish pertama gagal secara atomik dan mengonfirmasi ambiguity `published_at` pada RPC; hotfix additive sudah terverifikasi lokal, sementara publication snapshot tetap menjadi validation gate terbuka.
 >
 > Perubahan v2.18 (Sesi #68): F1A mengaktifkan canonical evidence JSON v2 dari durability sampai output, preflight v2, serta input operator source-first; audit akhir menutup risiko catatan publik, autosave recovery, dan penghapusan sumber yang masih dirujuk.
 >
@@ -792,6 +794,8 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] **Halaman /koreksi publik lintas-tipe-konten (Editorial + Argumen) dengan pencarian live** ← Sesi #52
 - [x] **Rearsitekturisasi halaman penulisan artikel menjadi Editorial Studio produksi** ← Sesi #58–#63, PR #119–#121
 - [x] **Fase 0 strategi UI/UX: stabilisasi aksesibilitas Drawer, dialog, grafik, dan footnote Editorial–Argumen** ← Sesi #64–#65, PR #123; merged dan smoke test production lulus pada jalur yang tersedia
+- [x] **F1A canonical evidence v2, source-first operator input, dan sinkronisasi draf production** ← Sesi #66–#69, PR #124–#125; pilot schema v2 dengan satu source berhasil tersinkron sebagai draf nonpublik
+- [ ] **F1A publication gate: publish snapshot, output sumber publik, direct reload, dan unpublish pilot** ← wajib lulus sebelum dataset/chart input dibuka atau F1B dimulai
 ---
 
 ## 10. MASALAH YANG DIKETAHUI
@@ -1915,6 +1919,73 @@ Format pengisian:
               RED ZONE: `ArticleRenderer.tsx`, `ChartBlock.tsx`, `CorrectionSection.tsx`, workflow route admin artikel,
                         dan renderer Argumen tidak disentuh oleh implementation slice awal.
 
+[14-08-2026] KEPUTUSAN: Hotfix sinkronisasi F1A menjaga boundary keamanan dan membatasi retry otomatis ← SESI #69
+              KONFIRMASI OWNER: `D-IMP-09 A`, `D-IMP-10 A`, dan `D-IMP-11 A` disahkan.
+              ROOT CAUSE:
+                - Trigger `public.link_editorial_revision_to_article()` adalah `SECURITY DEFINER` dengan
+                  `search_path=public`, sedangkan fungsi `pgcrypto.digest` production berada di schema `extensions`.
+                - Pemanggilan `digest(new.document_id, 'sha256')` tanpa schema membuat revision berjudul gagal dan
+                  hook client mengulang request 500 setiap sekitar 15 detik tanpa batas.
+              KONTRAK DATABASE (`D-IMP-09 A`):
+                - Migration additive mengganti hanya pemanggilan menjadi `extensions.digest(...)`; fungsi tetap
+                  `SECURITY DEFINER` dan `search_path=public`. Tabel, RLS, grant, data artikel, dan fungsi lain tidak diubah.
+                - Migration lama tidak ditulis ulang agar histori deployment tetap immutable; fresh environment
+                  menjalankan migration lama lalu hotfix additive.
+              KONTRAK RETRY (`D-IMP-10 A`):
+                - Satu mutasi mendapat request awal, retry setelah 15 detik, retry setelah 60 detik, lalu berhenti sampai
+                  operator memilih `Coba lagi`. Mutasi baru dan retry manual mendapat anggaran baru.
+                - Offline, konflik, respons nonretryable, pergantian dokumen, dan acknowledgement tetap menghentikan atau
+                  mereset siklus sesuai state; outbox serta salinan lokal tidak dihapus oleh kegagalan server.
+              ROLLOUT (`D-IMP-11 A`):
+                - Satu branch/PR memuat dua commit terpisah: retry guard lebih dahulu, kemudian migration database.
+                - Retry guard wajib ter-deploy dan dibuktikan berhenti sebelum migration production dijalankan manual.
+              BATAS: Hotfix tidak menerbitkan artikel, tidak membuka dataset/chart, dan tidak mengubah renderer publik,
+                     publish RPC, source registry, Design System V3, atau Red Zone Fase 0.
+
+[14-08-2026] KEPUTUSAN: Gerbang publikasi F1A memakai rehearsal production yang singkat, eksplisit, dan dapat dibatalkan ← SESI #69
+              KONFIRMASI OWNER: `D-IMP-12 A`, `D-IMP-13 A`, dan `D-IMP-14 A` disahkan.
+              REHEARSAL (`D-IMP-12 A`):
+                - Satu pilot menjalani publish–inspect–direct reload–unpublish di production setelah preflight lolos.
+                - Jika unpublish melalui UI gagal setelah publish berhasil, RPC unpublish resmi boleh dipakai sebagai rollback;
+                  tabel dan immutable snapshot tidak boleh diedit atau dihapus manual.
+              IDENTITAS (`D-IMP-13 A`):
+                - Judul pilot menjadi `UJI TEKNIS F1A — Bukan Artikel Editorial` dan slug canonical menjadi
+                  `uji-teknis-f1a-20260814` agar tidak menyerupai konten editorial nyata.
+              RETENSI (`D-IMP-14 A`):
+                - Setelah unpublish berhasil, draf dan immutable snapshot dipertahankan sebagai audit fixture nonpublik.
+              HASIL REHEARSAL PERTAMA:
+                - Revision 3 tersinkron, preflight lolos dengan satu warning non-blocking tentang tanggal akses sumber,
+                  lalu POST `/api/admin/editorial-studio/publish` menghasilkan 500.
+                - UI menyatakan versi publik tidak berubah. Query production mengonfirmasi workflow tetap `draft`,
+                  `published_snapshot_id=NULL`, `is_published=false`, jumlah snapshot 0, dan publication pointer 0.
+                - Eksekusi RPC yang sama di dalam transaksi diagnosis yang di-rollback mengonfirmasi PostgreSQL `42702`:
+                  RHS `coalesce(published_at, publication_time)` ambigu antara output variable fungsi dan kolom tabel.
+              BATAS: Rehearsal belum mencapai output publik atau unpublish. Tidak ada artikel uji yang sempat tayang,
+                     dan diagnosis ini belum mengotorisasi perubahan migration, API, renderer, atau data production.
+
+[14-08-2026] KEPUTUSAN: Hotfix ambiguity publish bersifat additive, sempit, dan repo-first ← SESI #69
+              KONFIRMASI OWNER: `D-IMP-15 A`, `D-IMP-16 A`, dan `D-IMP-17 A` disahkan.
+              MIGRATION (`D-IMP-15 A`):
+                - Migration baru `20260814230000_editorial_studio_publish_ambiguity_hotfix.sql` mengganti definisi
+                  `publish_editorial_studio_article` tanpa menulis ulang migration publikasi lama.
+                - Perubahan fungsi hanya memberi alias `target_article` pada tabel `public.articles` dan memakai
+                  `coalesce(target_article.published_at, publication_time)` agar RHS tidak lagi ambigu.
+                - Fungsi tetap `SECURITY DEFINER` dengan `search_path=public`; tabel, RLS, privileges, data, snapshot,
+                  publication pointer, metadata, dan fungsi lain tidak diubah.
+              BATAS PAKET (`D-IMP-16 A`):
+                - Paket hanya memuat migration additive, contract test, dan README. API publish/unpublish, Studio UI,
+                  renderer publik, Design System V3, serta seluruh Red Zone tidak disentuh.
+              ROLLOUT (`D-IMP-17 A`):
+                - Urutan wajib: implementasi lokal → seluruh validation gate → commit/draft PR → merge/deploy → migration
+                  production → verifikasi definisi fungsi → ulangi rehearsal revision 3.
+                - Migration production tidak boleh dijalankan dari branch yang belum di-merge. Jika verifikasi migration
+                  gagal, definisi lama dapat dipulihkan agar publish kembali ke kondisi gagal-aman yang sudah diketahui.
+              VALIDASI LOKAL: 67/67 contract test, TypeScript, lint, `git diff --check`, dan production build lulus;
+                               migration hotfix terbukti setara dengan fungsi lama setelah tiga perubahan alias
+                               dinormalisasi dan tidak mengandung DDL tabel atau DCL privileges. Lint hanya membawa
+                               warning lama `LikeButton.tsx`. Build memakai placeholder Supabase nonrahasia dan tidak
+                               dianggap sebagai bukti koneksi database production.
+
 ---
 
 ## 12. LOG SESI
@@ -3002,6 +3073,95 @@ Status akhir: Paket F1A lulus contract test, TypeScript, lint, diff-check, audit
               validation gate berikutnya.
 Next step: Tinjau staged diff, lalu setelah persetujuan owner buat satu commit F1A dan push feature branch. Gunakan preview
            deployment untuk smoke test source–citation sebelum satu artikel pilot diterbitkan.
+---
+
+[14-08-2026] SESI #69 — PRODUCTION VALIDATION DAN HOTFIX SINKRONISASI F1A
+Branch implementasi: codex/document-phase-0-production-validation; PR #124
+Branch hotfix: codex/editorial-studio-sync-hotfix; PR #125
+Branch dokumentasi: codex/document-f1a-production-validation
+Tujuan sesi: Memvalidasi vertical slice source–citation di production, mendiagnosis kegagalan RPC tanpa merusak draf,
+              memperbaiki root cause secara additive, dan menetapkan gate yang masih terbuka sebelum F1A ditutup.
+Yang dikerjakan:
+  [MERGE DAN DEPLOYMENT]
+  - PR #124 terkonfirmasi merged melalui commit `1e2bc86`; F1A canonical evidence v2 tersedia di production.
+  - PR #125 terkonfirmasi merged melalui commit `36cdf87`; Vercel production berstatus `Ready` pada commit tersebut.
+  - Hotfix terdiri dari commit `70491a9` (bounded retry) dan `1858777` (qualified digest function).
+
+  [PILOT SEBELUM HOTFIX]
+  - Draf `doc-pilot-f1a-20260814` membuktikan source registry, citation yang merujuk source nyata, local save/reload,
+    preview, dan preflight v2. Artikel tidak diterbitkan.
+  - Revision server pertama tetap schema v2 dengan satu source tetapi tanpa judul. Revision berjudul berikutnya gagal
+    atomik; tidak ada baris artikel draf atau publication yang terbentuk pada tahap kegagalan.
+  - Log Postgres mengonfirmasi `function digest(text, unknown) does not exist`; source dan definisi fungsi production
+    sama-sama menunjukkan pemanggilan `digest` tanpa schema di trigger article-link.
+
+  [RETRY GUARD PRODUCTION]
+  - Sebelum migration dijalankan, satu siklus terkontrol menghasilkan tepat tiga POST 500 pada 22:24:22, 22:24:39,
+    dan 22:25:40 waktu lokal. Jaraknya sesuai request awal, retry 15 detik, dan retry 60 detik.
+  - Tidak ada request keempat setelah observasi lanjutan; tab pilot kemudian ditutup sebelum migration.
+
+  [MIGRATION DAN VERIFIKASI DATABASE]
+  - Migration `20260814220000_editorial_studio_digest_schema_hotfix.sql` dijalankan manual sebagai satu transaksi dan
+    Supabase mengembalikan `Success. No rows returned`.
+  - `pg_proc`/`pg_get_functiondef` mengonfirmasi `security_definer=true`, config `["search_path=public"]`, qualified
+    `extensions.digest=true`, dan tidak ada `encode(digest(` tanpa schema pada definisi aktif.
+  - Migration tidak mengubah tabel, RLS, grant, publication data, atau isi artikel yang sudah terbit.
+
+  [SMOKE TEST SETELAH MIGRATION]
+  - Membuka ulang draf pilot menghasilkan `Semua perubahan tersimpan`; endpoint sync tercatat POST 200 pada 22:28:47.
+  - Dokumen menjadi revision 2, schema v2, mempunyai satu source, dan terhubung ke artikel draf
+    `draft-b5feb4e13d3bae169f8bbb23`.
+  - `is_published=false` dan `has_publication=false`; akses langsung ke slug draf menghasilkan halaman tidak ditemukan.
+  - Tidak ada publish, unpublish, snapshot publication, atau perubahan artikel publik pada sesi ini.
+
+  [VALIDATION LOKAL HOTFIX]
+  - Commit retry lulus 65 contract test secara mandiri; paket gabungan lulus 66/66 contract test.
+  - TypeScript, lint, `git diff --check`, dan production build lulus. Lint hanya membawa warning lama `LikeButton.tsx`.
+  - Build memakai placeholder Supabase nonrahasia untuk prerender dan tidak membuktikan koneksi data production; bukti
+    runtime berasal dari Vercel, Supabase, dan pilot production terkontrol di atas.
+
+  [BATAS BUKTI DAN DEPENDENCY]
+  - F1A input, local durability, canonical migration, preflight, retry guard, dan server sync kini CONFIRMED di production.
+  - Immutable publish snapshot, source/citation output publik, metadata publication, direct reload setelah publish,
+    unpublish, serta pemeriksaan bahwa fallback tidak kehilangan evidence masih NOT VERIFIED di production.
+  - Karena itu F1A belum boleh ditutup sepenuhnya dan dataset/chart input belum boleh dibuka. Validation gate berikutnya
+    adalah publish–reload–inspect–unpublish satu pilot terkontrol tanpa menjadikannya konten editorial nyata.
+
+  [REHEARSAL PUBLICATION GATE]
+  - Owner menyahkan `D-IMP-12 A`, `D-IMP-13 A`, dan `D-IMP-14 A`. Pilot diberi judul eksplisit
+    `UJI TEKNIS F1A — Bukan Artikel Editorial` dan slug `uji-teknis-f1a-20260814`, lalu tersinkron sebagai revision 3.
+  - Preflight lolos; warning tanggal akses sumber tidak menjadi blocker. Satu permintaan publish pada 22:48:12 menghasilkan
+    POST 500 dan UI menyatakan tidak ada versi publik yang diubah. Percobaan ulang dihentikan.
+  - Query production membuktikan kegagalan atomik: workflow `draft`, `published_snapshot_id=NULL`, artikel masih memakai
+    slug draf internal, `is_published=false`, jumlah immutable snapshot 0, dan publication pointer 0.
+  - Diagnosis RPC di dalam transaksi yang selalu di-rollback menghasilkan PostgreSQL `42702`: reference `published_at`
+    pada `published_at = coalesce(published_at, publication_time)` ambigu antara output variable dan kolom tabel.
+  - Root cause kini CONFIRMED. Tidak ada perubahan yang diterapkan ke production; API, renderer publik, dan data production
+    tidak diubah.
+
+  [HOTFIX PUBLISH — IMPLEMENTASI LOKAL]
+  - Owner menyahkan `D-IMP-15 A`, `D-IMP-16 A`, dan `D-IMP-17 A`.
+  - Migration additive `20260814230000_editorial_studio_publish_ambiguity_hotfix.sql` mengganti hanya definisi RPC publish;
+    migration lama tetap immutable dan tidak ada tabel, RLS, privileges, atau data yang diubah.
+  - `public.articles` diberi alias `target_article`; RHS publication time kini membaca
+    `coalesce(target_article.published_at, publication_time)` sehingga tidak bertabrakan dengan output variable fungsi.
+  - Contract test membandingkan fungsi lama dan hotfix setelah tiga perubahan alias dinormalisasi, menolak reference lama
+    yang ambigu, dan menjaga `SECURITY DEFINER` serta `search_path=public`. Hasil: 67/67 test lulus.
+  - TypeScript, lint, `git diff --check`, dan production build lulus. Lint hanya membawa warning lama `LikeButton.tsx`.
+    Build pertama tanpa environment Supabase gagal pada prerender seperti yang diharapkan; pengulangan dengan URL/key
+    placeholder nonrahasia lulus 36/36 halaman dan tidak diperlakukan sebagai bukti koneksi production.
+  - API, Studio UI, renderer publik, Design System V3, dan seluruh Red Zone tidak disentuh. Migration production belum
+    dijalankan dan pilot tetap draf nonpublik sampai PR di-merge serta deployment terverifikasi.
+
+Keputusan baru: `D-IMP-09 A` menjaga `search_path` sempit; `D-IMP-10 A` membatasi retry per mutasi; `D-IMP-11 A`
+                menetapkan deployment retry guard sebelum migration manual. `D-IMP-12 A`–`D-IMP-14 A` menetapkan
+                rehearsal production, identitas uji, dan retensi audit fixture. `D-IMP-15 A`–`D-IMP-17 A` menetapkan
+                migration additive sempit, batas paket, dan rollout repo-first. Tidak ada perubahan strategi Fase 1.
+Status akhir: Merge, deployment, retry guard, migration digest, dan server sync lulus production. Rehearsal publish pertama
+              gagal aman karena ambiguity RPC yang telah terkonfirmasi; hotfix publish lulus contract test lokal tetapi
+              belum di-merge atau dijalankan di production. Pilot tetap draf nonpublik dan publication gate F1A terbuka.
+Next step: Selesaikan TypeScript/lint/build/diff audit, buat draft PR, merge/deploy, jalankan migration hotfix production,
+           verifikasi definisi fungsi, lalu ulangi publish–output–reload–unpublish pada revision pilot yang sama.
 ---
 
 ## 13. REFERENSI & RESOURCE
