@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.13 | Status: Live | Terakhir diperbarui: 12-08-2026
+> Versi: 2.14 | Status: Live | Terakhir diperbarui: 14-08-2026
+>
+> Perubahan v2.14 (Sesi #64): Fase 0 strategi UI/UX menstabilkan jalur aksesibilitas publik—Drawer, tujuh dialog interaksi, grafik, serta integritas footnote Editorial dan Argumen—tanpa redesign total atau perubahan data/API.
 >
 > Perubahan v2.13 (Sesi #63): Phase 3A terkonfirmasi di `main`; perilaku scroll popup blok diselesaikan dan histori PR #119–#121 dilengkapi.
 >
@@ -599,16 +601,16 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │   │   ├── IndexStripClient.tsx          ← Client polling + render
 │   │   └── TrendIcon.tsx                 ← Ikon naik/turun
 │   ├── artikel/
-│   │   ├── ArticleRenderer.tsx           ← **SERVER COMPONENT — TIDAK BOLEH DISENTUH**
+│   │   ├── ArticleRenderer.tsx           ← **SERVER COMPONENT — RED ZONE**; render Markdown satu lintasan
 │   │   ├── ArticleInteractions.tsx       ← Client Component wrapper untuk seluruh section interaksi
-│   │   ├── ChartBlock.tsx                ← **JANGAN DISENTUH TANPA KONFIRMASI**
+│   │   ├── ChartBlock.tsx                ← **RED ZONE**; grafik + representasi data aksesibel
 │   │   ├── LikeButton.tsx                ← **JANGAN DISENTUH TANPA KONFIRMASI**
 │   │   ├── CorrectionSection.tsx         ← **JANGAN DISENTUH TANPA KONFIRMASI**
 │   │   ├── ShareButton.tsx
 │   │   ├── CommentsSection.tsx
 │   │   └── ImageUpload.tsx
 │   ├── opinions/
-│   │   ├── OpinionContentRenderer.tsx    ← Server Component — render Markdown opinions (rehypeRaw+Sanitize+KaTeX)
+│   │   ├── OpinionContentRenderer.tsx    ← Server Component — render Markdown Argumen; paritas chart/footnote Editorial
 │   │   ├── OpinionLabel.tsx              ← Badge "Opinions"
 │   │   ├── AuthorByline.tsx              ← Byline penulis + tanggal
 │   │   ├── OpinionCard.tsx               ← Card preview artikel di listing
@@ -645,7 +647,8 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 │   │       └── remarkCallout.ts
 │   ├── countries.ts                          ← Daftar negara (ID) + groupCountriesByLetter untuk Drawer A–Z. [Sesi #47]
 │   ├── slug.ts                               ← Centralized slug generation (DRY principle)
-│   └── rate-limit.ts                         ← In-memory rate limiting helper untuk API routes
+│   ├── rate-limit.ts                         ← In-memory rate limiting helper untuk API routes
+│   └── use-modal-dialog.ts                   ← Perilaku dialog bersama: focus trap, Escape, scroll lock, restore focus [Sesi #64]
 ├── .github/workflows/backup.yml
 ├── next.config.mjs
 ├── tailwind.config.ts
@@ -668,6 +671,8 @@ Ini berlaku di semua halaman yang perlu data profil penulis.
 | `lib/indices/` | Widget indeks sudah di-tune untuk rate limiting |
 | `components/widgets/` | Polling 15 detik sudah stabil |
 | `app/(admin)/dashboard/artikel/` | Workflow editorial sudah stabil. Pengecualian eksplisit pemilik pada 05-08-2026 hanya untuk file indeks baru `page.tsx`; `baru/`, `[id]/edit/`, dan `actions.ts` tetap Red Zone. |
+
+**Pengecualian Fase 0 UI/UX (14-08-2026):** Pemilik menyetujui `D-IMP-01 A` dan memberi izin eksplisit per file untuk perubahan aksesibilitas terverifikasi pada `ArticleRenderer.tsx`, `ChartBlock.tsx`, dan `CorrectionSection.tsx`. Pengecualian ini hanya mencakup fallback pemuatan, integritas footnote, representasi data grafik, serta perilaku dialog; status Red Zone tetap berlaku untuk perubahan berikutnya.
 
 ### Catatan Kritis: Supabase Clients
 
@@ -778,6 +783,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] **Redesain halaman Argumen (Opinions)** ← Sesi #49 Fase F
 - [x] **Halaman /koreksi publik lintas-tipe-konten (Editorial + Argumen) dengan pencarian live** ← Sesi #52
 - [x] **Rearsitekturisasi halaman penulisan artikel menjadi Editorial Studio produksi** ← Sesi #58–#63, PR #119–#121
+- [x] **Fase 0 strategi UI/UX: stabilisasi aksesibilitas Drawer, dialog, grafik, dan footnote Editorial–Argumen** ← Sesi #64; source lulus lokal, belum di-merge
 ---
 
 ## 10. MASALAH YANG DIKETAHUI
@@ -896,6 +902,24 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
                       Kemungkinan sebab: komponen-komponen ini memiliki nilai inline atau class yang di-compute
                       ulang saat CSS Variables berganti, menyebabkan repaint tidak sinkron dengan transisi.
                       Investigasi dan fix dijadwalkan di sesi terpisah — tidak memblokir Sesi #48.
+
+[14-08-2026] LIMITATION: Representasi data aksesibel grafik belum tersedia ketika JavaScript dimatikan sepenuhnya
+             STATUS: open
+             WORKAROUND: Saat JavaScript aktif, grafik menyediakan judul, ringkasan, dan tabel data; fallback pemuatan
+                         tetap netral. Chart.js masih dimuat dengan `ssr: false` untuk mencegah crash Canvas saat SSR.
+             RESOLVED: -
+
+[14-08-2026] TECHNICAL DEBT: Schema grafik belum memiliki field sumber, unit, tanggal data, dan metodologi terstruktur
+             STATUS: open
+             WORKAROUND: Judul, label seri, kategori, dan nilai yang tersedia di config ditampilkan tanpa mengarang
+                         metadata yang tidak ada. Perubahan schema harus menjadi fase tersendiri.
+             RESOLVED: -
+
+[14-08-2026] MASALAH: Runtime lokal mencatat hydration warning atribut `data-theme` pada RootLayout
+             STATUS: open
+             WORKAROUND: Tidak menghalangi Drawer, dialog, grafik, footnote, dark mode, atau render halaman yang diuji.
+                         Investigasi dipisahkan dari Fase 0 karena sumber peringatan berada di arsitektur tema existing.
+             RESOLVED: -
 ```
 Format pengisian:
 [TANGGAL] MASALAH: [deskripsi]
@@ -1794,6 +1818,36 @@ Format pengisian:
 
 ---
 
+[14-08-2026] KEPUTUSAN: Fase 0 strategi UI/UX memakai stabilisasi aksesibilitas bersama, bukan redesign total ← SESI #64
+              KONFIRMASI OWNER: Blueprint disahkan sebagai baseline setelah `D-UX-01`–`D-UX-30` dipilih A. Impact
+                               analysis `D-IMP-01 A` dan pengecualian Red Zone diberikan eksplisit per file.
+              ALASAN: Jalur membaca dan memeriksa bukti sudah mempunyai fondasi visual/editorial yang benar, tetapi
+                      perilaku keyboard, fokus dialog, representasi data grafik, dan paritas renderer belum cukup
+                      konsisten. Memperbaiki kontrak bersama lebih aman daripada mengganti tampilan atau arsitektur.
+              KONTRAK INTERAKSI:
+                - `useModalDialog` menjadi perilaku bersama untuk tujuh dialog Editorial/Argumen: fokus awal, focus trap,
+                  Escape, scroll lock, dan pengembalian fokus ke pemicu. Label dialog, label form, target minimal 44px,
+                  serta disabled state tetap ditentukan oleh masing-masing komponen.
+                - Drawer mempertahankan arsitekturnya sendiri tetapi mengikuti kontrak keyboard setara; kontrol pada
+                  accordion tertutup dikeluarkan dari urutan Tab dan fokus dipulihkan ke tombol pembuka.
+              KONTRAK BUKTI:
+                - `ChartBlock` menyajikan `<figure>` dengan judul, ringkasan, dan tabel data yang dapat dibaca; canvas
+                  menjadi representasi visual tambahan dan disembunyikan dari accessibility tree.
+                - Config kosong, tidak valid, atau tipe chart tidak didukung menghasilkan status netral—bukan crash
+                  atau klaim data yang direka.
+                - Renderer Editorial dan Argumen mempertahankan single-pass Markdown, meneruskan properti footnote,
+                  menormalkan ID/href fragment hasil sanitasi, dan memakai fallback pemuatan grafik yang setara.
+              BATAS PERUBAHAN: Tidak ada perubahan database, RLS, API, analytics, autentikasi, Editorial Studio,
+                               tipografi, token Design System V3, atau identitas visual. Fase ini tidak membangun search,
+                               topik/seri, RSS, lifecycle koreksi penuh, atau schema metodologi grafik.
+              VALIDATION GATE: TypeScript, lint, diff check, runtime mobile/desktop, Drawer, tujuh dialog, grafik, dan
+                               footnote lulus secara lokal tanpa screenshot. Pengujian screen reader aktual, mode no-JS,
+                               usability pengguna, dan observasi produksi tetap diperlukan pada fase validasi lanjutan.
+              ALTERNATIF DITOLAK: Redesign total; implementasi perilaku dialog terpisah per komponen; grafik visual-only;
+                                  mengarang metadata sumber/metodologi yang belum tersedia di schema.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -2679,6 +2733,41 @@ Status akhir: Kode Phase 3A dan dua perbaikan scroll sudah berada di `main`; dok
               commit, dan PR telah diselaraskan.
 Next step: Setelah perubahan dokumentasi ini di-merge, lakukan smoke test publish–unpublish satu artikel uji pada
            deployment aktif dan catat hasilnya sebagai bukti operasional terpisah.
+---
+
+[14-08-2026] SESI #64 — FASE 0 ACCESSIBILITY STABILIZATION
+Branch: codex/phase-0-accessibility-stabilization
+Tujuan sesi: Menerjemahkan baseline strategi UI/UX yang telah disahkan menjadi satu irisan fondasi yang dapat diuji:
+              memperbaiki jalur aksesibilitas kritis tanpa redesign total, perubahan data, atau perluasan fitur.
+Yang dikerjakan:
+  [DIALOG DAN DRAWER]
+  - `lib/use-modal-dialog.ts` ditambahkan sebagai hook perilaku bersama untuk dialog Koreksi, Komentar, Share, dan
+    Report pada Editorial/Argumen. Tujuh dialog memiliki focus trap, Escape, initial focus, restore focus, scroll lock,
+    nama aksesibel, label form, dan target interaksi minimal 44px.
+  - `components/layout/Drawer.tsx` diperkuat dengan semantik dialog, pengelolaan fokus/keyboard, scroll lock, serta
+    pengeluaran kontrol accordion tersembunyi dari urutan Tab tanpa mengubah struktur navigasi atau visual dasar.
+
+  [GRAFIK DAN RENDERER]
+  - `components/artikel/ChartBlock.tsx` kini memberi judul/ringkasan/tabel data aksesibel, menyembunyikan canvas visual
+    dari accessibility tree, memvalidasi tipe chart, dan menampilkan fallback netral ketika data tidak dapat dirender.
+  - `ArticleRenderer.tsx` dan `OpinionContentRenderer.tsx` diselaraskan untuk fallback pemuatan grafik serta integritas
+    footnote. Renderer Argumen menormalkan prefix ID hasil sanitasi agar tautan referensi dan target tetap terhubung.
+  - Tidak ada perubahan API, database, RLS, analytics, auth, Editorial Studio, global CSS, token, atau dependency paket.
+
+  [VERIFIKASI INTEGRASI]
+  - Runtime lokal tanpa screenshot pada viewport 390×844 dan 1280×720 memverifikasi tidak ada overflow horizontal,
+    Drawer dapat ditutup dengan Escape dan mengembalikan fokus, seluruh tujuh dialog mengunci scroll serta menjebak/
+    memulihkan fokus, dan grafik/footnote Editorial–Argumen tetap terhubung.
+  - TypeScript `tsc --noEmit`, `next lint`, dan `git diff --check` lulus. Lint hanya melaporkan satu warning lama pada
+    `components/artikel/LikeButton.tsx`; tidak ada file yang di-stage.
+  - Batas bukti: belum ada pengujian screen reader aktual, no-JS penuh, usability pengguna, atau produksi. Warning
+    hydration `data-theme`, schema metadata grafik, dan fallback no-JS dicatat sebagai pekerjaan terpisah di Seksi 10.
+
+Keputusan baru: Lihat Seksi 11 — stabilisasi aksesibilitas bersama mendahului perubahan surface dan perluasan fitur.
+Status akhir: Source dan integration gate lulus lokal. Perubahan masih hanya di worktree; belum di-stage, commit, push,
+              atau dibuatkan pull request.
+Next step: Tinjau diff dokumentasi bersama source Fase 0; setelah persetujuan owner, baru siapkan commit, push branch,
+           dan draft pull request untuk verifikasi preview/produksi.
 ---
 
 ## 13. REFERENSI & RESOURCE
