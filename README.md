@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.20 | Status: Live | Terakhir diperbarui: 14-08-2026
+> Versi: 2.21 | Status: Live | Terakhir diperbarui: 15-08-2026
+>
+> Perubahan v2.21 (Sesi #71): F1B-1 memperkeras input tabular dan model chart di atas canonical JSON v2 tanpa membuat schema v3; locale angka, typed review, referential integrity, unit tunggal, dan preflight output-readiness kini memiliki kontrak serta test permanen, sementara dataset/chart production tetap tertutup.
 >
 > Perubahan v2.20 (Sesi #70): F1A ditutup setelah RPC publish diperbaiki secara additive melalui PR #126 dan perpindahan pasca-Publish distabilkan melalui PR #127. Rehearsal production akhir membuktikan publish snapshot revision 3, URL edit permanen, direct reload, output source–citation, unpublish, serta keadaan akhir draf nonpublik dengan immutable snapshot tetap tersimpan.
 >
@@ -2011,6 +2013,42 @@ Format pengisian:
                   halaman publik 404, dan immutable snapshot tetap disimpan sebagai audit fixture.
               STATUS: F1A selesai. Pembukaan F1B tetap membutuhkan impact analysis dan persetujuan scope tersendiri.
 
+[15-08-2026] KEPUTUSAN: F1B memakai hardening additive schema v2 dan rollout output-first ← SESI #71
+              KONFIRMASI OWNER: `D-IMP-19 A` sampai `D-IMP-25 A` disahkan.
+              INPUT OPERATOR (`D-IMP-20 A`, `D-IMP-23 A`):
+                - Jalur awal dataset adalah tempel tabel spreadsheet sebagai TSV lalu typed review; tidak ada upload file,
+                  fetch API, formula execution, atau penebakan tipe diam-diam.
+                - Operator wajib memilih locale angka `id-ID` atau `en-US` dan mengonfirmasi tipe string, number,
+                  boolean, atau date. Format ambigu, kutip TSV rusak, row tidak persegi, serta tanggal tidak valid ditolak.
+                - Batas sekali tempel adalah 250 row data × 12 kolom tanpa truncation. Reader canonical tetap memakai
+                  compatibility limit v2: 1.000 row, 25 kolom, 20.000 total cell, dan 12 series per chart.
+              CANONICAL DAN CHART (`D-IMP-19 A`, `D-IMP-22 A`):
+                - Dataset dan chart tetap memakai canonical JSON v2 secara additive; tidak ada schema v3, tabel database,
+                  migrasi data, raw Chart.js config, atau down-migration.
+                - Chart menyimpan judul, ringkasan, dataset ID, jenis line/bar/scatter, xKey, dan series semantik. Line/bar
+                  menerima sumbu X string/date/number; scatter memerlukan number; seluruh series harus number dan satu unit.
+                - Input operator maksimal enam series. Stable ID chart/series dipertahankan saat edit, sedangkan reader
+                  tetap dapat menyelesaikan hingga 12 series sesuai compatibility floor v2.
+                - Penghapusan source, dataset, chart, atau kolom wajib diblokir selama citation, methodology, dataset,
+                  content reference, atau chart mapping masih bergantung padanya.
+              PREFLIGHT DAN OUTPUT (`D-IMP-21 A`, `D-IMP-24 A`):
+                - Source, tabel data, metodologi dataset, unit kolom number, ringkasan chart, dan mapping yang dapat
+                  diselesaikan adalah blocker. Limitations dan tanggal akses tetap warning.
+                - Download URL dataset bersifat opsional dan hanya menghasilkan warning; ketiadaannya tidak boleh
+                  menghilangkan tabel, sumber, metodologi, atau unit yang dapat diperiksa pembaca.
+                - Output wajib mempertahankan judul, ringkasan, sumber, tanggal, unit, metodologi, limitations, dan tabel
+                  SSR/no-JS. Canvas visual kelak hanya enhancement, bukan satu-satunya representasi evidence.
+                - Urutan rollout adalah output/fallback di Studio Lab → input operator di Studio Lab → aktivasi production
+                  terpisah → satu pilot production nonpublik. `future-datasetReference` dan `future-chartReference` tetap
+                  blocker sampai seluruh gate tersebut disetujui dan lulus.
+              SCOPE F1B-1 (`D-IMP-25 A`):
+                - Paket contract hardening hanya menyentuh `tabular-input.ts`, `chart-model.ts`, `document.ts`,
+                  `preflight.ts`, contract test, dan README.
+                - UI, renderer publik, API, database/RLS/RPC, package manifest, lockfile, artikel legacy, Argumen,
+                  Design System V3, serta production command dataset/chart tidak berubah.
+              ROLLBACK: Surface F1B berikutnya dapat tetap disembunyikan atau ditutup kembali tanpa menghapus evidence;
+                        kemampuan membaca schema v2 adalah compatibility floor dan tidak boleh diturunkan ke v1.
+
 ---
 
 ## 12. LOG SESI
@@ -3246,6 +3284,54 @@ Status akhir: F1A CLOSED. Seluruh vertical slice source–citation telah lulus p
               sebagai draf nonpublik dengan satu immutable snapshot audit.
 Next step: Mulai impact analysis F1B hanya setelah scope dataset/chart input dibahas dan disetujui; jangan membuka command
            production atau mengubah renderer sebagai kelanjutan otomatis dari penutupan F1A.
+---
+
+[15-08-2026] SESI #71 — F1B-1 DATASET/CHART CONTRACT HARDENING
+Branch: codex/editorial-studio-f1b-contract
+Tujuan sesi: Membangun fondasi input dataset dan model chart yang deterministik di atas canonical JSON v2, memperkeras
+              referential integrity serta preflight, dan membuktikannya melalui test tanpa membuka surface production.
+Yang dikerjakan:
+  [TABULAR INPUT CONTRACT]
+  - `lib/editorial-studio/tabular-input.ts` memproses clipboard spreadsheet sebagai TSV murni tanpa DOM, network,
+    file I/O, atau dependency baru. Quoted tab/newline dan escaped quote dipertahankan; malformed quote ditolak.
+  - Header wajib terisi dan unik; row harus persegi; input di atas 250×12, cell di atas 500 karakter, serta karakter
+    kontrol tidak aman ditolak tanpa truncation. Formula tetap string dan tidak pernah dieksekusi.
+  - Number parsing memakai locale eksplisit `id-ID`/`en-US`; mixed separator, integer tidak aman, tanggal tidak valid,
+    dan boolean selain ya/tidak atau true/false ditolak. Empty cell menjadi `null`.
+  - Column key ASCII yang stabil serta row ID canonical dibentuk setelah typed review. Label hasil review yang duplikat
+    tetap ditolak; unit number dibiarkan sebagai draft state lalu dijaga pada chart model dan preflight.
+
+  [CHART MODEL DAN CANONICAL INTEGRITY]
+  - `lib/editorial-studio/chart-model.ts` membentuk chart semantik tanpa konfigurasi library visual, memverifikasi jenis
+    sumbu/series, maksimal enam series operator, satu unit, dataset mapping, serta stable ID saat edit.
+  - Resolver reader memakai compatibility limit canonical 12 series, sehingga batas UI baru tidak mematahkan snapshot
+    v2 yang sah. Helper dependency menunjukkan chart yang memakai dataset atau kolom sebelum penghapusan.
+  - `lib/editorial-studio/document.ts` tetap schema v2 dan forward-compatible. Validator kini menolak date cell non-ISO,
+    integer yang tidak presisi, karakter kontrol, series non-number/duplikat, scatter X non-number, line/bar X boolean,
+    column mapping hilang, dan mixed unit.
+  - Dependency inspection canonical mencakup citation, methodology source, dataset source/reference, chart dataset/
+    reference, x column, dan series column. Menghapus evidence yang masih dirujuk akan menghasilkan dokumen invalid.
+
+  [PREFLIGHT DAN RELEASE GATE]
+  - `lib/editorial-studio/preflight.ts` memakai semantic chart resolver agar error mapping, tipe, dan unit tidak drift dari
+    chart model. Source, tabel, metodologi, unit number, summary, serta mapping tetap blocker.
+  - Download URL berubah dari blocker menjadi warning sesuai `D-IMP-21 A`; unit kosong maupun whitespace tetap blocker.
+  - `future-datasetReference` dan `future-chartReference` dipertahankan. F1B-1 belum mengaktifkan command production,
+    tidak menerbitkan pilot, dan tidak mengubah snapshot, publish RPC, atau output artikel publik.
+
+  [CONTRACT TEST]
+  - Fixture `Tahun: 2025` dikoreksi dari date menjadi string karena nilai tahun bukan tanggal ISO lengkap; output tabel
+    lama tetap sama. Sembilan kelompok test F1B-1 mencakup TSV, locale, limits, typed conversion, stable key/ID,
+    chart semantics, reader compatibility, canonical hardening, dependency guards, dan severity preflight.
+  - `pnpm test:studio` lulus 77/77; TypeScript penuh lulus; `next lint` tanpa error baru dan hanya membawa warning lama
+    `LikeButton.tsx`. Tidak ada package/dependency, database, API, UI, renderer, atau Red Zone legacy yang berubah.
+
+Keputusan baru: `D-IMP-19 A`–`D-IMP-25 A` dicatat pada Seksi 11; F1B tetap output-first, additive pada schema v2,
+                dan production-closed sampai validation gate fase berikutnya disetujui.
+Status akhir: Implementasi dan test F1B-1 lengkap secara lokal pada feature branch; belum ada staging, commit, push,
+              draft PR, preview deployment, atau bukti runtime production.
+Next step: Audit akhir seluruh diff F1B-1 sebagai satu paket, jalankan production build lokal, lalu siapkan staging hanya
+           jika seluruh gerbang lulus dan owner memerintahkan kelanjutan.
 ---
 
 ## 13. REFERENSI & RESOURCE

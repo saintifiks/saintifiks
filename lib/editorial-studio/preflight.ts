@@ -1,4 +1,5 @@
 import type {
+  StudioChartEvidence,
   StudioDatasetEvidence,
   StudioDocument,
   StudioDocumentV2,
@@ -6,6 +7,7 @@ import type {
   StudioSourceEvidence,
 } from './document'
 import { validateStudioDocument, validateStudioDocumentV2 } from './document'
+import { resolveStudioChartModel } from './chart-model'
 
 export type StudioPreflightIssue = {
   severity: 'blocker' | 'warning'
@@ -85,7 +87,7 @@ function inspectDataset(
     issues.push({ severity: 'blocker', code: 'dataset-source-missing', message: `Dataset “${dataset.title}” belum terhubung ke sumber.` })
   }
   if (!dataset.downloadUrl) {
-    issues.push({ severity: 'blocker', code: 'dataset-download-missing', message: `Dataset “${dataset.title}” belum memiliki tautan unduhan.` })
+    issues.push({ severity: 'warning', code: 'dataset-download-missing', message: `Dataset “${dataset.title}” belum memiliki tautan unduhan; tabel, sumber, dan metodologi tetap tersedia untuk pemeriksaan.` })
   }
   if (dataset.columns.length === 0 || dataset.rows.length === 0) {
     issues.push({ severity: 'blocker', code: 'dataset-table-missing', message: `Dataset “${dataset.title}” belum memiliki tabel data yang dapat diperiksa.` })
@@ -100,7 +102,7 @@ function inspectDataset(
     issues.push({ severity: 'warning', code: 'dataset-access-date-missing', message: `Tanggal akses dataset “${dataset.title}” belum dicatat.` })
   }
   const columnsWithoutUnit = dataset.columns.filter(
-    (column) => column.dataType === 'number' && column.unit === null
+    (column) => column.dataType === 'number' && !column.unit?.trim()
   )
   if (columnsWithoutUnit.length > 0) {
     issues.push({
@@ -109,6 +111,43 @@ function inspectDataset(
       message: `Kolom angka tanpa unit pada dataset “${dataset.title}”: ${columnsWithoutUnit.map((column) => column.label).join(', ')}.`,
     })
   }
+}
+
+function inspectChart(
+  chart: StudioChartEvidence,
+  dataset: StudioDatasetEvidence | undefined,
+  issues: StudioPreflightIssue[]
+) {
+  if (!chart.summary.trim()) {
+    issues.push({ severity: 'blocker', code: 'chart-summary-missing', message: `Ringkasan grafik “${chart.title}” belum diisi.` })
+  }
+  if (!chart.datasetId) {
+    issues.push({ severity: 'blocker', code: 'chart-dataset-missing', message: `Grafik “${chart.title}” belum terhubung ke dataset.` })
+    return
+  }
+  if (!dataset) {
+    issues.push({ severity: 'blocker', code: 'chart-dataset-unresolved', message: `Dataset untuk grafik “${chart.title}” tidak ditemukan.` })
+    return
+  }
+  if (!chart.xKey.trim() || chart.series.length === 0) {
+    issues.push({ severity: 'blocker', code: 'chart-mapping-missing', message: `Mapping data grafik “${chart.title}” belum lengkap.` })
+  }
+
+  const resolved = resolveStudioChartModel(dataset, chart)
+  if (resolved.ok) return
+  const issuesAlreadyCovered = new Set([
+    'summary-required',
+    'x-column-required',
+    'series-required',
+  ])
+  resolved.issues.forEach((issue) => {
+    if (issuesAlreadyCovered.has(issue.code)) return
+    issues.push({
+      severity: 'blocker',
+      code: `chart-${issue.code}`,
+      message: `Grafik “${chart.title}”: ${issue.message}`,
+    })
+  })
 }
 
 export function preflightStudioArticle(title: string, deck: string, document: StudioDocument) {
@@ -166,17 +205,8 @@ export function preflightStudioArticleV2(
   chartIds.forEach((chartId) => {
     const chart = charts.get(chartId)
     if (!chart) return
-    if (!chart.summary.trim()) {
-      issues.push({ severity: 'blocker', code: 'chart-summary-missing', message: `Ringkasan grafik “${chart.title}” belum diisi.` })
-    }
-    if (!chart.datasetId) {
-      issues.push({ severity: 'blocker', code: 'chart-dataset-missing', message: `Grafik “${chart.title}” belum terhubung ke dataset.` })
-    } else {
-      datasetIds.add(chart.datasetId)
-    }
-    if (!chart.xKey.trim() || chart.series.length === 0) {
-      issues.push({ severity: 'blocker', code: 'chart-mapping-missing', message: `Mapping data grafik “${chart.title}” belum lengkap.` })
-    }
+    if (chart.datasetId) datasetIds.add(chart.datasetId)
+    inspectChart(chart, chart.datasetId ? datasets.get(chart.datasetId) : undefined, issues)
   })
 
   datasetIds.forEach((datasetId) => {
