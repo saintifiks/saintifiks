@@ -319,7 +319,6 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
       setPublishOpen(false)
       setPublishSuccess('Versi ini telah diterbitkan sebagai snapshot immutable.')
       router.replace(`/dashboard/artikel/${payload.articleId}/edit`)
-      router.refresh()
     } catch {
       setPublishError('Koneksi ke server terputus. Versi publik tidak diubah; coba lagi setelah koneksi pulih.')
     } finally {

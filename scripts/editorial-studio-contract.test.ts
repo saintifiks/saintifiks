@@ -918,6 +918,23 @@ test('boundary publish aktif memigrasikan revision ke v2 dan menjalankan preflig
   assert.match(route, /preflightStudioArticleV2\(revisionRow\.title, revisionRow\.deck, migrated\.document\)/)
 })
 
+test('publish berpindah ke URL edit permanen tanpa refresh route draf yang bersaing', () => {
+  const studio = readFileSync(
+    resolve(process.cwd(), 'components/editorial-studio/StudioLab.tsx'),
+    'utf8'
+  )
+  const publishFlow = studio.match(
+    /async function publishArticle\(\)[\s\S]*?\n  async function unpublishArticle\(\)/
+  )?.[0]
+
+  assert.ok(publishFlow)
+  assert.match(
+    publishFlow,
+    /router\.replace\(`\/dashboard\/artikel\/\$\{payload\.articleId\}\/edit`\)/
+  )
+  assert.doesNotMatch(publishFlow, /router\.refresh\(\)/)
+})
+
 test('operator source-first memakai registry nyata dan tetap menutup command dataset serta chart', () => {
   const editor = readFileSync(
     resolve(process.cwd(), 'components/editorial-studio/StudioEditor.tsx'),
