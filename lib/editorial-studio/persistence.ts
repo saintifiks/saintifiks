@@ -1,5 +1,13 @@
-import type { StudioDocument } from './document'
-import { migrateStudioDocument, validateStudioDocument } from './document'
+import type {
+  StudioDocumentV2,
+  StudioIdFactory,
+  StudioVersionedDocument,
+} from './document'
+import {
+  migrateStudioDocument,
+  migrateStudioDocumentToV2,
+  validateStudioDocumentV2,
+} from './document'
 
 export const STUDIO_STORAGE_VERSION = 2 as const
 export const STUDIO_SNAPSHOT_LIMIT = 50
@@ -16,11 +24,56 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 export type StudioDraftContent = {
   title: string
   deck: string
-  document: StudioDocument
+  document: StudioVersionedDocument
+}
+
+export type StudioVersionedDraftContent = {
+  title: string
+  deck: string
+  document: StudioVersionedDocument
+}
+
+export type StudioDraftContentV2 = {
+  title: string
+  deck: string
+  document: StudioDocumentV2
+}
+
+export type StudioDraftV2Migration = {
+  content: StudioDraftContentV2
+  sourceSchemaVersion: number
+  sourceFingerprint: string
+  migratedFingerprint: string
+  migrated: boolean
+}
+
+type StudioFingerprintContent = {
+  title: string
+  deck: string
+  document: unknown
 }
 
 export type StudioSaveReason = 'autosave' | 'manual' | 'restore' | 'copy'
 export type StudioSnapshotReason = StudioSaveReason | 'server'
+
+export function shouldPersistStudioDraft(writeEnabled: boolean, reason: StudioSaveReason) {
+  return writeEnabled || reason === 'restore' || reason === 'copy'
+}
+
+export function evaluateStudioAutosaveGate(input: {
+  hydrated: boolean
+  hasConflict: boolean
+  writeEnabled: boolean
+  suppressNext: boolean
+}) {
+  if (!input.hydrated || input.hasConflict) {
+    return { shouldSchedule: false, suppressNext: input.suppressNext }
+  }
+  if (input.suppressNext) {
+    return { shouldSchedule: false, suppressNext: false }
+  }
+  return { shouldSchedule: input.writeEnabled, suppressNext: false }
+}
 
 export type StudioDraftRecord = StudioDraftContent & {
   storageVersion: typeof STUDIO_STORAGE_VERSION
@@ -35,9 +88,17 @@ export type StudioDraftRecord = StudioDraftContent & {
   lastSyncedAt: string | null
 }
 
+export type StudioDraftRecordV2 = Omit<StudioDraftRecord, 'document'> & {
+  document: StudioDocumentV2
+}
+
 export type StudioDraftSnapshot = StudioDraftRecord & {
   snapshotId: string
   reason: StudioSnapshotReason
+}
+
+export type StudioDraftSnapshotV2 = Omit<StudioDraftSnapshot, 'document'> & {
+  document: StudioDocumentV2
 }
 
 export type StudioOutboxRecord = StudioDraftContent & {
@@ -54,6 +115,10 @@ export type StudioOutboxRecord = StudioDraftContent & {
   lastError: string | null
 }
 
+export type StudioOutboxRecordV2 = Omit<StudioOutboxRecord, 'document'> & {
+  document: StudioDocumentV2
+}
+
 export type SaveStudioDraftOptions = {
   writerId: string
   expectedRevision: number | null
@@ -62,7 +127,7 @@ export type SaveStudioDraftOptions = {
 }
 
 export type SaveStudioDraftResult = {
-  record: StudioDraftRecord
+  record: StudioDraftRecordV2
   snapshotCreated: boolean
 }
 
@@ -115,7 +180,7 @@ function canonicalizeJson(value: unknown): unknown {
     }, {})
 }
 
-export function serializeStudioDraft(content: StudioDraftContent) {
+export function serializeStudioDraft(content: StudioFingerprintContent) {
   return JSON.stringify(canonicalizeJson({
     title: content.title,
     deck: content.deck,
@@ -123,7 +188,7 @@ export function serializeStudioDraft(content: StudioDraftContent) {
   }))
 }
 
-function serializeLegacyStudioDraft(content: StudioDraftContent) {
+function serializeLegacyStudioDraft(content: StudioFingerprintContent) {
   return JSON.stringify({
     title: content.title,
     deck: content.deck,
@@ -162,8 +227,73 @@ function createMutationId() {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
 
-export async function fingerprintStudioDraft(content: StudioDraftContent) {
+export async function fingerprintStudioDraft(content: StudioFingerprintContent) {
   return digestStudioDraft(serializeStudioDraft(content))
+}
+
+function fingerprintContentFromRecord(input: unknown): StudioFingerprintContent | null {
+  if (!isRecord(input)) return null
+  if (typeof input.title !== 'string' || typeof input.deck !== 'string') return null
+  return {
+    title: input.title,
+    deck: input.deck,
+    document: input.document,
+  }
+}
+
+async function digestForStoredFingerprint(serialized: string, fingerprint: string) {
+  if (fingerprint.startsWith('fnv1a-')) return fallbackFingerprint(serialized)
+  if (!/^[a-f0-9]{64}$/.test(fingerprint) || !globalThis.crypto?.subtle) return null
+  return digestStudioDraft(serialized)
+}
+
+export async function studioDraftFingerprintMatches(
+  content: StudioFingerprintContent,
+  expectedFingerprint: string
+) {
+  const canonical = await digestForStoredFingerprint(
+    serializeStudioDraft(content),
+    expectedFingerprint
+  )
+  if (canonical === expectedFingerprint) return true
+
+  const legacy = await digestForStoredFingerprint(
+    serializeLegacyStudioDraft(content),
+    expectedFingerprint
+  )
+  return legacy === expectedFingerprint
+}
+
+export async function migrateVerifiedStudioDraftContentToV2(
+  content: StudioFingerprintContent,
+  sourceFingerprint: string,
+  idFactory?: StudioIdFactory
+): Promise<StudioDraftV2Migration> {
+  if (!await studioDraftFingerprintMatches(content, sourceFingerprint)) {
+    throw new StudioPersistenceCorruptionError('Checksum sumber draf tidak cocok sebelum migrasi.')
+  }
+
+  const sourceSchemaVersion = isRecord(content.document)
+    && Number.isSafeInteger(content.document.schemaVersion)
+    ? Number(content.document.schemaVersion)
+    : -1
+  const migration = migrateStudioDocumentToV2(content.document, idFactory)
+  if (!migration.ok) {
+    throw new StudioPersistenceCorruptionError('Dokumen sumber tidak memiliki jalur migrasi v2 yang valid.')
+  }
+
+  const migratedContent: StudioDraftContentV2 = {
+    title: content.title,
+    deck: content.deck,
+    document: migration.document,
+  }
+  return {
+    content: migratedContent,
+    sourceSchemaVersion,
+    sourceFingerprint,
+    migratedFingerprint: await digestStudioDraft(serializeStudioDraft(migratedContent)),
+    migrated: sourceSchemaVersion !== migration.document.schemaVersion,
+  }
 }
 
 export function parseStudioDraftRecord(input: unknown): StudioDraftRecord | null {
@@ -200,7 +330,9 @@ export function parseStudioDraftRecord(input: unknown): StudioDraftRecord | null
     }
   }
 
-  const documentResult = migrateStudioDocument(input.document)
+  const documentResult = isRecord(input.document) && input.document.schemaVersion === 2
+    ? validateStudioDocumentV2(input.document)
+    : migrateStudioDocument(input.document)
   if (!documentResult.ok || documentResult.document.documentId !== input.documentId) return null
 
   return {
@@ -252,7 +384,9 @@ export function parseStudioOutboxRecord(input: unknown): StudioOutboxRecord | nu
   if ((Number(input.attemptCount) === 0) !== (input.lastAttemptAt === null)) return null
   if (input.lastError !== null && typeof input.lastError !== 'string') return null
 
-  const documentResult = migrateStudioDocument(input.document)
+  const documentResult = isRecord(input.document) && input.document.schemaVersion === 2
+    ? validateStudioDocumentV2(input.document)
+    : migrateStudioDocument(input.document)
   if (!documentResult.ok || documentResult.document.documentId !== input.documentId) return null
 
   return {
@@ -270,6 +404,20 @@ export function parseStudioOutboxRecord(input: unknown): StudioOutboxRecord | nu
     attemptCount: Number(input.attemptCount),
     lastAttemptAt: input.lastAttemptAt,
     lastError: input.lastError,
+  }
+}
+
+async function migrateVerifiedRecordToV2<T extends StudioDraftContent & { fingerprint: string }>(
+  record: T
+): Promise<Omit<T, 'document'> & { document: StudioDocumentV2 }> {
+  const migration = await migrateVerifiedStudioDraftContentToV2(
+    { title: record.title, deck: record.deck, document: record.document },
+    record.fingerprint
+  )
+  return {
+    ...record,
+    document: migration.content.document,
+    fingerprint: migration.migratedFingerprint,
   }
 }
 
@@ -358,16 +506,18 @@ export async function getStudioDraft(documentId: string) {
     const raw = await requestResult(transaction.objectStore(DRAFT_STORE).get(documentId))
     await completion
     if (raw === undefined) return null
-    const record = parseStudioDraftRecord(raw)
-    if (!record) throw new StudioPersistenceCorruptionError()
-    const canonicalFingerprint = await fingerprintStudioDraft(record)
-    const legacyFingerprint = canonicalFingerprint === record.fingerprint
-      ? canonicalFingerprint
-      : await digestStudioDraft(serializeLegacyStudioDraft(record))
-    if (legacyFingerprint !== record.fingerprint) {
+    const rawContent = fingerprintContentFromRecord(raw)
+    const rawFingerprint = isRecord(raw) ? raw.fingerprint : null
+    if (
+      !rawContent
+      || typeof rawFingerprint !== 'string'
+      || !await studioDraftFingerprintMatches(rawContent, rawFingerprint)
+    ) {
       throw new StudioPersistenceCorruptionError('Checksum draf lokal tidak cocok.')
     }
-    return record
+    const record = parseStudioDraftRecord(raw)
+    if (!record) throw new StudioPersistenceCorruptionError()
+    return migrateVerifiedRecordToV2(record) as Promise<StudioDraftRecordV2>
   } finally {
     database.close()
   }
@@ -382,9 +532,23 @@ export async function listStudioSnapshots(documentId: string, limit = 20) {
       transaction.objectStore(SNAPSHOT_STORE).index('documentId').getAll(IDBKeyRange.only(documentId))
     )
     await completion
-    return rawSnapshots
-      .map(parseStudioDraftSnapshot)
-      .filter((snapshot): snapshot is StudioDraftSnapshot => snapshot !== null)
+    const snapshots = await Promise.all(rawSnapshots.map(async (rawSnapshot) => {
+      const rawContent = fingerprintContentFromRecord(rawSnapshot)
+      const rawFingerprint = isRecord(rawSnapshot) ? rawSnapshot.fingerprint : null
+      if (
+        !rawContent
+        || typeof rawFingerprint !== 'string'
+        || !await studioDraftFingerprintMatches(rawContent, rawFingerprint)
+      ) {
+        throw new StudioPersistenceCorruptionError('Checksum snapshot lokal tidak cocok.')
+      }
+      const snapshot = parseStudioDraftSnapshot(rawSnapshot)
+      if (!snapshot) {
+        throw new StudioPersistenceCorruptionError('Snapshot lokal tidak dapat dibaca dengan aman.')
+      }
+      return migrateVerifiedRecordToV2(snapshot) as Promise<StudioDraftSnapshotV2>
+    }))
+    return snapshots
       .sort((left, right) => right.revision - left.revision)
       .slice(0, Math.max(0, limit))
   } finally {
@@ -410,10 +574,10 @@ async function pruneStudioSnapshots(documentId: string) {
 }
 
 export async function saveStudioDraft(
-  content: StudioDraftContent,
+  content: StudioDraftContentV2,
   options: SaveStudioDraftOptions
 ): Promise<SaveStudioDraftResult> {
-  const validation = validateStudioDocument(content.document)
+  const validation = validateStudioDocumentV2(content.document)
   if (!validation.ok) throw new Error('Dokumen tidak valid dan tidak disimpan.')
 
   const fingerprint = await fingerprintStudioDraft(content)
@@ -449,7 +613,7 @@ export async function saveStudioDraft(
 
     const snapshotCreated = shouldCreateStudioSnapshot(previous, options.reason, now)
     const revision = (previous?.revision ?? 0) + 1
-    const record: StudioDraftRecord = {
+    const record: StudioDraftRecordV2 = {
       storageVersion: STUDIO_STORAGE_VERSION,
       documentId: content.document.documentId,
       title: content.title,
@@ -465,7 +629,7 @@ export async function saveStudioDraft(
       lastSyncedAt: previous?.lastSyncedAt ?? null,
     }
 
-    const pendingMutation: StudioOutboxRecord = {
+    const pendingMutation: StudioOutboxRecordV2 = {
       storageVersion: STUDIO_STORAGE_VERSION,
       documentId: record.documentId,
       title: record.title,
@@ -485,7 +649,7 @@ export async function saveStudioDraft(
     drafts.put(record)
     outbox.put(pendingMutation)
     if (snapshotCreated) {
-      const snapshot: StudioDraftSnapshot = {
+      const snapshot: StudioDraftSnapshotV2 = {
         ...record,
         snapshotId: `${record.documentId}:revision:${record.revision}`,
         reason: options.reason,
@@ -531,9 +695,18 @@ export async function getStudioOutbox(documentId: string) {
     const raw = await requestResult(transaction.objectStore(OUTBOX_STORE).get(documentId))
     await completion
     if (raw === undefined) return null
+    const rawContent = fingerprintContentFromRecord(raw)
+    const rawFingerprint = isRecord(raw) ? raw.fingerprint : null
+    if (
+      !rawContent
+      || typeof rawFingerprint !== 'string'
+      || !await studioDraftFingerprintMatches(rawContent, rawFingerprint)
+    ) {
+      throw new StudioPersistenceCorruptionError('Checksum antrean sinkronisasi lokal tidak cocok.')
+    }
     const record = parseStudioOutboxRecord(raw)
     if (!record) throw new StudioPersistenceCorruptionError('Antrean sinkronisasi lokal rusak.')
-    return record
+    return migrateVerifiedRecordToV2(record) as Promise<StudioOutboxRecordV2>
   } finally {
     database.close()
   }
@@ -678,28 +851,26 @@ export async function adoptStudioServerDraft(
   expectedLocalRevision: number | null,
   now = new Date()
 ) {
-  if (!validateStudioDocument(content.document).ok) {
-    throw new Error('Dokumen server tidak valid.')
-  }
   if (!Number.isSafeInteger(serverRevision) || serverRevision < 1) {
     throw new Error('Revisi server tidak valid.')
   }
   if (!isValidDateString(serverSyncedAt)) {
     throw new Error('Waktu sinkronisasi server tidak valid.')
   }
-  const computedFingerprint = await fingerprintStudioDraft(content)
-  if (computedFingerprint !== serverFingerprint || !/^[a-f0-9]{64}$/.test(serverFingerprint)) {
-    throw new StudioPersistenceCorruptionError('Checksum draf server tidak cocok.')
+  if (!/^[a-f0-9]{64}$/.test(serverFingerprint)) {
+    throw new StudioPersistenceCorruptionError('Checksum draf server tidak valid.')
   }
+  const migration = await migrateVerifiedStudioDraftContentToV2(content, serverFingerprint)
+  const migratedContent = migration.content
 
   const savedAt = now.toISOString()
   const database = await openStudioDatabase()
-  let record: StudioDraftRecord
+  let record: StudioDraftRecordV2
   try {
     const transaction = database.transaction([DRAFT_STORE, SNAPSHOT_STORE, OUTBOX_STORE], 'readwrite')
     const completion = observeTransaction(transaction)
     const drafts = transaction.objectStore(DRAFT_STORE)
-    const rawPrevious = await requestResult(drafts.get(content.document.documentId))
+    const rawPrevious = await requestResult(drafts.get(migratedContent.document.documentId))
     const previous = rawPrevious === undefined ? null : parseStudioDraftRecord(rawPrevious)
     if (rawPrevious !== undefined && !previous) {
       transaction.abort()
@@ -719,12 +890,12 @@ export async function adoptStudioServerDraft(
 
     record = {
       storageVersion: STUDIO_STORAGE_VERSION,
-      documentId: content.document.documentId,
-      title: content.title,
-      deck: content.deck,
-      document: content.document,
+      documentId: migratedContent.document.documentId,
+      title: migratedContent.title,
+      deck: migratedContent.deck,
+      document: migratedContent.document,
       revision: (previous?.revision ?? 0) + 1,
-      fingerprint: serverFingerprint,
+      fingerprint: migration.migratedFingerprint,
       savedAt,
       lastSnapshotAt: savedAt,
       writerId,
@@ -737,7 +908,7 @@ export async function adoptStudioServerDraft(
       ...record,
       snapshotId: `${record.documentId}:revision:${record.revision}`,
       reason: 'server',
-    } satisfies StudioDraftSnapshot)
+    } satisfies StudioDraftSnapshotV2)
     transaction.objectStore(OUTBOX_STORE).delete(record.documentId)
     await completion
   } finally {

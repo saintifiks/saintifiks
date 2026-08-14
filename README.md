@@ -1,5 +1,13 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.14 | Status: Live | Terakhir diperbarui: 14-08-2026
+> Versi: 2.18 | Status: Live | Terakhir diperbarui: 14-08-2026
+>
+> Perubahan v2.18 (Sesi #68): F1A mengaktifkan canonical evidence JSON v2 dari durability sampai output, preflight v2, serta input operator source-first; audit akhir menutup risiko catatan publik, autosave recovery, dan penghapusan sumber yang masih dirujuk.
+>
+> Perubahan v2.17 (Sesi #67): Technical contract F1A mengunci evidence schema semantik yang netral dari Chart.js, migrasi v1→v2 lazy dan forward-only, serta vertical slice awal source–citation sebelum dataset/chart production dibuka.
+>
+> Perubahan v2.16 (Sesi #66): Impact analysis Fase 1 menetapkan canonical evidence registry di JSON v2, rollout melalui satu artikel Editorial Studio, serta status faktual dan blok ketidakpastian tanpa confidence score atau full public history.
+>
+> Perubahan v2.15 (Sesi #65): Fase 0 terkonfirmasi di `main` melalui PR #123; deployment Vercel dan smoke test production untuk Drawer, tujuh dialog, grafik, serta footnote Editorial lulus dengan batas validasi production dicatat eksplisit.
 >
 > Perubahan v2.14 (Sesi #64): Fase 0 strategi UI/UX menstabilkan jalur aksesibilitas publik—Drawer, tujuh dialog interaksi, grafik, serta integritas footnote Editorial dan Argumen—tanpa redesign total atau perubahan data/API.
 >
@@ -783,7 +791,7 @@ Comments:        Bahasa Indonesia untuk komentar bisnis/logika, bahasa Inggris u
 - [x] **Redesain halaman Argumen (Opinions)** ← Sesi #49 Fase F
 - [x] **Halaman /koreksi publik lintas-tipe-konten (Editorial + Argumen) dengan pencarian live** ← Sesi #52
 - [x] **Rearsitekturisasi halaman penulisan artikel menjadi Editorial Studio produksi** ← Sesi #58–#63, PR #119–#121
-- [x] **Fase 0 strategi UI/UX: stabilisasi aksesibilitas Drawer, dialog, grafik, dan footnote Editorial–Argumen** ← Sesi #64; source lulus lokal, belum di-merge
+- [x] **Fase 0 strategi UI/UX: stabilisasi aksesibilitas Drawer, dialog, grafik, dan footnote Editorial–Argumen** ← Sesi #64–#65, PR #123; merged dan smoke test production lulus pada jalur yang tersedia
 ---
 
 ## 10. MASALAH YANG DIKETAHUI
@@ -1841,10 +1849,71 @@ Format pengisian:
                                tipografi, token Design System V3, atau identitas visual. Fase ini tidak membangun search,
                                topik/seri, RSS, lifecycle koreksi penuh, atau schema metodologi grafik.
               VALIDATION GATE: TypeScript, lint, diff check, runtime mobile/desktop, Drawer, tujuh dialog, grafik, dan
-                               footnote lulus secara lokal tanpa screenshot. Pengujian screen reader aktual, mode no-JS,
-                               usability pengguna, dan observasi produksi tetap diperlukan pada fase validasi lanjutan.
+                               footnote lulus secara lokal tanpa screenshot. Smoke test production pasca-merge pada
+                               viewport 1280×720 mengonfirmasi Drawer, tujuh dialog, grafik, dan footnote Editorial.
+                               Konten Argumen live belum memiliki fixture grafik/footnote; screen reader aktual, mode
+                               no-JS, zoom/reflow production, dan usability pengguna tetap menjadi validation debt.
               ALTERNATIF DITOLAK: Redesign total; implementasi perilaku dialog terpisah per komponen; grafik visual-only;
                                   mengarang metadata sumber/metodologi yang belum tersedia di schema.
+
+---
+
+[14-08-2026] KEPUTUSAN: Fase 1 memakai evidence registry di canonical JSON v2 dan rollout Editorial terbatas ← SESI #66
+              KONFIRMASI OWNER: `D-IMP-02 A`, `D-IMP-03 A`, dan `D-IMP-04 A` disahkan.
+              DIAGNOSIS: Tipe node citation, dataset, dan chart sudah ada, tetapi production sengaja menyembunyikannya
+                         dan preflight memblokir publish karena `sourceId`, `datasetId`, serta `chartId` belum dapat
+                         di-resolve ke data bukti yang ikut tersimpan dan diterbitkan secara atomik.
+              KONTRAK DATA (`D-IMP-02 A`):
+                - Registri sumber dan evidence menjadi bagian canonical document schema v2, bukan tabel sumber global.
+                - Citation, dataset, dan chart memakai ID stabil yang wajib terhubung ke entri registri dalam dokumen.
+                - Migrasi v1→v2 harus additive; draf, snapshot, dan artikel legacy tetap terbaca.
+                - Immutable publication snapshot tetap menjadi unit atomik antara isi artikel dan evidence.
+              KONTRAK ROLLOUT (`D-IMP-03 A`):
+                - Vertical slice pertama hanya satu artikel Editorial Studio yang representatif.
+                - Argumen dan artikel legacy tidak dimigrasikan atau diubah sampai aliran Editorial terbukti.
+                - Production command citation/dataset/chart tetap diblokir sampai contract, renderer, fallback, dan
+                  preflight lulus end-to-end.
+              KONTRAK STATUS (`D-IMP-04 A`):
+                - Pembaca melihat status faktual seperti Terbit, Diperbarui, dan adanya koreksi hanya jika datanya sah.
+                - Ketidakpastian dinyatakan melalui blok berlabel seperti `Batas bukti` atau `Yang belum diketahui`;
+                  Saintifiks tidak memakai confidence score tunggal yang menyederhanakan isu.
+                - Full public revision history, diff versi, dan koreksi yang terikat snapshot ditunda sampai fondasi
+                  sumber/evidence berhasil dan kebutuhan lifecycle-nya dibuktikan.
+              TRADE-OFF: Evidence dapat terduplikasi antarartikel, tetapi content–evidence tetap atomik dan beban DB,
+                         RLS, sinkronisasi, serta pemeliharaan operator tunggal jauh lebih rendah daripada registri global.
+              NON-GOALS AWAL: Redesign artikel, migrasi massal, database sumber lintas-artikel, perluasan Argumen,
+                              homepage/search/topik/RSS, full version history, atau verifikasi sumber otomatis berbasis AI.
+
+---
+
+[14-08-2026] KEPUTUSAN: Technical contract F1A memakai evidence semantik, migrasi lazy, dan source-first rollout ← SESI #67
+              KONFIRMASI OWNER: `D-IMP-05 A`, `D-IMP-06 A`, dan `D-IMP-07 A` disahkan.
+              CANONICAL EVIDENCE (`D-IMP-05 A`):
+                - JSON v2 memiliki registry `sources`, `methodology`, `datasets`, dan `charts` di dalam dokumen.
+                - Chart canonical menyimpan dataset, mapping kolom, series, judul, dan ringkasan secara semantik;
+                  konfigurasi Chart.js bukan source of truth dan hanya dibentuk oleh renderer.
+                - Citation menyimpan `sourceId`, label occurrence, dan locator; dataset/chart reference hanya menyimpan
+                  ID registry agar judul atau metadata tidak memiliki salinan yang dapat drift.
+                - Status Terbit, Diperbarui, dan Dikoreksi berasal dari data publication snapshot/articles/koreksi
+                  approved, bukan field bebas yang dapat ditulis operator.
+                - Ketidakpastian memakai callout berlabel `Batas bukti` atau `Yang belum diketahui`, tanpa confidence score.
+              MIGRASI (`D-IMP-06 A`):
+                - v1→v2 berjalan lazy, deterministic, non-destructive, dan forward-only; tidak ada migrasi massal.
+                - Fingerprint/checksum diverifikasi terhadap JSON versi asli sebelum migrasi di memori.
+                - Membuka draf atau snapshot v1 tidak boleh membuat autosave, outbox, atau server revision baru.
+                - Revision v2 baru dibuat pada perubahan operator berikutnya; tidak ada down-migration v2→v1.
+                - Rollback menutup surface baru atau memakai fallback/restore lalu republish; kemampuan membaca v2
+                  menjadi compatibility floor yang tidak boleh dihapus setelah revision v2 pertama tersimpan.
+              ROLLOUT (`D-IMP-07 A`):
+                - Vertical slice production pertama hanya source registry + citation pada satu artikel Editorial pilot.
+                - Dataset dan chart memperoleh kontrak v2 sekarang, tetapi command production tetap tertutup sampai
+                  source input→preflight→snapshot→public output→fallback terbukti end-to-end.
+                - Argumen, artikel legacy, global source database, raw Chart.js config, AI verification, dan full
+                  revision history tetap di luar scope F1A.
+              DATABASE: Tidak memerlukan tabel, RLS, RPC, atau dependency baru; JSONB dan `schema_version > 0` yang
+                        tersedia sudah dapat menyimpan v2 selama versi kolom sama dengan `content.schemaVersion`.
+              RED ZONE: `ArticleRenderer.tsx`, `ChartBlock.tsx`, `CorrectionSection.tsx`, workflow route admin artikel,
+                        dan renderer Argumen tidak disentuh oleh implementation slice awal.
 
 ---
 
@@ -2768,6 +2837,171 @@ Status akhir: Source dan integration gate lulus lokal. Perubahan masih hanya di 
               atau dibuatkan pull request.
 Next step: Tinjau diff dokumentasi bersama source Fase 0; setelah persetujuan owner, baru siapkan commit, push branch,
            dan draft pull request untuk verifikasi preview/produksi.
+---
+
+[14-08-2026] SESI #65 — POST-MERGE PRODUCTION VALIDATION FASE 0
+Branch: codex/document-phase-0-production-validation
+Tujuan sesi: Menutup implementation slice Fase 0 dengan bukti pasca-merge, memperbarui project bible, dan menetapkan
+              batas yang belum boleh dianggap terverifikasi sebelum memulai impact analysis Fase 1.
+Yang dikerjakan:
+  [STATUS GITHUB DAN DEPLOYMENT]
+  - PR #123 (`8682f74`) terkonfirmasi merged ke `main` melalui merge commit `dcbed7b`.
+  - Status commit Vercel `success` dengan deskripsi `Deployment has completed`; production
+    `https://saintifiks.vercel.app` merespons HTTP 200.
+
+  [SMOKE TEST PRODUCTION — READ-ONLY]
+  - Pengujian dilakukan tanpa screenshot dan tanpa mengirim komentar, koreksi, laporan, like, atau perubahan data.
+  - Pada viewport 1280×720, Drawer mengunci scroll, memberi fokus awal, menjebak fokus dua arah, menutup dengan Escape,
+    serta memulihkan fokus. Seluruh 197 target yang dirender berukuran minimum 44×44px tanpa overflow horizontal.
+  - Tujuh dialog Editorial–Argumen (Koreksi, Komentar, Share, dan Report) memiliki nama aksesibel, fokus awal, scroll
+    lock, Escape, restore focus, dan target minimum 44px. Focus trap hook bersama dan indikator fokus 2px juga lulus.
+  - Artikel Editorial `Pesta Babi — Negara yang Melanggar Aturannya Sendiri` merender dua grafik sebagai canvas visual
+    beserta dua tabel data aksesibel. Enam tautan referensi/footnote dan backlink mempunyai target fragment yang valid.
+  - Fallback grafik muncul hanya selama dynamic loading, kemudian digantikan figure, ringkasan, canvas, dan tabel data.
+
+  [BATAS BUKTI]
+  - Tujuh artikel Argumen yang live berhasil dirender tanpa overflow horizontal, tetapi tidak satu pun memuat fixture
+    grafik atau footnote. Paritas renderer Argumen tetap CONFIRMED melalui source/runtime lokal, belum melalui fixture
+    production yang representatif.
+  - Viewport mobile dan desktop telah lulus lokal pada Sesi #64; smoke test production Sesi #65 hanya 1280×720 karena
+    pengendali browser tidak menyediakan perubahan viewport. Zoom/reflow production, screen reader aktual, no-JS penuh,
+    usability pengguna, dan pengiriman form production tidak diuji.
+
+Keputusan baru: Tidak ada. Sesi ini mengonfirmasi keputusan dan kontrak Sesi #64 tanpa memperluas scope Fase 0.
+Status akhir: PR, deployment, dan jalur production yang memiliki fixture lulus. Fase 0 ditutup sebagai implementation
+              slice; keterbatasan di atas tetap validation debt dan tidak boleh dilaporkan sebagai bukti production.
+Next step: Lakukan impact analysis Fase 1 untuk artikel sebagai reading + verification interface dari input Editorial
+           Studio sampai output pembaca; jangan mengubah surface sebelum kontrak data, status, dan operator dipetakan.
+---
+
+[14-08-2026] SESI #66 — IMPACT ANALYSIS FASE 1 ARTICLE VERIFICATION
+Branch: codex/document-phase-0-production-validation
+Tujuan sesi: Menentukan dependency dan batas Fase 1 dari input Editorial Studio sampai output pembaca sebelum kode atau
+              perubahan surface dimulai.
+Yang dikerjakan:
+  [ALIRAN INPUT–OUTPUT]
+  - Input: node citation, dataset, dan chart tersedia di schema/editor, tetapi disembunyikan pada production.
+  - Gate: preflight memblokir ketiganya karena workflow production belum memiliki referential integrity.
+  - Persistence: canonical JSON, server revision, immutable snapshot, serta publish pointer sudah menjadi fondasi kuat.
+  - Output: StudioRenderer baru menampilkan citation sebagai label dan chart/dataset sebagai placeholder; halaman publik
+    hanya menampilkan tanggal terbit awal, sementara koreksi masih terikat pada potongan teks, bukan block/snapshot ID.
+
+  [REKOMENDASI YANG DISAHKAN]
+  - `D-IMP-02 A`: evidence registry disimpan dalam canonical JSON v2 agar isi dan bukti terbit atomik.
+  - `D-IMP-03 A`: rollout pertama memakai satu artikel Editorial Studio; Argumen dan legacy ditunda.
+  - `D-IMP-04 A`: status faktual + blok ketidakpastian; tanpa confidence score dan full public history pada slice awal.
+
+  [URUTAN DEPENDENCY]
+  1. Definisikan schema v2, migrasi v1→v2, referential integrity, batas ukuran, dan contract test.
+  2. Pastikan renderer serta fallback dapat menyajikan sumber tanpa kehilangan bukti sebelum input production dibuka.
+  3. Tambahkan workflow operator untuk memasukkan sumber sekali dan memilihnya dari citation.
+  4. Aktifkan preflight baru dan uji publish atomik melalui satu artikel pilot.
+  5. Dataset/chart/metodologi mengikuti pola registry yang sama setelah vertical slice sumber berhasil.
+
+Status akhir: Baseline Fase 1 disahkan; belum ada kode, migration, staging, commit, atau push untuk Fase 1.
+Next step: Susun technical contract F1A tingkat field, migration/rollback plan, impact per file, dan test matrix sebelum
+           meminta persetujuan implementasi multi-file.
+---
+
+[14-08-2026] SESI #67 — TECHNICAL CONTRACT F1A CANONICAL EVIDENCE V2
+Branch: codex/document-phase-0-production-validation
+Tujuan sesi: Mengubah baseline Fase 1 menjadi kontrak field, migrasi/rollback, referential integrity, dampak file,
+              serta test matrix sebelum implementation scope disetujui.
+Yang dikerjakan:
+  [STRUKTUR V2]
+  - `evidence` wajib ada pada dokumen v2 dan berisi array `sources`, `datasets`, `charts`, serta methodology nullable.
+  - Source menyimpan ID stabil, judul, publisher, author, URL, tanggal publikasi/akses, dan note.
+  - Dataset memakai kolom/row bertipe primitif dengan source, unit, methodology, limitations, serta linked download.
+  - Chart mengacu pada dataset dan mapping kolom semantik; visual library tidak masuk canonical document.
+  - Citation, dataset reference, dan chart reference harus resolve ke registry; uncertainty menjadi semantic callout.
+
+  [INTEGRITAS DAN PREFLIGHT]
+  - Structural validation menolak duplicate/dangling ID, column mapping rusak, nilai data tidak aman, serta batas
+    registry yang terlampaui. Draft hasil migrasi boleh incomplete tetapi tidak boleh mempunyai referensi dangling.
+  - Preflight memblokir referenced source tanpa URL, placeholder, dataset/chart incomplete, unit hilang, summary kosong,
+    atau output yang tidak dapat menghasilkan tabel data. Orphan evidence dan metadata pelengkap menjadi warning.
+  - Batas server tetap 5 MB; guard aplikasi membatasi source/dataset/chart, baris, kolom, series, dan total cell agar
+    dokumen tetap realistis untuk operator tunggal, perangkat seluler, dan koneksi rendah bandwidth.
+
+  [MIGRASI DAN ROLLBACK]
+  - Jalur migrasi adalah v0→v1→v2; stable ID, teks, marks, metadata, dan urutan konten dipertahankan.
+  - Citation/dataset/chart lama menghasilkan registry placeholder tanpa mengarang URL, data, unit, atau metodologi.
+  - Checksum raw wajib diverifikasi sebelum dokumen dinaikkan versinya; v1 tidak ditulis ulang hanya karena dibuka.
+  - Fallback Markdown v2 wajib membawa link sumber, methodology, summary, unit, dan tabel agar evidence tidak hilang
+    bila canonical renderer tidak tersedia. Rollback tidak pernah menghapus atau menurunkan evidence ke v1.
+
+  [IMPACT DAN VALIDATION]
+  - Core impact berada pada document contract, persistence, sync parsing, adapter, preflight, loader, fixture, dan tests.
+  - Surface impact berada pada Studio editor/lab/renderer serta metadata status halaman artikel publik.
+  - Red Zone legacy tidak diperlukan untuk source vertical slice; dataset/chart visual memakai jalur Studio terpisah.
+  - Validation mencakup contract/migration/fingerprint tests, TypeScript, lint, build, runtime no-JS/keyboard/reflow,
+    publish atomik satu artikel pilot, dan rehearsal fallback/restore sebelum production.
+
+Keputusan baru:
+  - `D-IMP-05 A`: canonical chart semantik dan netral dari Chart.js.
+  - `D-IMP-06 A`: migrasi lazy, forward-only, tanpa auto-write.
+  - `D-IMP-07 A`: source + citation lebih dahulu; dataset/chart tetap tertutup.
+Status akhir: Technical contract F1A disahkan. Belum ada perubahan TypeScript, database, staging, commit, atau push.
+Next step: Susun urutan implementation slice dan impact per file; minta persetujuan eksplisit sebelum file kode pertama.
+---
+
+[14-08-2026] SESI #68 — IMPLEMENTASI DAN AUDIT AKHIR F1A CANONICAL EVIDENCE V2
+Branch: codex/document-phase-0-production-validation
+Tujuan sesi: Mengimplementasikan technical contract F1A secara berurutan dari canonical input sampai output pembaca,
+              lalu mengaudit paket sebagai satu kesatuan sebelum staging atau publikasi ke GitHub.
+Yang dikerjakan:
+  [F1A-1 — CANONICAL JSON V2]
+  - Dokumen v2 memiliki registry `sources`, `methodology`, `datasets`, dan `charts`, referensi semantik, stable ID,
+    batas ukuran, serta validator untuk duplicate/dangling ID, tipe data, URL, tanggal, dan mapping kolom.
+  - Migrasi v0→v1→v2 mempertahankan isi dan ID; evidence lama menjadi placeholder yang jujur tanpa mengarang URL,
+    data, unit, metodologi, atau tingkat kepastian.
+
+  [F1A-2 — DURABILITY]
+  - Record lokal v1 diverifikasi terhadap fingerprint mentah sebelum dimigrasikan ke v2 di memori. Membuka draf lama
+    tidak menulis ulang penyimpanan sampai operator benar-benar mengedit, memulihkan, atau membuat salinan.
+  - Boundary sync menerima request v1 dari tab lama lalu menormalkannya ke v2; write baru, outbox, konflik server,
+    snapshot, dan publish memakai canonical v2. Tidak ada perubahan tabel atau migration database pada slice ini.
+  - Gate autosave memastikan render hasil recovery dilewati, tetapi edit pertama operator sesudah recovery tetap dijadwalkan
+    untuk disimpan; suppression dipertahankan selama hydration atau konflik.
+
+  [F1A-3 — OUTPUT READINESS]
+  - Studio renderer dan fallback Markdown menyajikan citation, daftar sumber, catatan sumber, metodologi, keterbatasan,
+    ringkasan chart, unit, serta tabel data tanpa bergantung pada Chart.js.
+  - Halaman artikel publik membaca snapshot v2 dan tetap kompatibel dengan snapshot v1. Dataset/chart v2 dapat dibaca,
+    tetapi belum dapat diterbitkan melalui workflow operator pada vertical slice awal.
+
+  [F1A-4 — PREFLIGHT V2]
+  - Boundary publish memigrasikan revision ke v2 dan menjalankan preflight v2 sebelum snapshot immutable dibuat.
+  - Source–citation yang lengkap dapat lolos. Source tanpa URL, placeholder, dan referensi evidence rusak diblokir;
+    orphan evidence hanya menjadi warning. Dataset/chart tetap tertutup sampai input dan pengujian production tersedia.
+
+  [F1A-5 — SOURCE-FIRST OPERATOR INPUT]
+  - Registry sumber hadir sebelum editor; operator memasukkan sumber sekali lalu citation hanya dapat memilih source ID
+    yang nyata. Command dataset/chart tidak dibuka kembali pada editor production.
+  - Tambah/edit/hapus sumber memakai label eksplisit, dialog keyboard, target minimum 44×44px, token Design System V3,
+    dan reflow modal. Penghapusan diblokir bila source masih dirujuk citation, methodology, atau dataset.
+  - Field `note` bernama "Catatan untuk pembaca" karena nilainya tampil pada daftar sumber publik dan fallback; tidak ada
+    klaim bahwa field tersebut merupakan catatan internal.
+
+  [AUDIT DAN GERBANG]
+  - 62/62 contract test lulus; TypeScript penuh lulus; `next lint` lulus dengan satu warning lama di `LikeButton.tsx`;
+    `git diff --check` lulus. Tidak ada file Red Zone Fase 0 yang disentuh.
+  - Audit statis UI mengonfirmasi token semantik, focus indicator, nama aksesibel, focus trap, Escape/restore focus,
+    target interaksi minimum 44px, serta modal dengan tinggi viewport dan scroll internal.
+  - Dependency lokal dipulihkan dari `package-lock.json`; aset CSS `katex` dan `highlight.js` kembali tersedia tanpa
+    perubahan manifest atau lockfile proyek. `next build` lulus dan menghasilkan 36 halaman dengan URL/key Supabase
+    lokal nonrahasia yang hanya hidup selama proses build.
+  - Build tersebut membuktikan kompilasi dan prerender, bukan koneksi data production. Runtime admin, screen reader aktual,
+    dan publish pilot belum diuji karena kredensial Supabase lokal tidak tersedia; batas ini tidak boleh dilaporkan sebagai
+    hasil production.
+
+Keputusan baru: Tidak ada perubahan strategi. Implementasi mengikuti `D-IMP-05 A` sampai `D-IMP-08 A`; hasil audit
+                memperjelas note sebagai informasi publik dan mempertahankan dataset/chart sebagai capability tertutup.
+Status akhir: Paket F1A lulus contract test, TypeScript, lint, diff-check, audit statis UI, dan build lokal. Scope telah
+              disiapkan di staging area; belum ada commit, push, atau pull request. Runtime/publish pilot tetap menjadi
+              validation gate berikutnya.
+Next step: Tinjau staged diff, lalu setelah persetujuan owner buat satu commit F1A dan push feature branch. Gunakan preview
+           deployment untuk smoke test source–citation sebelum satu artikel pilot diterbitkan.
 ---
 
 ## 13. REFERENSI & RESOURCE

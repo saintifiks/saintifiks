@@ -1,22 +1,41 @@
-import type { StudioDocument } from './document'
-import { validateStudioDocument } from './document'
-import type { StudioDraftContent, StudioSaveReason } from './persistence'
+import type { StudioDocumentV2, StudioVersionedDocument } from './document'
+import {
+  migrateStudioDocumentToV2,
+  validateStudioDocument,
+  validateStudioDocumentV2,
+} from './document'
+import type { StudioDraftContentV2, StudioSaveReason } from './persistence'
+import { migrateVerifiedStudioDraftContentToV2 } from './persistence'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const SHA256_PATTERN = /^[a-f0-9]{64}$/
 const DOCUMENT_ID_PATTERN = /^doc-[A-Za-z0-9][A-Za-z0-9_-]{2,123}$/
 const SAVE_REASONS = new Set<StudioSaveReason>(['autosave', 'manual', 'restore', 'copy'])
 
-export type StudioSyncRequest = StudioDraftContent & {
+export type StudioSyncRequest = StudioDraftContentV2 & {
   mutationId: string
   baseServerRevision: number | null
   reason: StudioSaveReason
 }
 
-export type StudioServerDraft = StudioDraftContent & {
+export type StudioServerDraft = {
+  title: string
+  deck: string
+  document: StudioVersionedDocument
   serverRevision: number
   serverFingerprint: string
   syncedAt: string
+}
+
+export type StudioServerDraftV2 = {
+  title: string
+  deck: string
+  document: StudioDocumentV2
+  serverRevision: number
+  serverFingerprint: string
+  syncedAt: string
+  sourceSchemaVersion: number
+  migratedFingerprint: string
 }
 
 export type StudioSyncSuccessResponse = {
@@ -79,7 +98,10 @@ export function parseStudioSyncRequest(input: unknown): ParseResult<StudioSyncRe
     return { ok: false, message: 'Dek harus berupa teks dengan panjang maksimal 1.200 karakter.' }
   }
 
-  const documentValidation = validateStudioDocument(input.document)
+  if (!isRecord(input.document) || ![1, 2].includes(Number(input.document.schemaVersion))) {
+    return { ok: false, message: 'Versi dokumen tidak didukung untuk sinkronisasi.' }
+  }
+  const documentValidation = migrateStudioDocumentToV2(input.document)
   if (!documentValidation.ok) {
     return { ok: false, message: 'Dokumen tidak memenuhi kontrak Editorial Studio.' }
   }
@@ -109,7 +131,9 @@ function parseServerDraft(input: unknown): StudioServerDraft | null {
     return null
   }
   if (!isValidDateString(input.syncedAt)) return null
-  const documentValidation = validateStudioDocument(input.document)
+  const documentValidation = isRecord(input.document) && input.document.schemaVersion === 2
+    ? validateStudioDocumentV2(input.document)
+    : validateStudioDocument(input.document)
   if (!documentValidation.ok) return null
   if (!DOCUMENT_ID_PATTERN.test(documentValidation.document.documentId)) return null
 
@@ -120,6 +144,38 @@ function parseServerDraft(input: unknown): StudioServerDraft | null {
     serverRevision: input.serverRevision,
     serverFingerprint: input.serverFingerprint,
     syncedAt: input.syncedAt,
+  }
+}
+
+export async function parseVerifiedStudioServerDraftV2(
+  input: unknown
+): Promise<StudioServerDraftV2 | null> {
+  if (!isRecord(input)) return null
+  if (typeof input.title !== 'string' || typeof input.deck !== 'string') return null
+  if (!isServerRevision(input.serverRevision)) return null
+  if (typeof input.serverFingerprint !== 'string' || !SHA256_PATTERN.test(input.serverFingerprint)) {
+    return null
+  }
+  if (!isValidDateString(input.syncedAt)) return null
+
+  try {
+    const migration = await migrateVerifiedStudioDraftContentToV2({
+      title: input.title,
+      deck: input.deck,
+      document: input.document,
+    }, input.serverFingerprint)
+    if (!DOCUMENT_ID_PATTERN.test(migration.content.document.documentId)) return null
+
+    return {
+      ...migration.content,
+      serverRevision: input.serverRevision,
+      serverFingerprint: input.serverFingerprint,
+      syncedAt: input.syncedAt,
+      sourceSchemaVersion: migration.sourceSchemaVersion,
+      migratedFingerprint: migration.migratedFingerprint,
+    }
+  } catch {
+    return null
   }
 }
 
@@ -160,7 +216,7 @@ export function studioSyncRequestFromOutbox(input: {
   reason: StudioSaveReason
   title: string
   deck: string
-  document: StudioDocument
+  document: StudioDocumentV2
 }): StudioSyncRequest {
   return {
     mutationId: input.mutationId,

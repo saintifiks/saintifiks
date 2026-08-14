@@ -3,8 +3,12 @@ import {
   createStudioDocument,
   createStudioId,
   type StudioDocument,
+  type StudioChartEvidence,
+  type StudioDatasetEvidence,
   type StudioJsonNode,
   type StudioMark,
+  type StudioSourceEvidence,
+  type StudioVersionedDocument,
 } from './document'
 
 function attrs(type: StudioJsonNode['type']) {
@@ -252,6 +256,101 @@ export function markdownToStudioDocument(
   )
 }
 
+type MarkdownOutputContext = {
+  sources: Map<string, StudioSourceEvidence>
+  datasets: Map<string, StudioDatasetEvidence>
+  charts: Map<string, StudioChartEvidence>
+}
+
+function cleanMarkdownText(value: string) {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
+function escapeMarkdownLabel(value: string) {
+  return cleanMarkdownText(value).replace(/([\\\[\]])/g, '\\$1')
+}
+
+function markdownLink(label: string, url: string) {
+  const destination = encodeURI(url).replace(/\(/g, '%28').replace(/\)/g, '%29')
+  return `[${escapeMarkdownLabel(label)}](${destination})`
+}
+
+function sourceMarkdownLabel(source: StudioSourceEvidence) {
+  return source.url ? markdownLink(source.title, source.url) : escapeMarkdownLabel(source.title)
+}
+
+function sourceReferencesMarkdown(sourceIds: string[], context: MarkdownOutputContext) {
+  return sourceIds
+    .map((sourceId) => context.sources.get(sourceId))
+    .filter((source): source is StudioSourceEvidence => Boolean(source))
+    .map(sourceMarkdownLabel)
+    .join('; ')
+}
+
+function datasetCellMarkdown(value: unknown) {
+  if (value === null || value === undefined) return '—'
+  if (typeof value === 'boolean') return value ? 'Ya' : 'Tidak'
+  return String(value).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')
+}
+
+function datasetTableMarkdown(dataset: StudioDatasetEvidence) {
+  if (dataset.columns.length === 0) return ''
+  const header = dataset.columns.map((column) =>
+    datasetCellMarkdown(`${column.label}${column.unit ? ` (${column.unit})` : ''}`)
+  )
+  const line = (cells: string[]) => `| ${cells.join(' | ')} |`
+  return [
+    line(header),
+    line(dataset.columns.map(() => '---')),
+    ...dataset.rows.map((row) => line(dataset.columns.map((column) =>
+      datasetCellMarkdown(row.values[column.key])
+    ))),
+  ].join('\n')
+}
+
+function datasetDetailsMarkdown(
+  dataset: StudioDatasetEvidence,
+  context: MarkdownOutputContext,
+  includeTitle = true
+) {
+  const sections: string[] = []
+  if (includeTitle) sections.push(`### Dataset: ${cleanMarkdownText(dataset.title)}`)
+
+  const sources = sourceReferencesMarkdown(dataset.sourceIds, context)
+  if (sources) sections.push(`**Sumber data:** ${sources}`)
+  if (dataset.downloadUrl) {
+    sections.push(`**Unduh data:** ${markdownLink('Berkas dataset', dataset.downloadUrl)}`)
+  }
+  if (dataset.accessedDate) sections.push(`**Diakses:** ${dataset.accessedDate}`)
+  if (dataset.methodology) {
+    sections.push(`**Metodologi dataset:** ${cleanMarkdownText(dataset.methodology)}`)
+  }
+  if (dataset.limitations) {
+    sections.push(`**Keterbatasan dataset:** ${cleanMarkdownText(dataset.limitations)}`)
+  }
+
+  const table = datasetTableMarkdown(dataset)
+  sections.push(table || '_Tabel data belum tersedia._')
+  return sections.join('\n\n')
+}
+
+function chartDetailsMarkdown(
+  chart: StudioChartEvidence,
+  context: MarkdownOutputContext
+) {
+  const sections = [`### Grafik: ${cleanMarkdownText(chart.title)}`]
+  if (chart.summary) sections.push(cleanMarkdownText(chart.summary))
+
+  const dataset = chart.datasetId ? context.datasets.get(chart.datasetId) : undefined
+  if (dataset) {
+    sections.push(`**Dataset:** ${cleanMarkdownText(dataset.title)}`)
+    sections.push(datasetDetailsMarkdown(dataset, context, false))
+  } else {
+    sections.push('_Data grafik belum tersedia._')
+  }
+  return sections.join('\n\n')
+}
+
 function markedText(node: StudioJsonNode) {
   let value = node.text ?? ''
   for (const mark of node.marks ?? []) {
@@ -266,27 +365,38 @@ function markedText(node: StudioJsonNode) {
   return value
 }
 
-function inlineMarkdown(node: StudioJsonNode) {
+function inlineMarkdown(node: StudioJsonNode, context: MarkdownOutputContext | null) {
   return (node.content ?? []).map((child) => {
     if (child.type === 'text') return markedText(child)
     if (child.type === 'hardBreak') return '  \n'
-    if (child.type === 'citation') return `[${String(child.attrs?.label ?? 'Sumber')}]`
+    if (child.type === 'citation') {
+      const label = cleanMarkdownText(String(child.attrs?.label ?? 'Sumber'))
+      const locator = cleanMarkdownText(String(child.attrs?.locator ?? ''))
+      const text = `${label}${locator ? `, ${locator}` : ''}`
+      const sourceId = String(child.attrs?.sourceId ?? '')
+      const source = context?.sources.get(sourceId)
+      return source?.url ? markdownLink(text, source.url) : `[${escapeMarkdownLabel(text)}]`
+    }
     if (child.type === 'footnote') return `^[${String(child.attrs?.note ?? '')}]`
     return ''
   }).join('')
 }
 
-function blockMarkdown(node: StudioJsonNode, depth = 0): string {
+function blockMarkdown(
+  node: StudioJsonNode,
+  context: MarkdownOutputContext | null,
+  depth = 0
+): string {
   switch (node.type) {
-    case 'paragraph': return inlineMarkdown(node)
-    case 'heading': return `${node.attrs?.level === 3 ? '###' : '##'} ${inlineMarkdown(node)}`
-    case 'blockquote': return (node.content ?? []).map((child) => blockMarkdown(child, depth)).join('\n').split('\n').map((line) => `> ${line}`).join('\n')
-    case 'bulletList': return (node.content ?? []).map((item) => `- ${blockMarkdown(item, depth + 1)}`).join('\n')
-    case 'orderedList': return (node.content ?? []).map((item, index) => `${index + 1}. ${blockMarkdown(item, depth + 1)}`).join('\n')
-    case 'listItem': return (node.content ?? []).map((child) => blockMarkdown(child, depth)).join('\n')
+    case 'paragraph': return inlineMarkdown(node, context)
+    case 'heading': return `${node.attrs?.level === 3 ? '###' : '##'} ${inlineMarkdown(node, context)}`
+    case 'blockquote': return (node.content ?? []).map((child) => blockMarkdown(child, context, depth)).join('\n').split('\n').map((line) => `> ${line}`).join('\n')
+    case 'bulletList': return (node.content ?? []).map((item) => `- ${blockMarkdown(item, context, depth + 1)}`).join('\n')
+    case 'orderedList': return (node.content ?? []).map((item, index) => `${index + 1}. ${blockMarkdown(item, context, depth + 1)}`).join('\n')
+    case 'listItem': return (node.content ?? []).map((child) => blockMarkdown(child, context, depth)).join('\n')
     case 'codeBlock': return `\`\`\`${String(node.attrs?.language ?? '')}\n${(node.content ?? []).map((child) => child.text ?? '').join('')}\n\`\`\``
     case 'horizontalRule': return '---'
-    case 'callout': return (node.content ?? []).map((child) => blockMarkdown(child, depth)).join('\n').split('\n').map((line) => `> ${line}`).join('\n')
+    case 'callout': return (node.content ?? []).map((child) => blockMarkdown(child, context, depth)).join('\n').split('\n').map((line) => `> ${line}`).join('\n')
     case 'figure': {
       const src = typeof node.attrs?.src === 'string' ? node.attrs.src : ''
       const alt = String(node.attrs?.alt ?? '')
@@ -294,11 +404,21 @@ function blockMarkdown(node: StudioJsonNode, depth = 0): string {
       return src ? `![${alt}](${src}${caption ? ` "${caption.replace(/"/g, '\\"')}"` : ''})` : `[Gambar: ${alt}]`
     }
     case 'equation': return `$$\n${String(node.attrs?.latex ?? '')}\n$$`
-    case 'chartReference': return `{{chart:${String(node.attrs?.chartId ?? '')}}}`
-    case 'datasetReference': return `[Dataset: ${String(node.attrs?.label ?? '')}]`
+    case 'chartReference': {
+      const chartId = String(node.attrs?.chartId ?? '')
+      const chart = context?.charts.get(chartId)
+      return chart && context ? chartDetailsMarkdown(chart, context) : `{{chart:${chartId}}}`
+    }
+    case 'datasetReference': {
+      const datasetId = String(node.attrs?.datasetId ?? '')
+      const dataset = context?.datasets.get(datasetId)
+      return dataset && context
+        ? datasetDetailsMarkdown(dataset, context)
+        : `[Dataset: ${String(node.attrs?.label ?? '')}]`
+    }
     case 'table': {
       const rows = (node.content ?? []).map((row) =>
-        (row.content ?? []).map((cell) => inlineMarkdown(cell.content?.[0] ?? cell).replace(/\|/g, '\\|'))
+        (row.content ?? []).map((cell) => inlineMarkdown(cell.content?.[0] ?? cell, context).replace(/\|/g, '\\|'))
       )
       if (rows.length === 0) return ''
       const width = Math.max(1, ...rows.map((row) => row.length))
@@ -309,6 +429,53 @@ function blockMarkdown(node: StudioJsonNode, depth = 0): string {
   }
 }
 
-export function studioDocumentToMarkdown(document: StudioDocument) {
-  return (document.root.content ?? []).map((node) => blockMarkdown(node)).filter(Boolean).join('\n\n')
+function evidenceAppendixMarkdown(
+  document: StudioVersionedDocument,
+  context: MarkdownOutputContext | null
+) {
+  if (document.schemaVersion !== 2 || !context) return []
+  const sections: string[] = []
+  const methodology = document.evidence.methodology
+  if (methodology) {
+    const details = ['## Metodologi']
+    if (methodology.summary) details.push(cleanMarkdownText(methodology.summary))
+    if (methodology.limitations) {
+      details.push(`**Keterbatasan:** ${cleanMarkdownText(methodology.limitations)}`)
+    }
+    const sources = sourceReferencesMarkdown(methodology.sourceIds, context)
+    if (sources) details.push(`**Sumber metodologi:** ${sources}`)
+    sections.push(details.join('\n\n'))
+  }
+
+  if (document.evidence.sources.length > 0) {
+    const sources = document.evidence.sources.map((source, index) => {
+      const metadata = [
+        source.authors.join(', '),
+        source.publisher,
+        source.publishedDate ? `terbit ${source.publishedDate}` : '',
+        source.accessedDate ? `diakses ${source.accessedDate}` : '',
+      ].filter(Boolean).map(cleanMarkdownText).join('; ')
+      const note = source.note ? ` ${cleanMarkdownText(source.note)}` : ''
+      return `${index + 1}. ${sourceMarkdownLabel(source)}${metadata ? ` — ${metadata}.` : ''}${note}`
+    })
+    sections.push(`## Sumber\n\n${sources.join('\n')}`)
+  }
+  return sections
+}
+
+function markdownOutputContext(document: StudioVersionedDocument): MarkdownOutputContext | null {
+  if (document.schemaVersion !== 2) return null
+  return {
+    sources: new Map(document.evidence.sources.map((source) => [source.id, source])),
+    datasets: new Map(document.evidence.datasets.map((dataset) => [dataset.id, dataset])),
+    charts: new Map(document.evidence.charts.map((chart) => [chart.id, chart])),
+  }
+}
+
+export function studioDocumentToMarkdown(document: StudioVersionedDocument) {
+  const context = markdownOutputContext(document)
+  return [
+    ...(document.root.content ?? []).map((node) => blockMarkdown(node, context)).filter(Boolean),
+    ...evidenceAppendixMarkdown(document, context),
+  ].join('\n\n')
 }

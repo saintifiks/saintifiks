@@ -1,5 +1,11 @@
-import type { StudioDocument, StudioJsonNode } from './document'
-import { validateStudioDocument } from './document'
+import type {
+  StudioDatasetEvidence,
+  StudioDocument,
+  StudioDocumentV2,
+  StudioJsonNode,
+  StudioSourceEvidence,
+} from './document'
+import { validateStudioDocument, validateStudioDocumentV2 } from './document'
 
 export type StudioPreflightIssue = {
   severity: 'blocker' | 'warning'
@@ -16,10 +22,23 @@ function visit(node: StudioJsonNode, callback: (node: StudioJsonNode) => void) {
   node.content?.forEach((child) => visit(child, callback))
 }
 
-export function preflightStudioArticle(title: string, deck: string, document: StudioDocument) {
+function preflightResult(issues: StudioPreflightIssue[]) {
+  return {
+    issues,
+    blockers: issues.filter((issue) => issue.severity === 'blocker'),
+    warnings: issues.filter((issue) => issue.severity === 'warning'),
+    ok: !issues.some((issue) => issue.severity === 'blocker'),
+  }
+}
+
+function commonPreflightIssues(
+  title: string,
+  deck: string,
+  document: StudioDocument | StudioDocumentV2,
+  documentIsValid: boolean
+) {
   const issues: StudioPreflightIssue[] = []
-  const validation = validateStudioDocument(document)
-  if (!validation.ok) {
+  if (!documentIsValid) {
     issues.push({ severity: 'blocker', code: 'invalid-document', message: 'Kontrak dokumen belum valid.' })
   }
   if (!title.trim()) issues.push({ severity: 'blocker', code: 'missing-title', message: 'Judul artikel wajib diisi.' })
@@ -48,15 +67,164 @@ export function preflightStudioArticle(title: string, deck: string, document: St
     if (node.type === 'equation' && /^(x\s*=\s*y)?$/i.test(String(node.attrs?.latex ?? '').trim())) {
       issues.push({ severity: 'blocker', code: 'equation-placeholder', message: 'Rumus placeholder harus dilengkapi.' })
     }
+  })
+
+  return issues
+}
+
+function isPlaceholderSource(source: StudioSourceEvidence) {
+  return /^(?:sumber|source)(?:[\s_-]*\d+)?$/i.test(source.title.trim())
+    || /belum (?:diisi|lengkap)|placeholder/i.test(source.title)
+}
+
+function inspectDataset(
+  dataset: StudioDatasetEvidence,
+  issues: StudioPreflightIssue[]
+) {
+  if (dataset.sourceIds.length === 0) {
+    issues.push({ severity: 'blocker', code: 'dataset-source-missing', message: `Dataset “${dataset.title}” belum terhubung ke sumber.` })
+  }
+  if (!dataset.downloadUrl) {
+    issues.push({ severity: 'blocker', code: 'dataset-download-missing', message: `Dataset “${dataset.title}” belum memiliki tautan unduhan.` })
+  }
+  if (dataset.columns.length === 0 || dataset.rows.length === 0) {
+    issues.push({ severity: 'blocker', code: 'dataset-table-missing', message: `Dataset “${dataset.title}” belum memiliki tabel data yang dapat diperiksa.` })
+  }
+  if (!dataset.methodology.trim()) {
+    issues.push({ severity: 'blocker', code: 'dataset-methodology-missing', message: `Metodologi dataset “${dataset.title}” belum dijelaskan.` })
+  }
+  if (!dataset.limitations.trim()) {
+    issues.push({ severity: 'warning', code: 'dataset-limitations-missing', message: `Keterbatasan dataset “${dataset.title}” belum dinyatakan.` })
+  }
+  if (!dataset.accessedDate) {
+    issues.push({ severity: 'warning', code: 'dataset-access-date-missing', message: `Tanggal akses dataset “${dataset.title}” belum dicatat.` })
+  }
+  const columnsWithoutUnit = dataset.columns.filter(
+    (column) => column.dataType === 'number' && column.unit === null
+  )
+  if (columnsWithoutUnit.length > 0) {
+    issues.push({
+      severity: 'blocker',
+      code: 'dataset-unit-missing',
+      message: `Kolom angka tanpa unit pada dataset “${dataset.title}”: ${columnsWithoutUnit.map((column) => column.label).join(', ')}.`,
+    })
+  }
+}
+
+export function preflightStudioArticle(title: string, deck: string, document: StudioDocument) {
+  const validation = validateStudioDocument(document)
+  const issues = commonPreflightIssues(title, deck, document, validation.ok)
+
+  visit(document.root, (node) => {
     if (['citation', 'chartReference', 'datasetReference'].includes(node.type)) {
       issues.push({ severity: 'blocker', code: `future-${node.type}`, message: `Blok ${node.type} belum memiliki workflow produksi dan tidak boleh diterbitkan.` })
     }
   })
 
-  return {
-    issues,
-    blockers: issues.filter((issue) => issue.severity === 'blocker'),
-    warnings: issues.filter((issue) => issue.severity === 'warning'),
-    ok: !issues.some((issue) => issue.severity === 'blocker'),
+  return preflightResult(issues)
+}
+
+export function preflightStudioArticleV2(
+  title: string,
+  deck: string,
+  document: StudioDocumentV2
+) {
+  const validation = validateStudioDocumentV2(document)
+  const issues = commonPreflightIssues(title, deck, document, validation.ok)
+  const sourceIds = new Set<string>()
+  const datasetIds = new Set<string>()
+  const chartIds = new Set<string>()
+
+  visit(document.root, (node) => {
+    if (node.type === 'citation') {
+      sourceIds.add(String(node.attrs?.sourceId ?? ''))
+    }
+    if (node.type === 'datasetReference') {
+      const datasetId = String(node.attrs?.datasetId ?? '')
+      datasetIds.add(datasetId)
+      issues.push({
+        severity: 'blocker',
+        code: 'future-datasetReference',
+        message: 'Blok dataset belum dibuka untuk publikasi production.',
+      })
+    }
+    if (node.type === 'chartReference') {
+      const chartId = String(node.attrs?.chartId ?? '')
+      chartIds.add(chartId)
+      issues.push({
+        severity: 'blocker',
+        code: 'future-chartReference',
+        message: 'Blok grafik belum dibuka untuk publikasi production.',
+      })
+    }
+  })
+
+  const sources = new Map(document.evidence.sources.map((source) => [source.id, source]))
+  const datasets = new Map(document.evidence.datasets.map((dataset) => [dataset.id, dataset]))
+  const charts = new Map(document.evidence.charts.map((chart) => [chart.id, chart]))
+
+  chartIds.forEach((chartId) => {
+    const chart = charts.get(chartId)
+    if (!chart) return
+    if (!chart.summary.trim()) {
+      issues.push({ severity: 'blocker', code: 'chart-summary-missing', message: `Ringkasan grafik “${chart.title}” belum diisi.` })
+    }
+    if (!chart.datasetId) {
+      issues.push({ severity: 'blocker', code: 'chart-dataset-missing', message: `Grafik “${chart.title}” belum terhubung ke dataset.` })
+    } else {
+      datasetIds.add(chart.datasetId)
+    }
+    if (!chart.xKey.trim() || chart.series.length === 0) {
+      issues.push({ severity: 'blocker', code: 'chart-mapping-missing', message: `Mapping data grafik “${chart.title}” belum lengkap.` })
+    }
+  })
+
+  datasetIds.forEach((datasetId) => {
+    const dataset = datasets.get(datasetId)
+    if (!dataset) return
+    inspectDataset(dataset, issues)
+    dataset.sourceIds.forEach((sourceId) => sourceIds.add(sourceId))
+  })
+  document.evidence.methodology?.sourceIds.forEach((sourceId) => sourceIds.add(sourceId))
+
+  sourceIds.forEach((sourceId) => {
+    const source = sources.get(sourceId)
+    if (!source) return
+    if (!source.url) {
+      issues.push({ severity: 'blocker', code: 'source-url-missing', message: `Sumber “${source.title}” belum memiliki URL yang dapat diperiksa.` })
+    }
+    if (isPlaceholderSource(source)) {
+      issues.push({ severity: 'blocker', code: 'source-placeholder', message: `Judul sumber “${source.title}” masih berupa placeholder.` })
+    }
+    if (!source.publisher.trim() && source.authors.length === 0) {
+      issues.push({ severity: 'warning', code: 'source-attribution-missing', message: `Sumber “${source.title}” belum memiliki author atau publisher.` })
+    }
+    if (!source.accessedDate) {
+      issues.push({ severity: 'warning', code: 'source-access-date-missing', message: `Tanggal akses sumber “${source.title}” belum dicatat.` })
+    }
+  })
+
+  const orphanSources = document.evidence.sources.filter((source) => !sourceIds.has(source.id))
+  const orphanDatasets = document.evidence.datasets.filter((dataset) => !datasetIds.has(dataset.id))
+  const orphanCharts = document.evidence.charts.filter((chart) => !chartIds.has(chart.id))
+  if (orphanSources.length > 0) {
+    issues.push({ severity: 'warning', code: 'orphan-source', message: `${orphanSources.length} sumber belum dipakai oleh isi, metodologi, atau data.` })
   }
+  if (orphanDatasets.length > 0) {
+    issues.push({ severity: 'warning', code: 'orphan-dataset', message: `${orphanDatasets.length} dataset belum dirujuk oleh isi atau grafik.` })
+  }
+  if (orphanCharts.length > 0) {
+    issues.push({ severity: 'warning', code: 'orphan-chart', message: `${orphanCharts.length} grafik belum dirujuk oleh isi.` })
+  }
+
+  const methodology = document.evidence.methodology
+  if (methodology && (!methodology.summary.trim() || !methodology.limitations.trim())) {
+    issues.push({
+      severity: 'warning',
+      code: 'methodology-metadata-incomplete',
+      message: 'Metodologi sebaiknya menjelaskan ringkasan dan keterbatasan secara eksplisit.',
+    })
+  }
+
+  return preflightResult(issues)
 }

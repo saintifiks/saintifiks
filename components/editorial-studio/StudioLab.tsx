@@ -25,20 +25,26 @@ import {
   WifiOff,
   X,
 } from 'lucide-react'
-import type { StudioArticleMetadata, StudioDocument, StudioJsonNode } from '@/lib/editorial-studio/document'
-import {
-  createStudioDocument,
-  migrateStudioDocument,
-  studioDocumentsEqual,
-  validateStudioDocument,
+import type {
+  StudioArticleMetadata,
+  StudioDocumentV2,
+  StudioJsonNode,
+  StudioSourceEvidence,
 } from '@/lib/editorial-studio/document'
-import { editorialStudioFixture } from '@/lib/editorial-studio/fixture'
-import { preflightStudioArticle } from '@/lib/editorial-studio/preflight'
+import {
+  createStudioDocumentV2,
+  migrateStudioDocumentToV2,
+  studioDocumentsEqual,
+  validateStudioDocumentV2,
+} from '@/lib/editorial-studio/document'
+import { createEditorialStudioV2Fixture } from '@/lib/editorial-studio/fixture'
+import { preflightStudioArticleV2 } from '@/lib/editorial-studio/preflight'
 import { buatSlug } from '@/lib/slug'
-import { fingerprintStudioDraft, type StudioDraftContent, type StudioSnapshotReason } from '@/lib/editorial-studio/persistence'
+import { fingerprintStudioDraft, type StudioDraftContentV2, type StudioSnapshotReason } from '@/lib/editorial-studio/persistence'
 import StudioEditor from './StudioEditor'
 import StudioImageUpload from './StudioImageUpload'
 import StudioRenderer from './StudioRenderer'
+import StudioSourceRegistry from './StudioSourceRegistry'
 import { useStudioDraftPersistence } from './useStudioDraftPersistence'
 import { useStudioServerSync } from './useStudioServerSync'
 
@@ -48,7 +54,7 @@ type RoundTripState = 'idle' | 'passed' | 'failed'
 type StudioInitialDraft = {
   title: string
   deck: string
-  document: StudioDocument
+  document: StudioDocumentV2
   isPublished: boolean
   publishedAt: string | null
 }
@@ -60,12 +66,12 @@ type StudioLabProps = {
 
 const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary'
 
-function cloneFixture(): StudioDocument {
-  return JSON.parse(JSON.stringify(editorialStudioFixture)) as StudioDocument
+function cloneFixture(): StudioDocumentV2 {
+  return JSON.parse(JSON.stringify(createEditorialStudioV2Fixture())) as StudioDocumentV2
 }
 
-function blankDocument(source = editorialStudioFixture): StudioDocument {
-  return createStudioDocument(undefined, {
+function blankDocument(source = createEditorialStudioV2Fixture()): StudioDocumentV2 {
+  return createStudioDocumentV2(undefined, {
     documentId: source.documentId,
     article: source.article,
   })
@@ -117,7 +123,7 @@ function snapshotReason(reason: StudioSnapshotReason) {
 export default function StudioLab({ initialDraft, production = false }: StudioLabProps) {
   const router = useRouter()
   const initialDocument = initialDraft?.document ?? blankDocument()
-  const [document, setDocument] = useState<StudioDocument>(() => initialDocument)
+  const [document, setDocument] = useState<StudioDocumentV2>(() => initialDocument)
   const [title, setTitle] = useState(initialDraft?.title ?? '')
   const [deck, setDeck] = useState(initialDraft?.deck ?? '')
   const [isPublished, setIsPublished] = useState(initialDraft?.isPublished ?? false)
@@ -131,21 +137,23 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
   const [toolsOpen, setToolsOpen] = useState(false)
   const [roundTripState, setRoundTripState] = useState<RoundTripState>('idle')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [hasOperatorEdited, setHasOperatorEdited] = useState(false)
   const toolsRef = useRef<HTMLElement>(null)
   const toolsCloseRef = useRef<HTMLButtonElement>(null)
   const toolsTriggerRef = useRef<HTMLButtonElement>(null)
 
-  const validation = useMemo(() => validateStudioDocument(document), [document])
-  const preflight = useMemo(() => preflightStudioArticle(title, deck, document), [deck, document, title])
+  const validation = useMemo(() => validateStudioDocumentV2(document), [document])
+  const preflight = useMemo(() => preflightStudioArticleV2(title, deck, document), [deck, document, title])
   const wordCount = useMemo(() => countWords(document.root), [document.root])
   const outline = useMemo(() => collectOutline(document.root), [document.root])
-  const draftContent = useMemo<StudioDraftContent>(
+  const draftContent = useMemo<StudioDraftContentV2>(
     () => ({ title, deck, document }),
     [deck, document, title]
   )
   const persistence = useStudioDraftPersistence({
     content: draftContent,
     onRestore: handleRestore,
+    writeEnabled: hasOperatorEdited,
   })
   const serverSync = useStudioServerSync({
     documentId: document.documentId,
@@ -153,7 +161,10 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
     online: persistence.online,
     lastLocalSavedAt: persistence.lastSavedAt,
     onAdoptServer: persistence.adoptServerVersion,
-    onKeepLocalAsCopy: persistence.keepServerConflictAsCopy,
+    onKeepLocalAsCopy: async () => {
+      setHasOperatorEdited(true)
+      await persistence.keepServerConflictAsCopy()
+    },
   })
 
   useEffect(() => {
@@ -203,7 +214,7 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
     return typeof window === 'undefined' ? '' : globalThis.document.body.style.overflow
   }
 
-  function handleRestore(restored: StudioDraftContent) {
+  function handleRestore(restored: StudioDraftContentV2) {
     if (restored.document.documentId !== document.documentId && restored.document.article?.articleId === null) {
       setIsPublished(false)
       setPublishedAt(null)
@@ -214,13 +225,15 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
     setRoundTripState('idle')
   }
 
-  function handleDocumentChange(nextDocument: StudioDocument) {
+  function handleDocumentChange(nextDocument: StudioDocumentV2) {
+    setHasOperatorEdited(true)
     setDocument(nextDocument)
     setRoundTripState('idle')
     setPublishSuccess(null)
   }
 
   function handleTitleChange(nextTitle: string) {
+    setHasOperatorEdited(true)
     const previousAutomaticSlug = buatSlug(title)
     setTitle(nextTitle)
     if (document.article && (!document.article.slug || document.article.slug === previousAutomaticSlug)) {
@@ -231,6 +244,7 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
 
   function updateArticleMetadata(patch: Partial<StudioArticleMetadata>) {
     if (!document.article) return
+    setHasOperatorEdited(true)
     setDocument((current) => current.article ? {
       ...current,
       article: { ...current.article, ...patch },
@@ -240,13 +254,14 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
 
   function testRoundTrip() {
     const serialized = JSON.stringify(document)
-    const restored = migrateStudioDocument(JSON.parse(serialized))
+    const restored = migrateStudioDocumentToV2(JSON.parse(serialized))
     setRoundTripState(
       restored.ok && studioDocumentsEqual(document, restored.document) ? 'passed' : 'failed'
     )
   }
 
   function resetFixture() {
+    setHasOperatorEdited(true)
     handleRestore({
       title: 'Membangun editor yang menjaga argumen dan bukti',
       deck: 'Contoh lengkap blok semantik Editorial Studio Saintifiks.',
@@ -256,8 +271,25 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
   }
 
   function resetBlank() {
+    setHasOperatorEdited(true)
     handleRestore({ title: '', deck: '', document: blankDocument(document) })
     setView('write')
+  }
+
+  function handleSourcesChange(sources: StudioSourceEvidence[]) {
+    setHasOperatorEdited(true)
+    setDocument((current) => ({
+      ...current,
+      evidence: { ...current.evidence, sources },
+    }))
+    setRoundTripState('idle')
+    setPublishSuccess(null)
+  }
+
+  function handleDeckChange(nextDeck: string) {
+    setHasOperatorEdited(true)
+    setDeck(nextDeck)
+    setPublishSuccess(null)
   }
 
   async function publishArticle() {
@@ -406,7 +438,7 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
             <button
               type="button"
               aria-label="Simpan"
-              disabled={!persistence.hydrated || Boolean(persistence.conflict) || !validation.ok || persistence.state === 'saving'}
+              disabled={!hasOperatorEdited || !persistence.hydrated || Boolean(persistence.conflict) || !validation.ok || persistence.state === 'saving'}
               onClick={() => void persistence.saveNow()}
               className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-interactive-primary px-3 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:opacity-45 sm:px-4 ${focusRing}`}
             >
@@ -476,7 +508,7 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
               <button type="button" onClick={() => void persistence.loadLatestAfterConflict()} className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse ${focusRing}`}>
                 <RefreshCw aria-hidden="true" size={16} /> Muat versi terbaru
               </button>
-              <button type="button" onClick={persistence.keepAsCopy} className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-border-default/30 bg-surface-elevated px-4 font-interface text-sm font-semibold text-text-primary hover:bg-surface-sunken ${focusRing}`}>
+              <button type="button" onClick={() => { setHasOperatorEdited(true); persistence.keepAsCopy() }} className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-border-default/30 bg-surface-elevated px-4 font-interface text-sm font-semibold text-text-primary hover:bg-surface-sunken ${focusRing}`}>
                 <Copy aria-hidden="true" size={16} /> Jadikan salinan
               </button>
             </div>
@@ -515,16 +547,22 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
         )}
 
         {view === 'write' ? (
-          <StudioEditor
-            document={document}
-            title={title}
-            deck={deck}
-            wordCount={wordCount}
-            onChange={handleDocumentChange}
-            onTitleChange={handleTitleChange}
-            onDeckChange={(value) => { setDeck(value); setPublishSuccess(null) }}
-            production={production}
-          />
+          <div className="space-y-4">
+            <StudioSourceRegistry
+              document={document}
+              onChange={handleSourcesChange}
+            />
+            <StudioEditor
+              document={document}
+              title={title}
+              deck={deck}
+              wordCount={wordCount}
+              sources={document.evidence.sources}
+              onChange={handleDocumentChange}
+              onTitleChange={handleTitleChange}
+              onDeckChange={handleDeckChange}
+            />
+          </div>
         ) : (
           <section aria-label="Pratinjau artikel" className="rounded-2xl border border-border-default/15 bg-surface-elevated px-5 py-10 shadow-sm sm:px-10 sm:py-14 lg:px-16">
             <header className="mx-auto mb-10 max-w-content border-b border-border-default/20 pb-8">
@@ -691,7 +729,7 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
                             <p className="truncate font-interface text-sm font-medium text-text-primary">Revisi {snapshot.revision} | {snapshotReason(snapshot.reason)}</p>
                             <p className="mt-0.5 font-interface text-xs text-text-tertiary">{formatSavedAt(snapshot.savedAt)}</p>
                           </div>
-                          <button type="button" disabled={Boolean(persistence.conflict)} onClick={() => { setView('write'); setToolsOpen(false); void persistence.restoreSnapshot(snapshot) }} className={`min-h-[44px] shrink-0 rounded-lg px-3 font-interface text-xs font-semibold text-interactive-primary hover:bg-signal-info-surface disabled:opacity-45 ${focusRing}`}>Pulihkan</button>
+                          <button type="button" disabled={Boolean(persistence.conflict)} onClick={() => { setHasOperatorEdited(true); setView('write'); setToolsOpen(false); void persistence.restoreSnapshot(snapshot) }} className={`min-h-[44px] shrink-0 rounded-lg px-3 font-interface text-xs font-semibold text-interactive-primary hover:bg-signal-info-surface disabled:opacity-45 ${focusRing}`}>Pulihkan</button>
                         </div>
                       </li>
                     ))}

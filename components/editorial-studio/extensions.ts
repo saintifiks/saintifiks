@@ -1,5 +1,5 @@
 import { Extension, Node, mergeAttributes, type Editor } from '@tiptap/react'
-import type { StudioJsonNode, StudioNodeType } from '@/lib/editorial-studio/document'
+import type { StudioJsonNode, StudioNodeType, StudioSchemaVersion } from '@/lib/editorial-studio/document'
 import {
   STUDIO_SCHEMA_VERSION,
   createStudioId,
@@ -255,16 +255,22 @@ export const DatasetReferenceNode = createReferenceNode({
   label: (attrs) => `Dataset — ${attrs.label ?? 'belum diberi nama'}`,
 })
 
-export function createSemanticNodeAttrs(nodeType: StudioNodeType) {
+export function createSemanticNodeAttrs(
+  nodeType: StudioNodeType,
+  schemaVersion: StudioSchemaVersion = STUDIO_SCHEMA_VERSION
+) {
   return {
     id: createStudioId(nodeType),
-    schemaVersion: STUDIO_SCHEMA_VERSION,
+    schemaVersion,
   }
 }
 
-export function ensureEditorNodeIds(editor: Editor): StudioJsonNode {
+export function ensureEditorNodeIds(
+  editor: Editor,
+  schemaVersion: StudioSchemaVersion = STUDIO_SCHEMA_VERSION
+): StudioJsonNode {
   const currentRoot = editor.getJSON() as StudioJsonNode
-  const rootWithIds = normalizeStudioRoot(currentRoot)
+  const rootWithIds = normalizeStudioRoot(currentRoot, createStudioId, schemaVersion)
   const seenIds = new Set<string>()
 
   function ensureUniqueIds(node: StudioJsonNode): StudioJsonNode {
@@ -275,7 +281,7 @@ export function ensureEditorNodeIds(editor: Editor): StudioJsonNode {
         attrs = {
           ...attrs,
           id: createStudioId(node.type),
-          schemaVersion: STUDIO_SCHEMA_VERSION,
+          schemaVersion,
         }
       }
       seenIds.add(String(attrs?.id))

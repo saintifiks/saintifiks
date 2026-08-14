@@ -5,7 +5,11 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
 import StudioRenderer from '@/components/editorial-studio/StudioRenderer'
-import { migrateStudioDocument, type StudioDocument } from '@/lib/editorial-studio/document'
+import {
+  migrateStudioDocument,
+  validateStudioDocumentV2,
+  type StudioVersionedDocument,
+} from '@/lib/editorial-studio/document'
 import ArticleInteractions from '@/components/artikel/ArticleInteractions'
 import ReadingProgress from '@/components/artikel/ReadingProgress'
 import BylineBlock from '@/components/artikel/BylineBlock'
@@ -130,7 +134,7 @@ export default async function ArtikelPage({ params }: Props) {
 
   const artikel = article as Article
   const charts = artikel.article_charts || []
-  let studioDocument: StudioDocument | null = null
+  let studioDocument: StudioVersionedDocument | null = null
   const { data: publication } = await supabase
     .from('editorial_studio_publications')
     .select('snapshot_id')
@@ -142,8 +146,13 @@ export default async function ArtikelPage({ params }: Props) {
       .select('content')
       .eq('id', publication.snapshot_id)
       .maybeSingle()
-    const migrated = migrateStudioDocument(snapshot?.content)
-    if (migrated.ok) studioDocument = migrated.document
+    const v2Document = validateStudioDocumentV2(snapshot?.content)
+    if (v2Document.ok) {
+      studioDocument = v2Document.document
+    } else {
+      const migrated = migrateStudioDocument(snapshot?.content)
+      if (migrated.ok) studioDocument = migrated.document
+    }
   }
 
   // [PERBAIKAN SESI #15]
