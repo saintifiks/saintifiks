@@ -13,7 +13,14 @@ import remarkCallout from '@/lib/supabase/remark/remarkCallout'
 const ChartBlock = dynamic(() => import('./ChartBlock'), {
   ssr: false,
   loading: () => (
-    <div className="my-10 w-full h-64 bg-ink/5 animate-pulse border border-ink/10" />
+    <div
+      className="my-8 flex min-h-44 items-center justify-center rounded border border-signal-warning/25 bg-signal-warning-surface p-6 text-center"
+      role="status"
+    >
+      <p className="font-interface text-sm leading-relaxed text-ink">
+        Grafik visual belum tersedia. Gunakan penjelasan dalam artikel sebagai konteks utama.
+      </p>
+    </div>
   )
 })
 
@@ -66,7 +73,10 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
           em: ({ children }) => <em className="italic">{children}</em>,
           ul: ({ children }) => <ul className="font-body text-body-base mb-6 ml-6 list-disc space-y-2">{children}</ul>,
           ol: ({ children }) => <ol className="font-body text-body-base mb-6 ml-6 list-decimal space-y-2">{children}</ol>,
-          li: ({ children }) => <li className="mb-1">{children}</li>,
+          li: ({ node, children, ...props }) => {
+            void node
+            return <li {...props} className="mb-1">{children}</li>
+          },
           table: ({ children }) => (
             <div className="my-8 overflow-x-auto border border-ink/10 rounded">
               <table className="min-w-full divide-y divide-ink/10">{children}</table>
@@ -144,12 +154,16 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
               </figure>
             )
           },
-          a: ({ href, children }) => React.createElement('a', {
-            href,
-            className: "text-text-link underline underline-offset-2 hover:text-interactive-primary-hover transition-colors duration-150",
-            target: href?.startsWith('http') ? '_blank' : undefined,
-            rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
-          }, children),
+          a: ({ node, href, children, ...props }) => {
+            void node
+            return React.createElement('a', {
+              ...props,
+              href,
+              className: "text-text-link underline underline-offset-2 hover:text-interactive-primary-hover transition-colors duration-150",
+              target: href?.startsWith('http') ? '_blank' : undefined,
+              rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
+            }, children)
+          },
           hr: () => <hr className="border-ink/10 my-12" />,
           
           // Penukar Dinamis: Mencegat HTML div yang masuk dan menukarnya menjadi grafik React jika teridentifikasi

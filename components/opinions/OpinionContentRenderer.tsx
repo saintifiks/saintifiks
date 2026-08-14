@@ -17,7 +17,14 @@ import remarkCallout from '@/lib/supabase/remark/remarkCallout'
 const ChartBlock = dynamic(() => import('@/components/artikel/ChartBlock'), {
   ssr: false,
   loading: () => (
-    <div className="my-10 w-full h-64 bg-primary-dark/5 animate-pulse border border-primary-dark/10" />
+    <div
+      className="my-8 flex min-h-44 items-center justify-center rounded border border-signal-warning/25 bg-signal-warning-surface p-6 text-center"
+      role="status"
+    >
+      <p className="font-helvetica text-sm leading-relaxed text-ink">
+        Grafik visual belum tersedia. Gunakan penjelasan dalam artikel sebagai konteks utama.
+      </p>
+    </div>
   )
 })
 
@@ -25,6 +32,8 @@ type OpinionContentRendererProps = {
   content: string
   charts: { chart_id: string; config: string | object }[]
 }
+
+type OpinionChart = OpinionContentRendererProps['charts'][number]
 
 // Custom sanitize schema: identik dengan ArticleRenderer — izinkan class, id, dan data-* attributes
 // agar div.saintifiks-chart dan callout tidak dihapus sanitizer
@@ -45,6 +54,32 @@ const CALLOUT_CONFIG: Record<string, { label: string; typeClass: string }> = {
   warning:   { label: 'Perhatian', typeClass: 'callout-warning' },
   important: { label: 'Penting',   typeClass: 'callout-important' },
   tip:       { label: 'Tips',      typeClass: 'callout-tip' },
+}
+
+function resolveChart(renderedId: string, charts: OpinionChart[]) {
+  const exactMatch = charts.find((chart) => chart.chart_id === renderedId)
+  if (exactMatch) {
+    return { identifier: exactMatch.chart_id, chart: exactMatch }
+  }
+
+  // rehype-sanitize mempertahankan ID dengan awalan anti-DOM-clobbering.
+  // Gunakan ID asli hanya untuk lookup data; jangan hilangkan proteksi pada DOM.
+  const clobberPrefix = defaultSchema.clobberPrefix ?? 'user-content-'
+  const originalId = renderedId.startsWith(clobberPrefix)
+    ? renderedId.slice(clobberPrefix.length)
+    : renderedId
+
+  return {
+    identifier: originalId,
+    chart: charts.find((chart) => chart.chart_id === originalId),
+  }
+}
+
+function resolveSanitizedFragmentHref(href: string | undefined) {
+  if (!href?.startsWith('#') || href.length === 1) return href
+
+  const clobberPrefix = defaultSchema.clobberPrefix ?? 'user-content-'
+  return `#${clobberPrefix}${href.slice(1)}`
 }
 
 export default function OpinionContentRenderer({ content, charts }: OpinionContentRendererProps) {
@@ -68,7 +103,10 @@ export default function OpinionContentRenderer({ content, charts }: OpinionConte
           em: ({ children }) => <em className="italic">{children}</em>,
           ul: ({ children }) => <ul className="font-libre text-lg mb-6 ml-6 list-disc space-y-2">{children}</ul>,
           ol: ({ children }) => <ol className="font-libre text-lg mb-6 ml-6 list-decimal space-y-2">{children}</ol>,
-          li: ({ children }) => <li className="mb-1">{children}</li>,
+          li: ({ node, children, ...props }) => {
+            void node
+            return <li {...props} className="mb-1">{children}</li>
+          },
           table: ({ children }) => (
             <div className="my-8 overflow-x-auto border border-primary-dark/10 rounded">
               <table className="min-w-full divide-y divide-primary-dark/10">{children}</table>
@@ -146,20 +184,24 @@ export default function OpinionContentRenderer({ content, charts }: OpinionConte
               </figure>
             )
           },
-          a: ({ href, children }) => React.createElement('a', {
-            href,
-            className: "text-accent-blue underline underline-offset-2 hover:opacity-70 transition-opacity duration-150",
-            target: href?.startsWith('http') ? '_blank' : undefined,
-            rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
-          }, children),
+          a: ({ node, href, children, ...props }) => {
+            void node
+            return React.createElement('a', {
+              ...props,
+              href: resolveSanitizedFragmentHref(href),
+              className: "text-accent-blue underline underline-offset-2 hover:opacity-70 transition-opacity duration-150",
+              target: href?.startsWith('http') ? '_blank' : undefined,
+              rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
+            }, children)
+          },
           hr: () => <hr className="border-primary-dark/10 my-12" />,
 
           // Intercept div dengan class saintifiks-chart → render ChartBlock
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           div: ({ className, id, children, ...props }: any) => {
             if (className === 'saintifiks-chart' && id) {
-              const chartData = charts.find((c) => c.chart_id === id)
-              return <ChartBlock identifier={id} configString={chartData ? chartData.config : null} />
+              const { identifier, chart } = resolveChart(id, charts)
+              return <ChartBlock identifier={identifier} configString={chart?.config ?? null} />
             }
             return <div className={className} id={id} {...props}>{children}</div>
           }
