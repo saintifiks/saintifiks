@@ -30,6 +30,11 @@ import {
   preflightStudioArticleV2,
 } from '../lib/editorial-studio/preflight'
 import {
+  createStudioServerRetryCycle,
+  getStudioServerRetryDelay,
+  recordStudioServerRetryableFailure,
+} from '../lib/editorial-studio/server-retry-policy'
+import {
   evaluateStudioAutosaveGate,
   fingerprintStudioDraft,
   migrateVerifiedStudioDraftContentToV2,
@@ -784,6 +789,82 @@ test('migration publikasi memakai snapshot immutable, pointer publik, dan RPC se
   assert.match(migration, /on conflict \(article_id\) do update/)
   assert.match(migration, /revoke all on function public\.publish_editorial_studio_article[\s\S]+from public, anon, authenticated/)
   assert.match(migration, /grant execute on function public\.publish_editorial_studio_article[\s\S]+to service_role/)
+})
+
+test('hotfix digest mempertahankan search_path sempit dan tidak mengubah tabel atau izin', () => {
+  const publicationMigration = readFileSync(
+    resolve(process.cwd(), 'supabase/migrations/20260807010000_editorial_studio_publication.sql'),
+    'utf8'
+  ).toLowerCase().replace(/\r\n/g, '\n')
+  const migration = readFileSync(
+    resolve(
+      process.cwd(),
+      'supabase/migrations/20260814220000_editorial_studio_digest_schema_hotfix.sql'
+    ),
+    'utf8'
+  ).toLowerCase().replace(/\r\n/g, '\n')
+
+  assert.match(migration, /create or replace function public\.link_editorial_revision_to_article/)
+  assert.match(migration, /security definer\s+set search_path = public/)
+  assert.match(migration, /extensions\.digest\(new\.document_id, 'sha256'\)/)
+  assert.doesNotMatch(migration, /encode\(\s*digest\(/)
+  assert.doesNotMatch(migration, /set search_path\s*=\s*public\s*,\s*extensions/)
+  assert.doesNotMatch(migration, /\b(?:create|alter|drop) table\b/)
+  assert.doesNotMatch(migration, /\b(?:grant|revoke)\b/)
+
+  const functionPattern = /create or replace function public\.link_editorial_revision_to_article\(\)[\s\S]*?\n\$\$;/
+  const originalFunction = publicationMigration.match(functionPattern)?.[0]
+  const hotfixFunction = migration.match(functionPattern)?.[0]
+  assert.ok(originalFunction)
+  assert.ok(hotfixFunction)
+  assert.equal(hotfixFunction.replace('extensions.digest(', 'digest('), originalFunction)
+})
+
+test('retry sinkronisasi berhenti setelah 15 detik dan 60 detik untuk satu mutasi', () => {
+  let cycle = createStudioServerRetryCycle()
+
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+  assert.equal(cycle.failedRequestCount, 1)
+  assert.equal(getStudioServerRetryDelay(cycle.failedRequestCount), 15_000)
+
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+  assert.equal(cycle.failedRequestCount, 2)
+  assert.equal(getStudioServerRetryDelay(cycle.failedRequestCount), 60_000)
+
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+  assert.equal(cycle.failedRequestCount, 3)
+  assert.equal(getStudioServerRetryDelay(cycle.failedRequestCount), null)
+})
+
+test('mutasi baru dan retry manual memulai anggaran retry yang baru', () => {
+  let cycle = recordStudioServerRetryableFailure(
+    createStudioServerRetryCycle('mutation-a'),
+    'mutation-a'
+  )
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+  cycle = recordStudioServerRetryableFailure(cycle, 'mutation-a')
+
+  const newMutationCycle = recordStudioServerRetryableFailure(cycle, 'mutation-b')
+  assert.equal(newMutationCycle.mutationId, 'mutation-b')
+  assert.equal(newMutationCycle.failedRequestCount, 1)
+  assert.equal(getStudioServerRetryDelay(newMutationCycle.failedRequestCount), 15_000)
+
+  const manualCycle = createStudioServerRetryCycle(cycle.mutationId)
+  const manualFailure = recordStudioServerRetryableFailure(manualCycle, 'mutation-a')
+  assert.equal(manualFailure.failedRequestCount, 1)
+  assert.equal(getStudioServerRetryDelay(manualFailure.failedRequestCount), 15_000)
+})
+
+test('hook sinkronisasi memakai retry policy terbatas, bukan timer tanpa batas', () => {
+  const hook = readFileSync(
+    resolve(process.cwd(), 'components/editorial-studio/useStudioServerSync.ts'),
+    'utf8'
+  )
+
+  assert.match(hook, /recordStudioServerRetryableFailure\(/)
+  assert.match(hook, /getStudioServerRetryDelay\(retryCycleRef\.current\.failedRequestCount\)/)
+  assert.match(hook, /if \(retryDelay === null\) return/)
+  assert.doesNotMatch(hook, /const RETRY_DELAY_MS/)
 })
 
 test('boundary publish aktif memigrasikan revision ke v2 dan menjalankan preflight v2', () => {
