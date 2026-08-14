@@ -791,6 +791,35 @@ test('migration publikasi memakai snapshot immutable, pointer publik, dan RPC se
   assert.match(migration, /grant execute on function public\.publish_editorial_studio_article[\s\S]+to service_role/)
 })
 
+test('hotfix digest mempertahankan search_path sempit dan tidak mengubah tabel atau izin', () => {
+  const publicationMigration = readFileSync(
+    resolve(process.cwd(), 'supabase/migrations/20260807010000_editorial_studio_publication.sql'),
+    'utf8'
+  ).toLowerCase().replace(/\r\n/g, '\n')
+  const migration = readFileSync(
+    resolve(
+      process.cwd(),
+      'supabase/migrations/20260814220000_editorial_studio_digest_schema_hotfix.sql'
+    ),
+    'utf8'
+  ).toLowerCase().replace(/\r\n/g, '\n')
+
+  assert.match(migration, /create or replace function public\.link_editorial_revision_to_article/)
+  assert.match(migration, /security definer\s+set search_path = public/)
+  assert.match(migration, /extensions\.digest\(new\.document_id, 'sha256'\)/)
+  assert.doesNotMatch(migration, /encode\(\s*digest\(/)
+  assert.doesNotMatch(migration, /set search_path\s*=\s*public\s*,\s*extensions/)
+  assert.doesNotMatch(migration, /\b(?:create|alter|drop) table\b/)
+  assert.doesNotMatch(migration, /\b(?:grant|revoke)\b/)
+
+  const functionPattern = /create or replace function public\.link_editorial_revision_to_article\(\)[\s\S]*?\n\$\$;/
+  const originalFunction = publicationMigration.match(functionPattern)?.[0]
+  const hotfixFunction = migration.match(functionPattern)?.[0]
+  assert.ok(originalFunction)
+  assert.ok(hotfixFunction)
+  assert.equal(hotfixFunction.replace('extensions.digest(', 'digest('), originalFunction)
+})
+
 test('retry sinkronisasi berhenti setelah 15 detik dan 60 detik untuk satu mutasi', () => {
   let cycle = createStudioServerRetryCycle()
 
