@@ -13,6 +13,7 @@ import {
   STUDIO_EVIDENCE_LIMITS,
   createStudioDocument,
   createStudioDocumentV2,
+  findStudioEvidenceDependencies,
   migrateStudioDocument,
   migrateStudioDocumentToV2,
   normalizeStudioRoot,
@@ -20,6 +21,14 @@ import {
   validateStudioDocument,
   validateStudioDocumentV2,
 } from '../lib/editorial-studio/document'
+import {
+  STUDIO_CHART_INPUT_LIMITS,
+  buildStudioChartEvidence,
+  findStudioDatasetChartDependencies,
+  findStudioDatasetColumnChartDependencies,
+  resolveStudioChartModel,
+  validateStudioChartDraft,
+} from '../lib/editorial-studio/chart-model'
 import {
   createEditorialStudioV2Fixture,
   editorialStudioFixture,
@@ -59,6 +68,12 @@ import {
   parseStudioSyncResponse,
   studioSyncRequestFromOutbox,
 } from '../lib/editorial-studio/sync-contract'
+import {
+  STUDIO_TABULAR_INPUT_LIMITS,
+  buildStudioDatasetTable,
+  convertStudioTabularValue,
+  parseStudioTabularInput,
+} from '../lib/editorial-studio/tabular-input'
 
 function sequentialIds(): StudioIdFactory {
   let counter = 0
@@ -1119,7 +1134,7 @@ function semanticChartDocument(): StudioDocumentV2 {
         methodology: 'Nilai digunakan tanpa interpolasi.',
         limitations: 'Dataset hanya memuat satu observasi contoh.',
         columns: [
-          { key: 'year', label: 'Tahun', dataType: 'date', unit: null },
+          { key: 'year', label: 'Tahun', dataType: 'string', unit: null },
           { key: 'value', label: 'Inflasi', dataType: 'number', unit: '%' },
         ],
         rows: [{ id: 'row-inflasi-2025', values: { year: '2025', value: 2.4 } }],
@@ -1135,6 +1150,21 @@ function semanticChartDocument(): StudioDocumentV2 {
       }],
     },
   })
+}
+
+function f1bPublishCandidate(): StudioDocumentV2 {
+  const document = semanticChartDocument()
+  document.article = {
+    kind: 'article',
+    articleId: null,
+    slug: 'grafik-semantik',
+    coverImageUrl: null,
+    category: 'Data',
+    kicker: 'Analisis',
+    coverIllustrator: '',
+    country: 'Indonesia',
+  }
+  return document
 }
 
 function sourceFirstDocument(): StudioDocumentV2 {
@@ -1348,6 +1378,400 @@ test('validator v2 menolak URL dan tanggal evidence yang tidak aman', () => {
     assert.equal(result.issues.some((issue) => issue.message.includes('http atau https')), true)
     assert.equal(result.issues.some((issue) => issue.message.includes('Tanggal evidence tidak valid')), true)
   }
+})
+
+test('F1B-1 parser TSV menjaga quoted cell, multiline, formula teks, dan konversi id-ID', () => {
+  const parsed = parseStudioTabularInput(
+    'Tahun\tNilai\tCatatan\r\n2025\t1.234,50\t"=SUM(A1:A2)"\r\n2026\t2.000,00\t"Dua\r\nbaris"\r\n'
+  )
+
+  assert.equal(parsed.ok, true)
+  if (!parsed.ok) return
+  assert.equal(parsed.table.rows.length, 2)
+  assert.equal(parsed.table.rows[1][2], 'Dua\nbaris')
+
+  const built = buildStudioDatasetTable(
+    parsed.table,
+    [
+      { dataType: 'string' },
+      { dataType: 'number', unit: '%' },
+      { dataType: 'string' },
+    ],
+    'id-ID',
+    sequentialIds()
+  )
+
+  assert.equal(built.ok, true)
+  if (!built.ok) return
+  assert.deepEqual(built.columns.map((column) => column.key), ['tahun', 'nilai', 'catatan'])
+  assert.equal(built.rows[0].values.nilai, 1234.5)
+  assert.equal(built.rows[0].values.catatan, '=SUM(A1:A2)')
+  assert.equal(built.rows[1].values.catatan, 'Dua\nbaris')
+})
+
+test('F1B-1 input tabular menolak bentuk rusak, batas terlampaui, nilai ambigu, dan pembulatan tidak aman', () => {
+  const malformed = parseStudioTabularInput('A\tB\n"kutip tanpa penutup\t1')
+  const uneven = parseStudioTabularInput('A\tB\n1')
+  const duplicateHeader = parseStudioTabularInput('Nilai\tnilai\n1\t2')
+  const tooManyColumns = parseStudioTabularInput(
+    Array.from({ length: STUDIO_TABULAR_INPUT_LIMITS.columns + 1 }, (_, index) => `Kolom ${index}`).join('\t')
+  )
+  const tooManyRows = parseStudioTabularInput([
+    'Nilai',
+    ...Array.from(
+      { length: STUDIO_TABULAR_INPUT_LIMITS.rows + 1 },
+      (_, index) => String(index)
+    ),
+  ].join('\n'))
+
+  assert.equal(malformed.ok, false)
+  assert.equal(uneven.ok, false)
+  assert.equal(duplicateHeader.ok, false)
+  assert.equal(tooManyColumns.ok, false)
+  assert.equal(tooManyRows.ok, false)
+  assert.deepEqual(convertStudioTabularValue('1.234,56', 'number', 'id-ID'), {
+    ok: true,
+    value: 1234.56,
+  })
+  assert.deepEqual(convertStudioTabularValue('1,234.56', 'number', 'en-US'), {
+    ok: true,
+    value: 1234.56,
+  })
+  assert.equal(convertStudioTabularValue('1,234.56', 'number', 'id-ID').ok, false)
+  assert.equal(convertStudioTabularValue('1.234,56', 'number', 'en-US').ok, false)
+  assert.deepEqual(convertStudioTabularValue('29/02/2024', 'date', 'id-ID'), {
+    ok: true,
+    value: '2024-02-29',
+  })
+  assert.equal(convertStudioTabularValue('29/02/2023', 'date', 'id-ID').ok, false)
+  assert.equal(convertStudioTabularValue('mungkin', 'boolean', 'id-ID').ok, false)
+  assert.equal(
+    convertStudioTabularValue('9007199254740992', 'number', 'en-US').ok,
+    false
+  )
+  const roundedUnsafeInteger = convertStudioTabularValue(
+    '9007199254740992.5',
+    'number',
+    'en-US'
+  )
+  assert.equal(roundedUnsafeInteger.ok, false)
+  if (roundedUnsafeInteger.ok) return
+  assert.equal(roundedUnsafeInteger.issue.code, 'unsafe-integer')
+})
+
+test('F1B-1 builder tabular membuat key sistem dan menolak label hasil review yang duplikat', () => {
+  const parsed = parseStudioTabularInput('2025\tNilai %\tNilai orang\n2025\t2,4\t100')
+  assert.equal(parsed.ok, true)
+  if (!parsed.ok) return
+
+  const built = buildStudioDatasetTable(
+    parsed.table,
+    [
+      { dataType: 'string' },
+      { dataType: 'number', unit: '%' },
+      { dataType: 'number', unit: 'orang' },
+    ],
+    'id-ID',
+    sequentialIds()
+  )
+  assert.equal(built.ok, true)
+  if (built.ok) {
+    assert.deepEqual(
+      built.columns.map((column) => column.key),
+      ['column-2025', 'nilai', 'nilai-orang']
+    )
+  }
+
+  const duplicateLabels = buildStudioDatasetTable(
+    parsed.table,
+    [
+      { dataType: 'string', label: 'Nilai' },
+      { dataType: 'number', label: 'nilai', unit: '%' },
+      { dataType: 'number', unit: 'orang' },
+    ],
+    'id-ID',
+    sequentialIds()
+  )
+  assert.equal(duplicateLabels.ok, false)
+  if (!duplicateLabels.ok) {
+    assert.equal(duplicateLabels.issues.some((issue) => issue.code === 'duplicate-label'), true)
+  }
+})
+
+test('F1B-1 chart model membangun mapping semantik dan mempertahankan stable ID saat edit', () => {
+  const dataset = semanticChartDocument().evidence.datasets[0]
+  const draft = {
+    title: 'Perubahan inflasi',
+    summary: 'Inflasi dapat dibandingkan per tahun.',
+    type: 'line' as const,
+    xKey: 'year',
+    series: [{ columnKey: 'value' }],
+  }
+
+  assert.equal(validateStudioChartDraft(dataset, draft).ok, true)
+  const built = buildStudioChartEvidence(dataset, draft, { idFactory: sequentialIds() })
+  assert.equal(built.ok, true)
+  if (!built.ok) return
+  assert.equal(resolveStudioChartModel(dataset, built.chart).ok, true)
+
+  const rebuilt = buildStudioChartEvidence(
+    dataset,
+    { ...draft, title: 'Perubahan inflasi tahunan' },
+    {
+      existingChart: built.chart,
+      idFactory: () => {
+        throw new Error('Stable ID seharusnya dipertahankan.')
+      },
+    }
+  )
+  assert.equal(rebuilt.ok, true)
+  if (!rebuilt.ok) return
+  assert.equal(rebuilt.chart.id, built.chart.id)
+  assert.deepEqual(
+    rebuilt.chart.series.map((series) => series.id),
+    built.chart.series.map((series) => series.id)
+  )
+  assert.equal(
+    findStudioDatasetChartDependencies([built.chart], dataset.id)[0].chartId,
+    built.chart.id
+  )
+  assert.deepEqual(
+    findStudioDatasetColumnChartDependencies([built.chart], dataset.id, 'value')[0].roles,
+    ['series']
+  )
+})
+
+test('F1B-1 chart model menolak tipe, unit, duplikasi, dan batas operator yang tidak aman', () => {
+  const dataset = semanticChartDocument().evidence.datasets[0]
+  const baseDraft = {
+    title: 'Perubahan inflasi',
+    summary: 'Ringkasan grafik.',
+    type: 'line' as const,
+    xKey: 'year',
+    series: [{ columnKey: 'value' }],
+  }
+  const scatter = validateStudioChartDraft(dataset, { ...baseDraft, type: 'scatter' })
+  const nonNumericSeries = validateStudioChartDraft(dataset, {
+    ...baseDraft,
+    series: [{ columnKey: 'year' }],
+  })
+  const missingUnitDataset = JSON.parse(JSON.stringify(dataset)) as typeof dataset
+  missingUnitDataset.columns[1].unit = null
+  const missingUnit = validateStudioChartDraft(missingUnitDataset, baseDraft)
+  const mixedUnitDataset = JSON.parse(JSON.stringify(dataset)) as typeof dataset
+  mixedUnitDataset.columns.push({
+    key: 'population',
+    label: 'Populasi',
+    dataType: 'number',
+    unit: 'orang',
+  })
+  const mixedUnits = validateStudioChartDraft(mixedUnitDataset, {
+    ...baseDraft,
+    series: [{ columnKey: 'value' }, { columnKey: 'population' }],
+  })
+  const expandedDataset = JSON.parse(JSON.stringify(dataset)) as typeof dataset
+  const expandedSeries = Array.from(
+    { length: STUDIO_CHART_INPUT_LIMITS.series + 1 },
+    (_, index) => {
+      const columnKey = `value-${index + 1}`
+      expandedDataset.columns.push({
+        key: columnKey,
+        label: `Nilai ${index + 1}`,
+        dataType: 'number',
+        unit: '%',
+      })
+      return { columnKey }
+    }
+  )
+  const tooManySeries = validateStudioChartDraft(expandedDataset, {
+    ...baseDraft,
+    series: expandedSeries,
+  })
+
+  assert.equal(scatter.ok, false)
+  assert.equal(nonNumericSeries.ok, false)
+  assert.equal(missingUnit.ok, false)
+  assert.equal(mixedUnits.ok, false)
+  assert.equal(tooManySeries.ok, false)
+  if (!tooManySeries.ok) {
+    assert.equal(tooManySeries.issues.some((issue) => issue.code === 'too-many-series'), true)
+  }
+
+  const readerChart = {
+    id: 'chart-reader-seven',
+    title: 'Tujuh seri',
+    summary: 'Kompatibilitas reader schema v2.',
+    datasetId: expandedDataset.id,
+    type: 'bar' as const,
+    xKey: 'year',
+    series: expandedSeries.map((series, index) => ({
+      id: `series-reader-${index + 1}`,
+      columnKey: series.columnKey,
+      label: `Nilai ${index + 1}`,
+    })),
+  }
+  assert.equal(resolveStudioChartModel(expandedDataset, readerChart).ok, true)
+})
+
+test('F1B-1 validator canonical menolak nilai dataset dan mapping chart yang merusak integritas', () => {
+  const invalidDate = semanticChartDocument()
+  invalidDate.evidence.datasets[0].columns[0].dataType = 'date'
+  const unsafeInteger = semanticChartDocument()
+  unsafeInteger.evidence.datasets[0].rows[0].values.value = Number.MAX_SAFE_INTEGER + 1
+  const unsafeText = semanticChartDocument()
+  unsafeText.evidence.datasets[0].rows[0].values.year = '2025\u0000'
+  const scatterWithStringX = semanticChartDocument()
+  scatterWithStringX.evidence.charts[0].type = 'scatter'
+  const nonNumericSeries = semanticChartDocument()
+  nonNumericSeries.evidence.charts[0].series[0].columnKey = 'year'
+  const duplicateSeries = semanticChartDocument()
+  duplicateSeries.evidence.charts[0].series.push({
+    id: 'series-inflasi-copy',
+    columnKey: 'value',
+    label: 'Inflasi salinan',
+  })
+  const mixedUnits = semanticChartDocument()
+  mixedUnits.evidence.datasets[0].columns.push({
+    key: 'population',
+    label: 'Populasi',
+    dataType: 'number',
+    unit: 'orang',
+  })
+  mixedUnits.evidence.datasets[0].rows[0].values.population = 100
+  mixedUnits.evidence.charts[0].series.push({
+    id: 'series-population',
+    columnKey: 'population',
+    label: 'Populasi',
+  })
+
+  assert.equal(validateStudioDocumentV2(invalidDate).ok, false)
+  assert.equal(validateStudioDocumentV2(unsafeInteger).ok, false)
+  assert.equal(validateStudioDocumentV2(unsafeText).ok, false)
+  assert.equal(validateStudioDocumentV2(scatterWithStringX).ok, false)
+  assert.equal(validateStudioDocumentV2(nonNumericSeries).ok, false)
+  assert.equal(validateStudioDocumentV2(duplicateSeries).ok, false)
+  assert.equal(validateStudioDocumentV2(mixedUnits).ok, false)
+})
+
+test('F1B-1 dependency registry menjaga source, dataset, chart, dan kolom yang masih dirujuk', () => {
+  const document = semanticChartDocument()
+  document.root.content?.push({
+    type: 'datasetReference',
+    attrs: {
+      id: 'dataset-reference-test',
+      schemaVersion: 2,
+      datasetId: 'dataset-inflasi',
+    },
+  })
+  assert.equal(validateStudioDocumentV2(document).ok, true)
+
+  assert.deepEqual(
+    findStudioEvidenceDependencies(document, { type: 'source', id: 'source-bps' })
+      .map((dependency) => dependency.kind),
+    ['citation', 'methodology-source', 'dataset-source']
+  )
+  assert.deepEqual(
+    findStudioEvidenceDependencies(document, { type: 'dataset', id: 'dataset-inflasi' })
+      .map((dependency) => dependency.kind),
+    ['dataset-reference', 'chart-dataset']
+  )
+  assert.deepEqual(
+    findStudioEvidenceDependencies(document, { type: 'chart', id: 'chart-inflasi' })
+      .map((dependency) => dependency.kind),
+    ['chart-reference']
+  )
+  assert.deepEqual(
+    findStudioEvidenceDependencies(document, {
+      type: 'datasetColumn',
+      datasetId: 'dataset-inflasi',
+      columnKey: 'value',
+    }).map((dependency) => dependency.kind),
+    ['chart-series-column']
+  )
+})
+
+test('F1B-1 preflight menjadikan download warning dan mempertahankan production blockers', () => {
+  const chartCandidate = f1bPublishCandidate()
+  chartCandidate.evidence.datasets[0].downloadUrl = null
+  const chartPreflight = preflightStudioArticleV2(
+    'Grafik semantik',
+    'Ringkasan.',
+    chartCandidate
+  )
+
+  assert.equal(chartPreflight.ok, false)
+  assert.equal(
+    chartPreflight.blockers.some((issue) => issue.code === 'future-chartReference'),
+    true
+  )
+  assert.equal(
+    chartPreflight.blockers.some((issue) => issue.code === 'dataset-download-missing'),
+    false
+  )
+  assert.equal(
+    chartPreflight.warnings.some((issue) => issue.code === 'dataset-download-missing'),
+    true
+  )
+
+  const datasetCandidate = f1bPublishCandidate()
+  const chartReference = datasetCandidate.root.content?.find(
+    (node) => node.type === 'chartReference'
+  )
+  if (chartReference) {
+    chartReference.type = 'datasetReference'
+    chartReference.attrs = {
+      ...chartReference.attrs,
+      datasetId: 'dataset-inflasi',
+    }
+    delete chartReference.attrs.chartId
+  }
+  const datasetPreflight = preflightStudioArticleV2(
+    'Dataset semantik',
+    'Ringkasan.',
+    datasetCandidate
+  )
+  assert.equal(
+    datasetPreflight.blockers.some((issue) => issue.code === 'future-datasetReference'),
+    true
+  )
+})
+
+test('F1B-1 preflight memblokir source, tabel, metodologi, unit, dan chart yang tidak siap', () => {
+  const incomplete = f1bPublishCandidate()
+  incomplete.evidence.datasets[0].downloadUrl = null
+  incomplete.evidence.datasets[0].sourceIds = []
+  incomplete.evidence.datasets[0].rows = []
+  incomplete.evidence.datasets[0].methodology = ''
+  incomplete.evidence.datasets[0].columns[1].unit = '   '
+  incomplete.evidence.sources[0].url = null
+  const result = preflightStudioArticleV2('Evidence belum lengkap', 'Ringkasan.', incomplete)
+
+  for (const code of [
+    'source-url-missing',
+    'dataset-source-missing',
+    'dataset-table-missing',
+    'dataset-methodology-missing',
+    'dataset-unit-missing',
+  ]) {
+    assert.equal(result.blockers.some((issue) => issue.code === code), true, code)
+  }
+  assert.equal(result.warnings.some((issue) => issue.code === 'dataset-download-missing'), true)
+
+  const invalidChart = f1bPublishCandidate()
+  invalidChart.evidence.charts[0].series[0].columnKey = 'year'
+  const chartResult = preflightStudioArticleV2(
+    'Chart belum lengkap',
+    'Ringkasan.',
+    invalidChart
+  )
+  assert.equal(
+    chartResult.blockers.some((issue) => issue.code === 'chart-series-type-unsupported'),
+    true
+  )
+  assert.equal(
+    chartResult.blockers.some((issue) => issue.code === 'future-chartReference'),
+    true
+  )
 })
 
 test('callout ketidakpastian hanya menjadi bagian kontrak v2', () => {

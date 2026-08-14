@@ -151,6 +151,29 @@ export type StudioDocumentV2 = {
   article?: StudioArticleMetadata
 }
 
+export type StudioEvidenceDependencyTarget =
+  | { type: 'source'; id: string }
+  | { type: 'dataset'; id: string }
+  | { type: 'chart'; id: string }
+  | { type: 'datasetColumn'; datasetId: string; columnKey: string }
+
+export type StudioEvidenceDependencyKind =
+  | 'citation'
+  | 'methodology-source'
+  | 'dataset-source'
+  | 'dataset-reference'
+  | 'chart-dataset'
+  | 'chart-reference'
+  | 'chart-x-column'
+  | 'chart-series-column'
+
+export type StudioEvidenceDependency = {
+  kind: StudioEvidenceDependencyKind
+  path: string
+  ownerId?: string
+  ownerTitle?: string
+}
+
 // Alias legacy tetap v1 untuk reader dan jalur kompatibilitas yang eksplisit.
 // Writer source-first memakai StudioDocumentV2 secara langsung agar perpindahan
 // versi tidak terjadi diam-diam pada caller lama.
@@ -265,6 +288,7 @@ const EVIDENCE_ID_PATTERN = /^[A-Za-z][A-Za-z0-9_-]{2,127}$/
 const DATASET_KEY_PATTERN = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/
 const CHART_TYPES = new Set(['line', 'bar', 'scatter'])
 const DATA_TYPES = new Set(['string', 'number', 'boolean', 'date'])
+const UNSAFE_DATASET_TEXT = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -272,6 +296,107 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+export function findStudioEvidenceDependencies(
+  document: StudioDocumentV2,
+  target: StudioEvidenceDependencyTarget
+): StudioEvidenceDependency[] {
+  const dependencies: StudioEvidenceDependency[] = []
+  const nodeStack: Array<{ node: StudioJsonNode; path: string }> = [{
+    node: document.root,
+    path: '$.root',
+  }]
+
+  while (nodeStack.length > 0) {
+    const current = nodeStack.pop()
+    if (!current) break
+    const attrs = current.node.attrs ?? {}
+    if (target.type === 'source' && current.node.type === 'citation' && attrs.sourceId === target.id) {
+      dependencies.push({ kind: 'citation', path: `${current.path}.attrs.sourceId` })
+    }
+    if (
+      target.type === 'dataset'
+      && current.node.type === 'datasetReference'
+      && attrs.datasetId === target.id
+    ) {
+      dependencies.push({ kind: 'dataset-reference', path: `${current.path}.attrs.datasetId` })
+    }
+    if (
+      target.type === 'chart'
+      && current.node.type === 'chartReference'
+      && attrs.chartId === target.id
+    ) {
+      dependencies.push({ kind: 'chart-reference', path: `${current.path}.attrs.chartId` })
+    }
+
+    const children = current.node.content ?? []
+    for (let index = children.length - 1; index >= 0; index -= 1) {
+      nodeStack.push({ node: children[index], path: `${current.path}.content[${index}]` })
+    }
+  }
+
+  if (target.type === 'source') {
+    document.evidence.methodology?.sourceIds.forEach((sourceId, index) => {
+      if (sourceId === target.id) {
+        dependencies.push({
+          kind: 'methodology-source',
+          path: `$.evidence.methodology.sourceIds[${index}]`,
+        })
+      }
+    })
+    document.evidence.datasets.forEach((dataset, datasetIndex) => {
+      dataset.sourceIds.forEach((sourceId, sourceIndex) => {
+        if (sourceId === target.id) {
+          dependencies.push({
+            kind: 'dataset-source',
+            path: `$.evidence.datasets[${datasetIndex}].sourceIds[${sourceIndex}]`,
+            ownerId: dataset.id,
+            ownerTitle: dataset.title,
+          })
+        }
+      })
+    })
+  }
+
+  if (target.type === 'dataset') {
+    document.evidence.charts.forEach((chart, chartIndex) => {
+      if (chart.datasetId === target.id) {
+        dependencies.push({
+          kind: 'chart-dataset',
+          path: `$.evidence.charts[${chartIndex}].datasetId`,
+          ownerId: chart.id,
+          ownerTitle: chart.title,
+        })
+      }
+    })
+  }
+
+  if (target.type === 'datasetColumn') {
+    document.evidence.charts.forEach((chart, chartIndex) => {
+      if (chart.datasetId !== target.datasetId) return
+      if (chart.xKey === target.columnKey) {
+        dependencies.push({
+          kind: 'chart-x-column',
+          path: `$.evidence.charts[${chartIndex}].xKey`,
+          ownerId: chart.id,
+          ownerTitle: chart.title,
+        })
+      }
+      chart.series.forEach((series, seriesIndex) => {
+        if (series.columnKey === target.columnKey) {
+          dependencies.push({
+            kind: 'chart-series-column',
+            path: `$.evidence.charts[${chartIndex}].series[${seriesIndex}].columnKey`,
+            ownerId: chart.id,
+            ownerTitle: chart.title,
+          })
+        }
+      })
+    })
+  }
+
+  return dependencies
 }
 
 function createFallbackId() {
@@ -644,8 +769,16 @@ function validateDataset(
         pushIssue(issues, `${rowPath}.values.${key}`, 'Nilai cell harus berupa primitive atau null.')
       } else if (typeof cell === 'number' && !Number.isFinite(cell)) {
         pushIssue(issues, `${rowPath}.values.${key}`, 'Nilai angka harus finite.')
+      } else if (typeof cell === 'number' && Number.isInteger(cell) && !Number.isSafeInteger(cell)) {
+        pushIssue(
+          issues,
+          `${rowPath}.values.${key}`,
+          'Bilangan bulat terlalu besar untuk disimpan tepat; gunakan tipe string.'
+        )
       } else if (typeof cell === 'string' && cell.length > 500) {
         pushIssue(issues, `${rowPath}.values.${key}`, 'Nilai teks cell maksimal 500 karakter.')
+      } else if (typeof cell === 'string' && UNSAFE_DATASET_TEXT.test(cell)) {
+        pushIssue(issues, `${rowPath}.values.${key}`, 'Nilai teks cell mengandung karakter kontrol.')
       }
       const expectedType = columnTypes.get(key)
       if (
@@ -658,6 +791,8 @@ function validateDataset(
         )
       ) {
         pushIssue(issues, `${rowPath}.values.${key}`, `Nilai cell tidak sesuai tipe kolom ${expectedType}.`)
+      } else if (expectedType === 'date' && typeof cell === 'string') {
+        validateIsoDate(cell, `${rowPath}.values.${key}`, issues)
       }
     }
   })
@@ -685,6 +820,7 @@ function validateChart(
   validateText(value.xKey, `${path}.xKey`, 64, issues)
 
   const seriesIds = new Set<string>()
+  const seriesColumnKeys = new Set<string>()
   if (!Array.isArray(value.series) || value.series.length > STUDIO_EVIDENCE_LIMITS.seriesPerChart) {
     pushIssue(
       issues,
@@ -707,6 +843,16 @@ function validateChart(
       seriesIds.add(seriesId)
     }
     validateText(series.columnKey, `${seriesPath}.columnKey`, 64, issues, true)
+    if (isNonEmptyString(series.columnKey)) {
+      if (seriesColumnKeys.has(series.columnKey)) {
+        pushIssue(
+          issues,
+          `${seriesPath}.columnKey`,
+          `Kolom series duplikat: ${series.columnKey}.`
+        )
+      }
+      seriesColumnKeys.add(series.columnKey)
+    }
     validateText(series.label, `${seriesPath}.label`, 160, issues, true)
   })
 }
@@ -809,31 +955,63 @@ function validateEvidenceRegistry(
       pushIssue(issues, `${chartPath}.datasetId`, `Dataset tidak ditemukan: ${chart.datasetId}.`)
       return
     }
-    const columnKeys = new Set(
-      Array.isArray(dataset.columns)
-        ? dataset.columns
-          .filter(isRecord)
-          .map((column) => column.key)
-          .filter((key): key is string => typeof key === 'string')
-        : []
-    )
-    if (typeof chart.xKey === 'string' && chart.xKey && !columnKeys.has(chart.xKey)) {
+    const columns = new Map<string, Record<string, unknown>>()
+    if (Array.isArray(dataset.columns)) {
+      dataset.columns.filter(isRecord).forEach((column) => {
+        if (typeof column.key === 'string') columns.set(column.key, column)
+      })
+    }
+    const xColumn = typeof chart.xKey === 'string' ? columns.get(chart.xKey) : undefined
+    if (typeof chart.xKey === 'string' && chart.xKey && !xColumn) {
       pushIssue(issues, `${chartPath}.xKey`, `Kolom chart tidak ditemukan: ${chart.xKey}.`)
+    } else if (xColumn && typeof chart.type === 'string' && CHART_TYPES.has(chart.type)) {
+      const xDataType = xColumn.dataType
+      if (chart.type === 'scatter' && xDataType !== 'number') {
+        pushIssue(issues, `${chartPath}.xKey`, 'Scatter memerlukan kolom angka pada sumbu X.')
+      } else if (
+        chart.type !== 'scatter'
+        && xDataType !== 'string'
+        && xDataType !== 'date'
+        && xDataType !== 'number'
+      ) {
+        pushIssue(
+          issues,
+          `${chartPath}.xKey`,
+          'Sumbu X line atau bar hanya menerima kolom string, date, atau number.'
+        )
+      }
     }
     if (Array.isArray(chart.series)) {
+      const seriesUnits = new Set<string>()
       chart.series.forEach((series, seriesIndex) => {
-        if (
-          isRecord(series)
-          && typeof series.columnKey === 'string'
-          && !columnKeys.has(series.columnKey)
-        ) {
+        if (!isRecord(series) || typeof series.columnKey !== 'string') return
+        const column = columns.get(series.columnKey)
+        if (!column) {
           pushIssue(
             issues,
             `${chartPath}.series[${seriesIndex}].columnKey`,
             `Kolom series tidak ditemukan: ${series.columnKey}.`
           )
+          return
+        }
+        if (column.dataType !== 'number') {
+          pushIssue(
+            issues,
+            `${chartPath}.series[${seriesIndex}].columnKey`,
+            'Series chart hanya menerima kolom number.'
+          )
+        }
+        if (typeof column.unit === 'string' && column.unit.trim()) {
+          seriesUnits.add(column.unit.trim().normalize('NFKC').toLocaleLowerCase('id-ID'))
         }
       })
+      if (seriesUnits.size > 1) {
+        pushIssue(
+          issues,
+          `${chartPath}.series`,
+          'Seluruh series chart harus memakai unit yang sama; dual axis tidak didukung.'
+        )
+      }
     }
   })
 
