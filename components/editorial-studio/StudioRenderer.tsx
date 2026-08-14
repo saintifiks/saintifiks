@@ -1,14 +1,28 @@
 import { Fragment, type ReactNode } from 'react'
 import { BarChart3, Database, Image as ImageIcon } from 'lucide-react'
-import type { StudioDocument, StudioJsonNode, StudioMark } from '@/lib/editorial-studio/document'
-import { validateStudioDocument } from '@/lib/editorial-studio/document'
+import type {
+  StudioChartEvidence,
+  StudioDatasetEvidence,
+  StudioDatasetValue,
+  StudioJsonNode,
+  StudioMark,
+  StudioSourceEvidence,
+  StudioVersionedDocument,
+} from '@/lib/editorial-studio/document'
+import {
+  validateStudioDocument,
+  validateStudioDocumentV2,
+} from '@/lib/editorial-studio/document'
 
 type StudioRendererProps = {
-  document: StudioDocument
+  document: StudioVersionedDocument
 }
 
 type RenderContext = {
   footnoteNumbers: Map<string, number>
+  sources: Map<string, StudioSourceEvidence>
+  datasets: Map<string, StudioDatasetEvidence>
+  charts: Map<string, StudioChartEvidence>
 }
 
 function stringAttr(node: StudioJsonNode, name: string) {
@@ -32,7 +46,236 @@ function calloutLabel(tone: string) {
     context: 'Konteks',
     warning: 'Perhatian',
     method: 'Metode',
+    evidenceLimit: 'Batas bukti',
+    unknown: 'Yang belum diketahui',
   }[tone] ?? 'Catatan'
+}
+
+function sourceAnchorId(sourceId: string) {
+  return `studio-source-${sourceId}`
+}
+
+function evidenceValue(value: StudioDatasetValue) {
+  if (value === null) return '—'
+  if (typeof value === 'boolean') return value ? 'Ya' : 'Tidak'
+  return String(value)
+}
+
+function sourceMetadata(source: StudioSourceEvidence) {
+  return [
+    source.authors.join(', '),
+    source.publisher,
+    source.publishedDate ? `Terbit ${source.publishedDate}` : '',
+    source.accessedDate ? `Diakses ${source.accessedDate}` : '',
+  ].filter(Boolean)
+}
+
+function EvidenceSourceLinks({
+  sourceIds,
+  context,
+  label = 'Sumber data',
+}: {
+  sourceIds: string[]
+  context: RenderContext
+  label?: string
+}) {
+  const sources = sourceIds
+    .map((sourceId) => context.sources.get(sourceId))
+    .filter((source): source is StudioSourceEvidence => Boolean(source))
+  if (sources.length === 0) return null
+
+  return (
+    <p className="mt-3 font-interface text-caption leading-relaxed text-text-secondary">
+      {label}:{' '}
+      {sources.map((source, index) => (
+        <Fragment key={source.id}>
+          {index > 0 ? '; ' : ''}
+          <a
+            href={`#${sourceAnchorId(source.id)}`}
+            className="text-text-link underline decoration-border-accent underline-offset-4"
+          >
+            {source.title}
+          </a>
+        </Fragment>
+      ))}
+    </p>
+  )
+}
+
+function EvidenceDataTable({
+  dataset,
+  caption,
+}: {
+  dataset: StudioDatasetEvidence
+  caption: string
+}) {
+  if (dataset.columns.length === 0) {
+    return (
+      <p className="mt-4 font-interface text-sm text-text-secondary">
+        Tabel data belum tersedia.
+      </p>
+    )
+  }
+
+  return (
+    <div
+      role="region"
+      aria-label={`Tabel data ${caption}`}
+      tabIndex={0}
+      className="mt-4 overflow-x-auto rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-primary focus-visible:ring-offset-2"
+    >
+      <table className="w-full border-collapse font-interface text-sm">
+        <caption className="sr-only">{caption}</caption>
+        <thead>
+          <tr>
+            {dataset.columns.map((column) => (
+              <th
+                key={column.key}
+                scope="col"
+                className="border border-border-default/25 bg-surface-sunken p-3 text-left font-semibold"
+              >
+                {column.label}
+                {column.unit ? <span className="font-normal"> ({column.unit})</span> : null}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {dataset.rows.map((row) => (
+            <tr key={row.id}>
+              {dataset.columns.map((column) => (
+                <td
+                  key={column.key}
+                  className="border border-border-default/25 p-3 align-top"
+                >
+                  {evidenceValue(row.values[column.key] ?? null)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function DatasetEvidenceBlock({
+  dataset,
+  context,
+}: {
+  dataset: StudioDatasetEvidence
+  context: RenderContext
+}) {
+  const downloadUrl = safeHref(dataset.downloadUrl)
+  return (
+    <section
+      aria-labelledby={`studio-dataset-${dataset.id}`}
+      className="my-8 rounded-lg border border-border-default/20 bg-surface-sunken/30 p-5"
+    >
+      <div className="flex items-start gap-3">
+        <Database aria-hidden="true" className="mt-1 shrink-0 text-text-tertiary" size={18} />
+        <div className="min-w-0">
+          <p className="font-interface text-kicker-lg font-semibold uppercase tracking-wider text-text-tertiary">
+            Dataset
+          </p>
+          <h2 id={`studio-dataset-${dataset.id}`} className="mt-1 font-interface text-lg font-semibold leading-heading">
+            {dataset.title}
+          </h2>
+        </div>
+      </div>
+      <EvidenceSourceLinks sourceIds={dataset.sourceIds} context={context} />
+      {downloadUrl ? (
+        <p className="mt-3 font-interface text-caption">
+          <a
+            href={downloadUrl}
+            className="text-text-link underline decoration-border-accent underline-offset-4"
+            rel="noreferrer noopener"
+          >
+            Unduh data
+          </a>
+          {dataset.accessedDate ? ` · Diakses ${dataset.accessedDate}` : ''}
+        </p>
+      ) : null}
+      {dataset.methodology ? (
+        <p className="mt-3 font-interface text-sm leading-relaxed text-text-secondary">
+          <strong className="text-text-primary">Metodologi:</strong> {dataset.methodology}
+        </p>
+      ) : null}
+      {dataset.limitations ? (
+        <p className="mt-2 font-interface text-sm leading-relaxed text-text-secondary">
+          <strong className="text-text-primary">Keterbatasan:</strong> {dataset.limitations}
+        </p>
+      ) : null}
+      <EvidenceDataTable dataset={dataset} caption={dataset.title} />
+    </section>
+  )
+}
+
+function ChartEvidenceBlock({
+  chart,
+  context,
+}: {
+  chart: StudioChartEvidence
+  context: RenderContext
+}) {
+  const dataset = chart.datasetId ? context.datasets.get(chart.datasetId) : undefined
+  const downloadUrl = dataset ? safeHref(dataset.downloadUrl) : undefined
+  return (
+    <figure
+      aria-labelledby={`studio-chart-${chart.id}`}
+      className="my-9 rounded-lg border border-border-default/20 bg-surface-sunken/30 p-5"
+    >
+      <div className="flex items-start gap-3">
+        <BarChart3 aria-hidden="true" className="mt-1 shrink-0 text-interactive-primary" size={20} />
+        <div className="min-w-0">
+          <p className="font-interface text-kicker-lg font-semibold uppercase tracking-wider text-text-tertiary">
+            Grafik
+          </p>
+          <figcaption id={`studio-chart-${chart.id}`} className="mt-1 font-interface text-lg font-semibold leading-heading">
+            {chart.title}
+          </figcaption>
+        </div>
+      </div>
+      {chart.summary ? (
+        <p className="mt-3 font-interface text-sm leading-relaxed text-text-secondary">
+          {chart.summary}
+        </p>
+      ) : null}
+      {dataset ? (
+        <>
+          <p className="mt-3 font-interface text-sm leading-relaxed text-text-secondary">
+            <strong className="text-text-primary">Dataset:</strong> {dataset.title}
+          </p>
+          <EvidenceSourceLinks sourceIds={dataset.sourceIds} context={context} />
+          {downloadUrl ? (
+            <p className="mt-3 font-interface text-caption">
+              <a
+                href={downloadUrl}
+                className="text-text-link underline decoration-border-accent underline-offset-4"
+                rel="noreferrer noopener"
+              >
+                Unduh data
+              </a>
+              {dataset.accessedDate ? ` · Diakses ${dataset.accessedDate}` : ''}
+            </p>
+          ) : null}
+          {dataset.methodology ? (
+            <p className="mt-3 font-interface text-sm leading-relaxed text-text-secondary">
+              <strong className="text-text-primary">Metodologi:</strong> {dataset.methodology}
+            </p>
+          ) : null}
+          {dataset.limitations ? (
+            <p className="mt-2 font-interface text-sm leading-relaxed text-text-secondary">
+              <strong className="text-text-primary">Keterbatasan:</strong> {dataset.limitations}
+            </p>
+          ) : null}
+          <EvidenceDataTable dataset={dataset} caption={`Data untuk ${chart.title}`} />
+        </>
+      ) : (
+        <p className="mt-4 font-interface text-sm text-text-secondary">Data grafik belum tersedia.</p>
+      )}
+    </figure>
+  )
 }
 
 function renderMarkedText(text: string, marks: StudioMark[] | undefined, key: string) {
@@ -183,6 +426,22 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
       const sourceId = stringAttr(node, 'sourceId')
       const label = stringAttr(node, 'label')
       const locator = stringAttr(node, 'locator')
+      const source = context.sources.get(sourceId)
+      const citationText = `[${label}${locator ? `, ${locator}` : ''}]`
+      if (source) {
+        return (
+          <a
+            key={key}
+            href={`#${sourceAnchorId(sourceId)}`}
+            data-block-id={stableId}
+            className="mx-1 inline-flex rounded-full bg-signal-info-surface px-2 py-0.5 align-baseline font-interface text-xs font-medium text-interactive-primary no-underline"
+            aria-label={`Sitasi ${label}: ${source.title}${locator ? `, ${locator}` : ''}`}
+            title={source.title}
+          >
+            {citationText}
+          </a>
+        )
+      }
       return (
         <span
           key={key}
@@ -191,7 +450,7 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
           aria-label={`Sitasi ${label}${locator ? `, ${locator}` : ''}`}
           title={`sourceId: ${sourceId}`}
         >
-          [{label}{locator ? `, ${locator}` : ''}]
+          {citationText}
         </span>
       )
     }
@@ -245,7 +504,13 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
         </figure>
       )
     case 'chartReference':
-      return (
+      return context.charts.has(stringAttr(node, 'chartId')) ? (
+        <ChartEvidenceBlock
+          key={key}
+          chart={context.charts.get(stringAttr(node, 'chartId'))!}
+          context={context}
+        />
+      ) : (
         <figure
           key={key}
           data-block-id={stableId}
@@ -261,7 +526,13 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
         </figure>
       )
     case 'datasetReference':
-      return (
+      return context.datasets.has(stringAttr(node, 'datasetId')) ? (
+        <DatasetEvidenceBlock
+          key={key}
+          dataset={context.datasets.get(stringAttr(node, 'datasetId'))!}
+          context={context}
+        />
+      ) : (
         <aside
           key={key}
           data-block-id={stableId}
@@ -314,6 +585,83 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
   }
 }
 
+function EvidenceAppendix({
+  document,
+  context,
+}: {
+  document: StudioVersionedDocument
+  context: RenderContext
+}) {
+  if (document.schemaVersion !== 2) return null
+  const methodology = document.evidence.methodology
+  if (!methodology && document.evidence.sources.length === 0) return null
+
+  return (
+    <div className="mt-14 space-y-10 border-t border-border-default/25 pt-7">
+      {methodology ? (
+        <section aria-labelledby="studio-methodology-title">
+          <h2 id="studio-methodology-title" className="font-interface text-lg font-semibold leading-heading">
+            Metodologi
+          </h2>
+          {methodology.summary ? (
+            <p className="mt-3 font-interface text-sm leading-relaxed text-text-secondary">
+              {methodology.summary}
+            </p>
+          ) : null}
+          {methodology.limitations ? (
+            <p className="mt-3 font-interface text-sm leading-relaxed text-text-secondary">
+              <strong className="text-text-primary">Keterbatasan:</strong> {methodology.limitations}
+            </p>
+          ) : null}
+          <EvidenceSourceLinks
+            sourceIds={methodology.sourceIds}
+            context={context}
+            label="Sumber metodologi"
+          />
+        </section>
+      ) : null}
+
+      {document.evidence.sources.length > 0 ? (
+        <section aria-labelledby="studio-sources-title">
+          <h2 id="studio-sources-title" className="font-interface text-lg font-semibold leading-heading">
+            Sumber
+          </h2>
+          <ol className="mt-4 list-decimal space-y-5 pl-6 font-interface text-sm leading-relaxed text-text-secondary">
+            {document.evidence.sources.map((source) => {
+              const href = safeHref(source.url)
+              const metadata = sourceMetadata(source)
+              return (
+                <li
+                  key={source.id}
+                  id={sourceAnchorId(source.id)}
+                  tabIndex={-1}
+                  className="scroll-mt-24 pl-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-primary focus-visible:ring-offset-2"
+                >
+                  {href ? (
+                    <a
+                      href={href}
+                      className="font-medium text-text-link underline decoration-border-accent underline-offset-4"
+                      rel="noreferrer noopener"
+                    >
+                      {source.title}
+                    </a>
+                  ) : (
+                    <span className="font-medium text-text-primary">{source.title}</span>
+                  )}
+                  {metadata.length > 0 ? (
+                    <p className="mt-1 text-caption text-text-secondary">{metadata.join(' · ')}</p>
+                  ) : null}
+                  {source.note ? <p className="mt-1 text-caption text-text-secondary">{source.note}</p> : null}
+                </li>
+              )
+            })}
+          </ol>
+        </section>
+      ) : null}
+    </div>
+  )
+}
+
 function collectFootnotes(root: StudioJsonNode) {
   const footnotes: StudioJsonNode[] = []
   function visit(node: StudioJsonNode) {
@@ -325,7 +673,9 @@ function collectFootnotes(root: StudioJsonNode) {
 }
 
 export default function StudioRenderer({ document }: StudioRendererProps) {
-  const validation = validateStudioDocument(document)
+  const validation = document.schemaVersion === 2
+    ? validateStudioDocumentV2(document)
+    : validateStudioDocument(document)
   if (!validation.ok) {
     return (
       <section role="alert" className="rounded-lg border border-signal-danger/30 bg-signal-danger-surface p-5 font-interface text-sm text-text-primary">
@@ -338,6 +688,21 @@ export default function StudioRenderer({ document }: StudioRendererProps) {
   const context: RenderContext = {
     footnoteNumbers: new Map(
       footnotes.map((node, index) => [stringAttr(node, 'id'), index + 1])
+    ),
+    sources: new Map(
+      document.schemaVersion === 2
+        ? document.evidence.sources.map((source) => [source.id, source])
+        : []
+    ),
+    datasets: new Map(
+      document.schemaVersion === 2
+        ? document.evidence.datasets.map((dataset) => [dataset.id, dataset])
+        : []
+    ),
+    charts: new Map(
+      document.schemaVersion === 2
+        ? document.evidence.charts.map((chart) => [chart.id, chart])
+        : []
     ),
   }
 
@@ -364,6 +729,7 @@ export default function StudioRenderer({ document }: StudioRendererProps) {
           </ol>
         </section>
       )}
+      <EvidenceAppendix document={document} context={context} />
     </div>
   )
 }

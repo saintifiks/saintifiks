@@ -1,20 +1,23 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createStudioId, validateStudioDocument } from '@/lib/editorial-studio/document'
+import { createStudioId, validateStudioDocumentV2 } from '@/lib/editorial-studio/document'
 import {
   STUDIO_AUTOSAVE_DELAY_MS,
   StudioDraftConflictError,
   adoptStudioServerDraft,
   deleteStudioDraft,
   discardStudioOutbox,
+  evaluateStudioAutosaveGate,
   fingerprintStudioDraft,
   getStudioDraft,
   listStudioSnapshots,
   saveStudioDraft,
-  type StudioDraftContent,
+  shouldPersistStudioDraft,
+  type StudioDraftContentV2,
   type StudioDraftRecord,
-  type StudioDraftSnapshot,
+  type StudioDraftRecordV2,
+  type StudioDraftSnapshotV2,
   type StudioSaveReason,
 } from '@/lib/editorial-studio/persistence'
 import type { StudioServerDraft } from '@/lib/editorial-studio/sync-contract'
@@ -30,8 +33,9 @@ export type StudioPersistenceState =
   | 'unavailable'
 
 type UseStudioDraftPersistenceOptions = {
-  content: StudioDraftContent
-  onRestore: (content: StudioDraftContent) => void
+  content: StudioDraftContentV2
+  onRestore: (content: StudioDraftContentV2) => void
+  writeEnabled: boolean
 }
 
 type StudioChannelMessage =
@@ -40,7 +44,7 @@ type StudioChannelMessage =
   | { type: 'leaving'; writerId: string }
   | { type: 'saved'; writerId: string; revision: number }
 
-function copyDocument(content: StudioDraftContent): StudioDraftContent['document'] {
+function copyDocument(content: StudioDraftContentV2): StudioDraftContentV2['document'] {
   return {
     ...content.document,
     documentId: createStudioId('document'),
@@ -61,12 +65,13 @@ function writerId() {
 export function useStudioDraftPersistence({
   content,
   onRestore,
+  writeEnabled,
 }: UseStudioDraftPersistenceOptions) {
   const [state, setState] = useState<StudioPersistenceState>('loading')
   const [hydrated, setHydrated] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
   const [recoveredAt, setRecoveredAt] = useState<string | null>(null)
-  const [snapshots, setSnapshots] = useState<StudioDraftSnapshot[]>([])
+  const [snapshots, setSnapshots] = useState<StudioDraftSnapshotV2[]>([])
   const [conflict, setConflict] = useState<StudioDraftRecord | null>(null)
   const [otherTabOpen, setOtherTabOpen] = useState(false)
   const [online, setOnline] = useState(() =>
@@ -100,7 +105,7 @@ export function useStudioDraftPersistence({
   }, [])
 
   const applyRecord = useCallback(
-    async (record: StudioDraftRecord, options: { recovered?: boolean } = {}) => {
+    async (record: StudioDraftRecordV2, options: { recovered?: boolean } = {}) => {
       revisionRef.current = record.revision
       fingerprintRef.current = record.fingerprint
       setLastSavedAt(record.savedAt)
@@ -120,9 +125,9 @@ export function useStudioDraftPersistence({
   )
 
   const executeSave = useCallback(
-    async (reason: StudioSaveReason, contentOverride?: StudioDraftContent) => {
+    async (reason: StudioSaveReason, contentOverride?: StudioDraftContentV2) => {
       const draftContent = contentOverride ?? latestContentRef.current
-      if (!validateStudioDocument(draftContent.document).ok) {
+      if (!validateStudioDocumentV2(draftContent.document).ok) {
         setState('error')
         setErrorMessage('Dokumen belum valid, sehingga autosave dihentikan.')
         return
@@ -173,12 +178,13 @@ export function useStudioDraftPersistence({
   )
 
   const queueSave = useCallback(
-    (reason: StudioSaveReason, contentOverride?: StudioDraftContent) => {
+    (reason: StudioSaveReason, contentOverride?: StudioDraftContentV2) => {
+      if (!shouldPersistStudioDraft(writeEnabled, reason)) return Promise.resolve()
       const task = saveQueueRef.current.then(() => executeSave(reason, contentOverride))
       saveQueueRef.current = task.catch(() => undefined)
       return task
     },
-    [executeSave]
+    [executeSave, writeEnabled]
   )
 
   const saveNow = useCallback(() => queueSave('manual'), [queueSave])
@@ -224,17 +230,20 @@ export function useStudioDraftPersistence({
   }, [applyRecord, content.document.documentId])
 
   useEffect(() => {
-    if (!hydrated || conflict) return
-    if (suppressNextAutosaveRef.current) {
-      suppressNextAutosaveRef.current = false
-      return
-    }
+    const gate = evaluateStudioAutosaveGate({
+      hydrated,
+      hasConflict: Boolean(conflict),
+      writeEnabled,
+      suppressNext: suppressNextAutosaveRef.current,
+    })
+    suppressNextAutosaveRef.current = gate.suppressNext
+    if (!gate.shouldSchedule) return
     setState('dirty')
     const timeout = window.setTimeout(() => {
       void queueSave('autosave')
     }, STUDIO_AUTOSAVE_DELAY_MS)
     return () => window.clearTimeout(timeout)
-  }, [conflict, content, hydrated, queueSave])
+  }, [conflict, content, hydrated, queueSave, writeEnabled])
 
   useEffect(() => {
     function updateOnlineState() {
@@ -256,7 +265,7 @@ export function useStudioDraftPersistence({
       }
     }
     function handleVisibilityChange() {
-      if (document.visibilityState === 'hidden' && hydrated && !conflict) {
+      if (document.visibilityState === 'hidden' && hydrated && !conflict && writeEnabled) {
         void queueSave('autosave')
       }
     }
@@ -266,7 +275,7 @@ export function useStudioDraftPersistence({
       window.removeEventListener('keydown', handleSaveShortcut, { capture: true })
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [conflict, hydrated, queueSave, saveNow])
+  }, [conflict, hydrated, queueSave, saveNow, writeEnabled])
 
   useEffect(() => {
     if (!hydrated || typeof BroadcastChannel === 'undefined') return
@@ -319,18 +328,18 @@ export function useStudioDraftPersistence({
 
   const loadLatestAfterConflict = useCallback(async () => {
     try {
-      const latest = conflict ?? (await getStudioDraft(content.document.documentId))
+      const latest = await getStudioDraft(content.document.documentId)
       if (!latest) return
       await applyRecord(latest)
     } catch (error) {
       setState('error')
       setErrorMessage(error instanceof Error ? error.message : 'Versi terbaru gagal dimuat.')
     }
-  }, [applyRecord, conflict, content.document.documentId])
+  }, [applyRecord, content.document.documentId])
 
   const keepAsCopy = useCallback(() => {
     const current = latestContentRef.current
-    const copy: StudioDraftContent = {
+    const copy: StudioDraftContentV2 = {
       ...current,
       title: current.title ? `${current.title} — salinan` : 'Naskah tanpa judul — salinan',
       document: copyDocument(current),
@@ -383,7 +392,7 @@ export function useStudioDraftPersistence({
       }
       throw error
     }
-    const copy: StudioDraftContent = {
+    const copy: StudioDraftContentV2 = {
       ...current,
       title: current.title ? `${current.title} — salinan` : 'Naskah tanpa judul — salinan',
       document: copyDocument(current),
@@ -394,8 +403,8 @@ export function useStudioDraftPersistence({
   }, [])
 
   const restoreSnapshot = useCallback(
-    async (snapshot: StudioDraftSnapshot) => {
-      const restoredContent: StudioDraftContent = {
+    async (snapshot: StudioDraftSnapshotV2) => {
+      const restoredContent: StudioDraftContentV2 = {
         title: snapshot.title,
         deck: snapshot.deck,
         document: snapshot.document,

@@ -1,6 +1,10 @@
-import type { StudioDocument } from './document'
+import {
+  migrateStudioDocumentToV2,
+  type StudioDocumentV1,
+  type StudioDocumentV2,
+} from './document'
 
-export const editorialStudioFixture: StudioDocument = {
+export const editorialStudioFixture: StudioDocumentV1 = {
   schemaVersion: 1,
   documentId: 'doc-studio-poc',
   root: {
@@ -197,4 +201,13 @@ export const editorialStudioFixture: StudioDocument = {
       },
     ],
   },
+}
+
+export function createEditorialStudioV2Fixture(): StudioDocumentV2 {
+  const migrated = migrateStudioDocumentToV2(editorialStudioFixture)
+  if (!migrated.ok || migrated.document.schemaVersion !== 2) {
+    const detail = migrated.ok ? 'Versi hasil migrasi bukan v2.' : JSON.stringify(migrated.issues)
+    throw new Error(`Golden fixture Editorial Studio v2 tidak dapat dibangun: ${detail}`)
+  }
+  return migrated.document
 }

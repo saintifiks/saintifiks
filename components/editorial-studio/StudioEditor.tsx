@@ -20,10 +20,8 @@ import { TableRow } from '@tiptap/extension-table-row'
 import {
   Bold,
   Braces,
-  ChartNoAxesColumnIncreasing,
   ChevronDown,
   Code2,
-  Database,
   Heading2,
   Heading3,
   Image as ImageIcon,
@@ -45,8 +43,8 @@ import {
   Unlink,
   X,
 } from 'lucide-react'
-import type { StudioDocument, StudioJsonNode, StudioNodeType } from '@/lib/editorial-studio/document'
-import { STUDIO_SCHEMA_VERSION, createStudioId } from '@/lib/editorial-studio/document'
+import type { StudioDocumentV2, StudioSourceEvidence } from '@/lib/editorial-studio/document'
+import { STUDIO_LATEST_SCHEMA_VERSION, createStudioId } from '@/lib/editorial-studio/document'
 import {
   CalloutNode,
   ChartReferenceNode,
@@ -63,14 +61,14 @@ import {
 import StudioImageUpload from './StudioImageUpload'
 
 type StudioEditorProps = {
-  document: StudioDocument
+  document: StudioDocumentV2
   title: string
   deck: string
   wordCount: number
-  onChange: (document: StudioDocument) => void
+  sources: StudioSourceEvidence[]
+  onChange: (document: StudioDocumentV2) => void
   onTitleChange: (title: string) => void
   onDeckChange: (deck: string) => void
-  production?: boolean
 }
 
 type ConfigurableNodeType = 'figure' | 'footnote' | 'equation'
@@ -87,6 +85,13 @@ type SemanticDialogState = {
     latex: string
     label: string
   }
+}
+
+type CitationDialogState = {
+  position: number | null
+  sourceId: string
+  label: string
+  locator: string
 }
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>
@@ -212,62 +217,16 @@ function insertCallout(editor: Editor) {
     .focus()
     .insertContent({
       type: 'callout',
-      attrs: { id: calloutId, schemaVersion: STUDIO_SCHEMA_VERSION, tone: 'context' },
+      attrs: { id: calloutId, schemaVersion: STUDIO_LATEST_SCHEMA_VERSION, tone: 'context' },
       content: [
         {
           type: 'paragraph',
-          attrs: { id: paragraphId, schemaVersion: STUDIO_SCHEMA_VERSION },
+          attrs: { id: paragraphId, schemaVersion: STUDIO_LATEST_SCHEMA_VERSION },
           content: [{ type: 'text', text: 'Tambahkan konteks penting di sini.' }],
         },
       ],
     })
     .run()
-}
-
-function insertReference(editor: Editor, type: StudioNodeType) {
-  const shared = createSemanticNodeAttrs(type)
-  const contentByType: Partial<Record<StudioNodeType, StudioJsonNode>> = {
-    citation: {
-      type: 'citation',
-      attrs: { ...shared, sourceId: createStudioId('citation'), label: 'Sumber baru' },
-    },
-    footnote: {
-      type: 'footnote',
-      attrs: { ...shared, note: 'Catatan kaki baru' },
-    },
-    figure: {
-      type: 'figure',
-      attrs: {
-        ...shared,
-        assetId: createStudioId('figure'),
-        alt: 'Deskripsi gambar belum diisi',
-        caption: 'Keterangan gambar',
-      },
-    },
-    equation: {
-      type: 'equation',
-      attrs: { ...shared, latex: 'x = y', label: 'Rumus baru' },
-    },
-    chartReference: {
-      type: 'chartReference',
-      attrs: {
-        ...shared,
-        chartId: createStudioId('chartReference'),
-        title: 'Grafik baru',
-      },
-    },
-    datasetReference: {
-      type: 'datasetReference',
-      attrs: {
-        ...shared,
-        datasetId: createStudioId('datasetReference'),
-        label: 'Dataset baru',
-      },
-    },
-  }
-  const content = contentByType[type]
-  if (!content) return
-  editor.chain().focus().insertContent(content).run()
 }
 
 function currentBlockStyle(editor: Editor) {
@@ -362,7 +321,7 @@ export default function StudioEditor({
   onChange,
   onTitleChange,
   onDeckChange,
-  production = false,
+  sources,
 }: StudioEditorProps) {
   const [, rerenderToolbar] = useReducer((value) => value + 1, 0)
   const [slashState, setSlashState] = useState<SlashState | null>(null)
@@ -373,13 +332,17 @@ export default function StudioEditor({
   const [linkError, setLinkError] = useState<string | null>(null)
   const [semanticDialog, setSemanticDialog] = useState<SemanticDialogState | null>(null)
   const [semanticError, setSemanticError] = useState<string | null>(null)
+  const [citationDialog, setCitationDialog] = useState<CitationDialogState | null>(null)
+  const [citationError, setCitationError] = useState<string | null>(null)
   const linkInputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLElement>(null)
   const slashMenuRef = useRef<HTMLDivElement>(null)
   const slashStateRef = useRef<SlashState | null>(null)
   const slashIndexRef = useRef(0)
   const filteredCommandsRef = useRef<SlashCommand[]>([])
   const editorRef = useRef<Editor | null>(null)
   const slashQueryKey = slashState ? `${slashState.from}\u0000${slashState.query}` : null
+  const dialogOpen = Boolean(citationDialog || semanticDialog)
 
   const openSemanticDialog = useCallback((
     type: ConfigurableNodeType,
@@ -401,6 +364,21 @@ export default function StudioEditor({
       },
     })
     setSemanticError(null)
+    setSlashState(null)
+    setSelectionMenu(null)
+  }, [])
+
+  const openCitationDialog = useCallback((
+    position: number | null = null,
+    attrs: Record<string, unknown> = {}
+  ) => {
+    setCitationDialog({
+      position,
+      sourceId: typeof attrs.sourceId === 'string' ? attrs.sourceId : '',
+      label: typeof attrs.label === 'string' ? attrs.label : '',
+      locator: typeof attrs.locator === 'string' ? attrs.locator : '',
+    })
+    setCitationError(null)
     setSlashState(null)
     setSelectionMenu(null)
   }, [])
@@ -448,9 +426,13 @@ export default function StudioEditor({
           { node: resolved.nodeBefore, position: resolved.nodeBefore ? position - resolved.nodeBefore.nodeSize : position },
         ]
         const match = candidates.find((candidate) =>
-          candidate.node && ['figure', 'footnote', 'equation'].includes(candidate.node.type.name)
+          candidate.node && ['figure', 'footnote', 'equation', 'citation'].includes(candidate.node.type.name)
         )
         if (!match?.node) return false
+        if (match.node.type.name === 'citation') {
+          openCitationDialog(match.position, match.node.attrs as Record<string, unknown>)
+          return true
+        }
         openSemanticDialog(
           match.node.type.name as ConfigurableNodeType,
           match.position,
@@ -489,16 +471,16 @@ export default function StudioEditor({
       },
     },
     onCreate({ editor }) {
-      ensureEditorNodeIds(editor)
+      ensureEditorNodeIds(editor, STUDIO_LATEST_SCHEMA_VERSION)
     },
     onSelectionUpdate() {
       rerenderToolbar()
     },
     onUpdate({ editor }) {
-      const root = ensureEditorNodeIds(editor)
+      const root = ensureEditorNodeIds(editor, STUDIO_LATEST_SCHEMA_VERSION)
       onChange({
         ...document,
-        schemaVersion: STUDIO_SCHEMA_VERSION,
+        schemaVersion: STUDIO_LATEST_SCHEMA_VERSION,
         documentId: document.documentId,
         root,
       })
@@ -617,25 +599,9 @@ export default function StudioEditor({
       description: 'Referensi sumber yang dapat diverifikasi',
       keywords: 'citation source reference sitasi sumber referensi',
       icon: MessageSquareQuote,
-      run: (instance) => insertReference(instance, 'citation'),
+      run: () => openCitationDialog(),
     },
-    {
-      id: 'dataset',
-      label: 'Dataset',
-      description: 'Referensi dataset terstruktur',
-      keywords: 'dataset data sumber',
-      icon: Database,
-      run: (instance) => insertReference(instance, 'datasetReference'),
-    },
-    {
-      id: 'chart',
-      label: 'Grafik',
-      description: 'Referensi visualisasi data',
-      keywords: 'chart graph grafik visualisasi data',
-      icon: ChartNoAxesColumnIncreasing,
-      run: (instance) => insertReference(instance, 'chartReference'),
-    },
-  ] satisfies SlashCommand[]).filter((command) => !production || !['citation', 'dataset', 'chart'].includes(command.id)), [openSemanticDialog, production])
+  ] satisfies SlashCommand[]), [openCitationDialog, openSemanticDialog])
 
   const filteredCommands = useMemo(() => {
     const query = slashState?.query.trim().toLocaleLowerCase('id-ID') ?? ''
@@ -682,7 +648,7 @@ export default function StudioEditor({
     const current = editor.getJSON()
     if (JSON.stringify(current) !== JSON.stringify(document.root)) {
       editor.commands.setContent(document.root, { emitUpdate: false })
-      ensureEditorNodeIds(editor)
+      ensureEditorNodeIds(editor, STUDIO_LATEST_SCHEMA_VERSION)
     }
   }, [document.documentId, document.root, editor])
 
@@ -759,6 +725,43 @@ export default function StudioEditor({
   useEffect(() => {
     if (linkPanelOpen) window.setTimeout(() => linkInputRef.current?.focus(), 0)
   }, [linkPanelOpen])
+
+  useEffect(() => {
+    if (!dialogOpen) return
+    const restoreFocusTo = globalThis.document.activeElement instanceof HTMLElement
+      ? globalThis.document.activeElement
+      : null
+    const previousOverflow = globalThis.document.body.style.overflow
+    globalThis.document.body.style.overflow = 'hidden'
+
+    function handleDialogKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setCitationDialog(null)
+        setSemanticDialog(null)
+        return
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), select:not([disabled]), input:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+      )
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && globalThis.document.activeElement === first) {
+        event.preventDefault()
+        last?.focus()
+      } else if (!event.shiftKey && globalThis.document.activeElement === last) {
+        event.preventDefault()
+        first?.focus()
+      }
+    }
+
+    globalThis.document.addEventListener('keydown', handleDialogKeyDown)
+    return () => {
+      globalThis.document.removeEventListener('keydown', handleDialogKeyDown)
+      globalThis.document.body.style.overflow = previousOverflow
+      restoreFocusTo?.focus()
+    }
+  }, [dialogOpen])
 
   if (!editor) {
     return (
@@ -842,7 +845,7 @@ export default function StudioEditor({
         .updateAttributes(semanticDialog.type, attrs)
         .run()
     } else {
-      const shared = createSemanticNodeAttrs(semanticDialog.type)
+      const shared = createSemanticNodeAttrs(semanticDialog.type, STUDIO_LATEST_SCHEMA_VERSION)
       editor.chain().focus().insertContent({
         type: semanticDialog.type,
         attrs: {
@@ -867,6 +870,65 @@ export default function StudioEditor({
     setSemanticDialog(null)
   }
 
+  function defaultCitationLabel(source: StudioSourceEvidence) {
+    return source.publisher.trim() || source.authors[0]?.trim() || source.title.trim()
+  }
+
+  function selectCitationSource(sourceId: string) {
+    const source = sources.find((item) => item.id === sourceId)
+    setCitationDialog((current) => current ? {
+      ...current,
+      sourceId,
+      label: source ? defaultCitationLabel(source) : '',
+    } : current)
+    setCitationError(null)
+  }
+
+  function applyCitationNode() {
+    if (!editor || !citationDialog) return
+    const source = sources.find((item) => item.id === citationDialog.sourceId)
+    if (!source) {
+      setCitationError('Pilih sumber yang sudah terdaftar.')
+      return
+    }
+    const label = citationDialog.label.trim() || defaultCitationLabel(source)
+    const attrs = {
+      sourceId: source.id,
+      label,
+      locator: citationDialog.locator.trim() || null,
+    }
+
+    if (citationDialog.position !== null) {
+      editor
+        .chain()
+        .focus()
+        .setNodeSelection(citationDialog.position)
+        .updateAttributes('citation', attrs)
+        .run()
+    } else {
+      editor.chain().focus().insertContent({
+        type: 'citation',
+        attrs: {
+          ...createSemanticNodeAttrs('citation', STUDIO_LATEST_SCHEMA_VERSION),
+          ...attrs,
+        },
+      }).run()
+    }
+    setCitationDialog(null)
+    setCitationError(null)
+  }
+
+  function deleteCitationNode() {
+    if (!editor || !citationDialog || citationDialog.position === null) return
+    const node = editor.state.doc.nodeAt(citationDialog.position)
+    if (!node || node.type.name !== 'citation') return
+    editor.chain().focus().deleteRange({
+      from: citationDialog.position,
+      to: citationDialog.position + node.nodeSize,
+    }).run()
+    setCitationDialog(null)
+  }
+
   const editorIsEmpty = editor.isEmpty
   const blockStyle = currentBlockStyle(editor)
   const selectedSemanticNode = (() => {
@@ -874,6 +936,13 @@ export default function StudioEditor({
     const node = editor.state.doc.nodeAt(position)
     return node && ['figure', 'footnote', 'equation'].includes(node.type.name)
       ? { type: node.type.name as ConfigurableNodeType, position, attrs: node.attrs as Record<string, unknown> }
+      : null
+  })()
+  const selectedCitationNode = (() => {
+    const position = editor.state.selection.from
+    const node = editor.state.doc.nodeAt(position)
+    return node?.type.name === 'citation'
+      ? { position, attrs: node.attrs as Record<string, unknown> }
       : null
   })()
 
@@ -964,7 +1033,7 @@ export default function StudioEditor({
           </span>
         </div>
 
-        {(editor.isActive('table') || selectedSemanticNode) && (
+        {(editor.isActive('table') || selectedSemanticNode || selectedCitationNode) && (
           <div role="toolbar" aria-label="Alat blok terpilih" className="flex flex-wrap items-center gap-1 border-t border-border-default/15 px-1 pt-2 font-interface text-xs">
             {editor.isActive('table') && (
               <>
@@ -977,6 +1046,9 @@ export default function StudioEditor({
             )}
             {selectedSemanticNode && (
               <button type="button" onClick={() => openSemanticDialog(selectedSemanticNode.type, selectedSemanticNode.position, selectedSemanticNode.attrs)} className={`min-h-[40px] rounded-lg px-3 font-semibold text-interactive-primary hover:bg-signal-info-surface ${focusRing}`}>Edit blok terpilih</button>
+            )}
+            {selectedCitationNode && (
+              <button type="button" onClick={() => openCitationDialog(selectedCitationNode.position, selectedCitationNode.attrs)} className={`min-h-[44px] rounded-lg px-3 font-semibold text-interactive-primary hover:bg-signal-info-surface ${focusRing}`}>Edit sitasi terpilih</button>
             )}
           </div>
         )}
@@ -1162,6 +1234,76 @@ export default function StudioEditor({
         </div>
       )}
 
+      {citationDialog && (
+        <div className="fixed inset-0 z-modal flex items-center justify-center p-4 sm:p-8">
+          <button type="button" aria-label="Tutup pengaturan sitasi" onClick={() => setCitationDialog(null)} className="absolute inset-0 bg-surface-overlay/60" />
+          <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="studio-citation-dialog-title" className="relative z-base max-h-[min(680px,calc(100dvh-32px))] w-full max-w-[620px] overflow-y-auto rounded-2xl border border-border-default/20 bg-surface-elevated p-5 shadow-lg sm:p-7">
+            <header className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="studio-citation-dialog-title" className="font-interface text-lg font-semibold text-text-primary">{citationDialog.position === null ? 'Sisipkan sitasi' : 'Edit sitasi'}</h2>
+                <p className="mt-1 font-interface text-xs leading-relaxed text-text-tertiary">Sitasi harus menunjuk satu sumber nyata dari registry naskah.</p>
+              </div>
+              <button type="button" aria-label="Tutup" onClick={() => setCitationDialog(null)} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-surface-sunken ${focusRing}`}><X aria-hidden="true" size={19} /></button>
+            </header>
+
+            {sources.length === 0 ? (
+              <div className="mt-6 rounded-xl bg-signal-warning-surface px-4 py-3">
+                <p role="alert" className="font-interface text-sm leading-relaxed text-text-primary">Belum ada sumber yang dapat dipilih. Tutup dialog ini lalu tambahkan sumber pada bagian “Sumber naskah”.</p>
+              </div>
+            ) : (
+              <div className="mt-6 space-y-4">
+                <label className="block">
+                  <span className="font-interface text-xs font-semibold text-text-primary">Sumber <span className="text-signal-danger">*</span></span>
+                  <select
+                    autoFocus
+                    value={citationDialog.sourceId}
+                    onChange={(event) => selectCitationSource(event.target.value)}
+                    className={`mt-2 min-h-[44px] w-full rounded-lg border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`}
+                  >
+                    <option value="">Pilih sumber...</option>
+                    {sources.map((source) => <option key={source.id} value={source.id}>{source.title}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="font-interface text-xs font-semibold text-text-primary">Label sitasi <span className="text-signal-danger">*</span></span>
+                  <span className="mt-1 block font-interface text-[11px] leading-relaxed text-text-tertiary">Gunakan nama singkat yang mudah dikenali, misalnya “BPS” atau “WHO 2025”.</span>
+                  <input
+                    value={citationDialog.label}
+                    onChange={(event) => { setCitationDialog((current) => current ? { ...current, label: event.target.value } : current); setCitationError(null) }}
+                    maxLength={180}
+                    className={`mt-2 min-h-[44px] w-full rounded-lg border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`}
+                  />
+                </label>
+                <label className="block">
+                  <span className="font-interface text-xs font-semibold text-text-primary">Lokator spesifik (opsional)</span>
+                  <span className="mt-1 block font-interface text-[11px] leading-relaxed text-text-tertiary">Contoh: halaman 17, tabel 3, atau paragraf 8.</span>
+                  <input
+                    value={citationDialog.locator}
+                    onChange={(event) => { setCitationDialog((current) => current ? { ...current, locator: event.target.value } : current); setCitationError(null) }}
+                    maxLength={300}
+                    className={`mt-2 min-h-[44px] w-full rounded-lg border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`}
+                  />
+                </label>
+              </div>
+            )}
+
+            {citationError && <p role="alert" className="mt-4 rounded-lg bg-signal-danger-surface px-3 py-2.5 font-interface text-xs text-signal-danger">{citationError}</p>}
+
+            <footer className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-border-default/15 pt-5">
+              <div>
+                {citationDialog.position !== null && (
+                  <button type="button" onClick={deleteCitationNode} className={`min-h-[44px] rounded-lg px-3 font-interface text-xs font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}>Hapus sitasi</button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setCitationDialog(null)} className={`min-h-[44px] rounded-lg px-4 font-interface text-sm font-semibold text-text-secondary hover:bg-surface-sunken ${focusRing}`}>Batal</button>
+                <button type="button" disabled={sources.length === 0} onClick={applyCitationNode} className={`min-h-[44px] rounded-lg bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}`}>{citationDialog.position === null ? 'Sisipkan' : 'Simpan perubahan'}</button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      )}
+
       {semanticDialog && (
         <div className="fixed inset-0 z-modal flex items-center justify-center p-4 sm:p-8">
           <button
@@ -1171,6 +1313,7 @@ export default function StudioEditor({
             className="absolute inset-0 bg-surface-overlay/60"
           />
           <section
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="studio-semantic-dialog-title"

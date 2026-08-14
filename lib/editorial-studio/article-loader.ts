@@ -1,17 +1,17 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
-  createStudioDocument,
-  migrateStudioDocument,
+  createStudioDocumentV2,
+  migrateStudioDocumentToV2,
   type StudioArticleMetadata,
-  type StudioDocument,
+  type StudioDocumentV2,
 } from './document'
 import { markdownToStudioDocument } from './markdown-adapter'
 
 export type StudioArticleDraft = {
   title: string
   deck: string
-  document: StudioDocument
+  document: StudioDocumentV2
   isPublished: boolean
   publishedAt: string | null
 }
@@ -58,7 +58,7 @@ export function createNewStudioArticle(documentId?: string): StudioArticleDraft 
   return {
     title: '',
     deck: '',
-    document: createStudioDocument(undefined, { article, documentId }),
+    document: createStudioDocumentV2(undefined, { article, documentId }),
     isPublished: false,
     publishedAt: null,
   }
@@ -87,7 +87,7 @@ export async function loadStudioArticle(articleId: string): Promise<StudioArticl
       .select('title,deck,content')
       .eq('id', studioHead.current_revision_id)
       .maybeSingle()
-    const migrated = migrateStudioDocument(revision?.content)
+    const migrated = migrateStudioDocumentToV2(revision?.content)
     if (revision && migrated.ok) {
       return {
         title: revision.title,
@@ -100,10 +100,14 @@ export async function loadStudioArticle(articleId: string): Promise<StudioArticl
   }
 
   const documentId = `doc-article-${article.id.replace(/-/g, '')}`
+  const imported = migrateStudioDocumentToV2(
+    markdownToStudioDocument(article.content, { documentId, article: articleMetadata })
+  )
+  if (!imported.ok) return null
   return {
     title: article.title,
     deck: article.excerpt ?? '',
-    document: markdownToStudioDocument(article.content, { documentId, article: articleMetadata }),
+    document: imported.document,
     isPublished: article.is_published,
     publishedAt: article.published_at,
   }

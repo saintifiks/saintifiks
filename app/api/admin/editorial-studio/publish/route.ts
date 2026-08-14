@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/admin-check'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { migrateStudioDocument } from '@/lib/editorial-studio/document'
+import { migrateStudioDocumentToV2 } from '@/lib/editorial-studio/document'
 import { studioDocumentToMarkdown } from '@/lib/editorial-studio/markdown-adapter'
-import { preflightStudioArticle } from '@/lib/editorial-studio/preflight'
+import { preflightStudioArticleV2 } from '@/lib/editorial-studio/preflight'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,9 +41,9 @@ export async function POST(request: NextRequest) {
   if (revisionRow.fingerprint !== clientFingerprint) {
     return response({ error: 'Perubahan terbaru belum tersinkron. Tunggu sampai status kembali tersinkron.' }, 409)
   }
-  const migrated = migrateStudioDocument(revisionRow.content)
+  const migrated = migrateStudioDocumentToV2(revisionRow.content)
   if (!migrated.ok) return response({ error: 'Dokumen server tidak lolos kontrak canonical.' }, 422)
-  const preflight = preflightStudioArticle(revisionRow.title, revisionRow.deck, migrated.document)
+  const preflight = preflightStudioArticleV2(revisionRow.title, revisionRow.deck, migrated.document)
   if (!preflight.ok) return response({ error: 'Preflight masih memiliki blocker.', issues: preflight.issues }, 422)
 
   const { data, error } = await admin.rpc('publish_editorial_studio_article', {
