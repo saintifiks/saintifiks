@@ -5,7 +5,7 @@ import { applySecurityHeaders } from '@/lib/security/headers'
 
 export async function middleware(request: NextRequest) {
   // Buat response dasar
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },

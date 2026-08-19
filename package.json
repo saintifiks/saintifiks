@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test:studio": "tsc -p tsconfig.studio-test.json && node --test .studio-test-dist/scripts/editorial-studio-contract.test.js",
     "test:security:static": "node --test scripts/security-static-contract.test.mjs"
   },
@@ -23,7 +23,7 @@
     "html-to-image": "^1.11.13",
     "json5": "^2.2.3",
     "lucide-react": "^1.16.0",
-    "next": "^15.5.23",
+    "next": "^16.3.1",
     "react": "^19.2.8",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.8",
@@ -40,8 +40,8 @@
     "@types/node": "^20",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "eslint": "^8",
-    "eslint-config-next": "^15.5.23",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
