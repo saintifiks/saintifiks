@@ -7,53 +7,89 @@ import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
-import dynamic from 'next/dynamic'
 import remarkCallout from '@/lib/supabase/remark/remarkCallout'
-
-const ChartBlock = dynamic(() => import('./ChartBlock'), {
-  ssr: false,
-  loading: () => (
-    <div
-      className="my-8 flex min-h-44 items-center justify-center rounded border border-signal-warning/25 bg-signal-warning-surface p-6 text-center"
-      role="status"
-    >
-      <p className="font-interface text-sm leading-relaxed text-ink">
-        Grafik visual belum tersedia. Gunakan penjelasan dalam artikel sebagai konteks utama.
-      </p>
-    </div>
-  )
-})
+import ChartBlockClient from './ChartBlockClient'
 
 type ArticleRendererProps = {
   content: string
-  charts: { chart_identifier: string; config: string | object }[]
+  charts: {
+    chart_identifier: string
+    config: string | object
+  }[]
 }
 
-const CALLOUT_CONFIG: Record<string, { label: string; typeClass: string }> = {
-  note:      { label: 'Catatan',   typeClass: 'callout-note' },
-  warning:   { label: 'Perhatian', typeClass: 'callout-warning' },
-  important: { label: 'Penting',   typeClass: 'callout-important' },
-  tip:       { label: 'Tips',      typeClass: 'callout-tip' },
+const CALLOUT_CONFIG: Record<
+  string,
+  {
+    label: string
+    typeClass: string
+  }
+> = {
+  note: {
+    label: 'Catatan',
+    typeClass: 'callout-note',
+  },
+  warning: {
+    label: 'Perhatian',
+    typeClass: 'callout-warning',
+  },
+  important: {
+    label: 'Penting',
+    typeClass: 'callout-important',
+  },
+  tip: {
+    label: 'Tips',
+    typeClass: 'callout-tip',
+  },
 }
 
-// Custom sanitize schema: extend defaultSchema untuk izinkan class, id, dan data-* attributes
-// Diperlukan agar chart placeholder (div.saintifiks-chart#id) dan callout (data-callout-type)
-// tidak dihapus oleh sanitizer — sambil tetap memblokir script/event handlers berbahaya
+// Custom sanitize schema: extend defaultSchema untuk izinkan class, id,
+// dan data-* attributes.
+//
+// Diperlukan agar chart placeholder (div.saintifiks-chart#id)
+// dan callout (data-callout-type) tidak dihapus oleh sanitizer,
+// sambil tetap memblokir script/event handlers berbahaya.
 const sanitizeSchema = {
   ...defaultSchema,
   clobberPrefix: '',
   attributes: {
     ...defaultSchema.attributes,
-    '*': [...(defaultSchema.attributes?.['*'] ?? []), 'className', 'id'],
-    div: [...(defaultSchema.attributes?.['div'] ?? []), 'className', 'id', 'dataCalloutType'],
-    blockquote: [...(defaultSchema.attributes?.['blockquote'] ?? []), 'dataCalloutType'],
-    code: [...(defaultSchema.attributes?.['code'] ?? []), 'className'],
-    span: [...(defaultSchema.attributes?.['span'] ?? []), 'className'],
+
+    '*': [
+      ...(defaultSchema.attributes?.['*'] ?? []),
+      'className',
+      'id',
+    ],
+
+    div: [
+      ...(defaultSchema.attributes?.['div'] ?? []),
+      'className',
+      'id',
+      'dataCalloutType',
+    ],
+
+    blockquote: [
+      ...(defaultSchema.attributes?.['blockquote'] ?? []),
+      'dataCalloutType',
+    ],
+
+    code: [
+      ...(defaultSchema.attributes?.['code'] ?? []),
+      'className',
+    ],
+
+    span: [
+      ...(defaultSchema.attributes?.['span'] ?? []),
+      'className',
+    ],
   },
 }
 
-export default function ArticleRenderer({ content, charts }: ArticleRendererProps) {
-  // Regex Replacement: Mengubah token AI menjadi HTML statis block-level sebelum diproses parser
+export default function ArticleRenderer({
+  content,
+  charts,
+}: ArticleRendererProps) {
+  // Mengubah token chart menjadi HTML block-level sebelum diproses parser.
   const processedContent = content.replace(
     /{{chart:([^}]+)}}/g,
     '\n\n<div class="saintifiks-chart" id="$1"></div>\n\n'
@@ -62,32 +98,119 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
   return (
     <div className="article-body">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath, remarkCallout]}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex, rehypeHighlight]}
+        remarkPlugins={[
+          remarkGfm,
+          remarkMath,
+          remarkCallout,
+        ]}
+        rehypePlugins={[
+          rehypeRaw,
+          [rehypeSanitize, sanitizeSchema],
+          rehypeKatex,
+          rehypeHighlight,
+        ]}
         components={{
-          h1: ({ children }) => <h1 className="font-body text-display-sm font-bold text-ink mt-12 mb-6 leading-heading">{children}</h1>,
-          h2: ({ children }) => <h2 className="font-body text-2xl font-bold text-ink mt-10 mb-4 leading-heading">{children}</h2>,
-          h3: ({ children }) => <h3 className="font-body text-xl font-bold text-ink mt-8 mb-3 leading-heading">{children}</h3>,
-          p: ({ children }) => <p className="font-body text-body-base leading-reading mb-6">{children}</p>,
-          strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-          em: ({ children }) => <em className="italic">{children}</em>,
-          ul: ({ children }) => <ul className="font-body text-body-base mb-6 ml-6 list-disc space-y-2">{children}</ul>,
-          ol: ({ children }) => <ol className="font-body text-body-base mb-6 ml-6 list-decimal space-y-2">{children}</ol>,
-          li: ({ node, children, ...props }) => {
+          h1: ({ children }) => (
+            <h1 className="font-body text-display-sm font-bold text-ink mt-12 mb-6 leading-heading">
+              {children}
+            </h1>
+          ),
+
+          h2: ({ children }) => (
+            <h2 className="font-body text-2xl font-bold text-ink mt-10 mb-4 leading-heading">
+              {children}
+            </h2>
+          ),
+
+          h3: ({ children }) => (
+            <h3 className="font-body text-xl font-bold text-ink mt-8 mb-3 leading-heading">
+              {children}
+            </h3>
+          ),
+
+          p: ({ children }) => (
+            <p className="font-body text-body-base leading-reading mb-6">
+              {children}
+            </p>
+          ),
+
+          strong: ({ children }) => (
+            <strong className="font-bold">
+              {children}
+            </strong>
+          ),
+
+          em: ({ children }) => (
+            <em className="italic">
+              {children}
+            </em>
+          ),
+
+          ul: ({ children }) => (
+            <ul className="font-body text-body-base mb-6 ml-6 list-disc space-y-2">
+              {children}
+            </ul>
+          ),
+
+          ol: ({ children }) => (
+            <ol className="font-body text-body-base mb-6 ml-6 list-decimal space-y-2">
+              {children}
+            </ol>
+          ),
+
+          li: ({
+            node,
+            children,
+            ...props
+          }) => {
             void node
-            return <li {...props} className="mb-1">{children}</li>
+
+            return (
+              <li
+                {...props}
+                className="mb-1"
+              >
+                {children}
+              </li>
+            )
           },
+
           table: ({ children }) => (
             <div className="my-8 overflow-x-auto border border-ink/10 rounded">
-              <table className="min-w-full divide-y divide-ink/10">{children}</table>
+              <table className="min-w-full divide-y divide-ink/10">
+                {children}
+              </table>
             </div>
           ),
-          th: ({ children }) => <th className="px-4 py-3 bg-ink/5 text-left font-medium border-b border-ink/10 text-ink">{children}</th>,
-          td: ({ children }) => <td className="px-4 py-3 border-b border-ink/10 text-ink">{children}</td>,
-          blockquote: ({ node, children }) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const calloutType = (node as any)?.properties?.['data-callout-type'] as string | undefined
-            const config = calloutType ? CALLOUT_CONFIG[calloutType] : undefined
+
+          th: ({ children }) => (
+            <th className="px-4 py-3 bg-ink/5 text-left font-medium border-b border-ink/10 text-ink">
+              {children}
+            </th>
+          ),
+
+          td: ({ children }) => (
+            <td className="px-4 py-3 border-b border-ink/10 text-ink">
+              {children}
+            </td>
+          ),
+
+          blockquote: ({
+            node,
+            children,
+          }) => {
+            const rawCalloutType =
+              node?.properties?.['data-callout-type'] ??
+              node?.properties?.dataCalloutType
+
+            const calloutType =
+              typeof rawCalloutType === 'string'
+                ? rawCalloutType
+                : undefined
+
+            const config = calloutType
+              ? CALLOUT_CONFIG[calloutType]
+              : undefined
 
             if (config) {
               return (
@@ -96,7 +219,10 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                   data-callout-type={calloutType}
                   role="note"
                 >
-                  <p className="callout-box__label">{config.label}</p>
+                  <p className="callout-box__label">
+                    {config.label}
+                  </p>
+
                   <div className="font-lora text-body-sm text-text-primary [&>p]:mb-0 [&>p]:leading-reading">
                     {children}
                   </div>
@@ -110,10 +236,22 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
               </blockquote>
             )
           },
-          code: ({ className, children, ...props }) => {
-            const match = /language-(\w+)/.exec(className || '')
+
+          code: ({
+            className,
+            children,
+            ...props
+          }) => {
+            const match =
+              /language-(\w+)/.exec(
+                className || ''
+              )
+
             return match ? (
-              <code className={className} {...props}>
+              <code
+                className={className}
+                {...props}
+              >
                 {children}
               </code>
             ) : (
@@ -122,20 +260,42 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
               </code>
             )
           },
-          img: ({ src, alt }) => {
-            const [caption, source] = (alt || '').split('|').map(s => s.trim())
-            const isSupabase = src?.includes('.supabase.co')
+
+          img: ({
+            src,
+            alt,
+          }) => {
+            const [caption, source] =
+              (alt || '')
+                .split('|')
+                .map((value) =>
+                  value.trim()
+                )
+
+            // React 19 / react-markdown dapat memberi tipe string | Blob.
+            // Renderer Saintifiks hanya memproses URL gambar berbentuk string.
+            if (
+              typeof src !== 'string' ||
+              src.length === 0
+            ) {
+              return null
+            }
+
+            const isSupabase =
+              src.includes('.supabase.co')
 
             return (
               <figure className="my-10">
                 {isSupabase ? (
                   <Image
-                    src={src!}
+                    src={src}
                     alt={caption || ''}
                     width={800}
                     height={500}
                     className="w-full rounded border border-ink/10"
-                    style={{ height: 'auto' }}
+                    style={{
+                      height: 'auto',
+                    }}
                   />
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -145,36 +305,104 @@ export default function ArticleRenderer({ content, charts }: ArticleRendererProp
                     className="w-full rounded border border-ink/10"
                   />
                 )}
+
                 {caption && (
                   <figcaption className="text-center mt-3 text-sm text-warm-gray font-mono">
                     {caption}
-                    {source && <span className="block text-xs mt-1">Sumber: {source}</span>}
+
+                    {source && (
+                      <span className="block text-xs mt-1">
+                        Sumber: {source}
+                      </span>
+                    )}
                   </figcaption>
                 )}
               </figure>
             )
           },
-          a: ({ node, href, children, ...props }) => {
+
+          a: ({
+            node,
+            href,
+            children,
+            ...props
+          }) => {
             void node
-            return React.createElement('a', {
-              ...props,
-              href,
-              className: "text-text-link underline underline-offset-2 hover:text-interactive-primary-hover transition-colors duration-150",
-              target: href?.startsWith('http') ? '_blank' : undefined,
-              rel: href?.startsWith('http') ? 'noopener noreferrer' : undefined
-            }, children)
+
+            const isExternal =
+              typeof href === 'string' &&
+              (
+                href.startsWith('http://') ||
+                href.startsWith('https://')
+              )
+
+            return React.createElement(
+              'a',
+              {
+                ...props,
+                href,
+                className:
+                  'text-text-link underline underline-offset-2 hover:text-interactive-primary-hover transition-colors duration-150',
+                target: isExternal
+                  ? '_blank'
+                  : undefined,
+                rel: isExternal
+                  ? 'noopener noreferrer'
+                  : undefined,
+              },
+              children
+            )
           },
-          hr: () => <hr className="border-ink/10 my-12" />,
-          
-          // Penukar Dinamis: Mencegat HTML div yang masuk dan menukarnya menjadi grafik React jika teridentifikasi
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          div: ({ className, id, children, ...props }: any) => {
-            if (className === 'saintifiks-chart' && id) {
-              const chartData = charts.find((c) => c.chart_identifier === id)
-              return <ChartBlock identifier={id} configString={chartData ? chartData.config : null} />
+
+          hr: () => (
+            <hr className="border-ink/10 my-12" />
+          ),
+
+          // Mencegat div chart dan menukarnya menjadi Client Component.
+          // next/dynamic dengan ssr:false berada di ChartBlockClient.tsx,
+          // bukan di Server Component ini.
+          div: ({
+            node,
+            className,
+            id,
+            children,
+            ...props
+          }) => {
+            void node
+
+            if (
+              className === 'saintifiks-chart' &&
+              typeof id === 'string' &&
+              id.length > 0
+            ) {
+              const chartData =
+                charts.find(
+                  (chart) =>
+                    chart.chart_identifier === id
+                )
+
+              return (
+                <ChartBlockClient
+                  identifier={id}
+                  configString={
+                    chartData
+                      ? chartData.config
+                      : null
+                  }
+                />
+              )
             }
-            return <div className={className} id={id} {...props}>{children}</div>
-          }
+
+            return (
+              <div
+                className={className}
+                id={id}
+                {...props}
+              >
+                {children}
+              </div>
+            )
+          },
         }}
       >
         {processedContent}
