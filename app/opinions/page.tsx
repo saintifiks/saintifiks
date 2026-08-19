@@ -1,7 +1,6 @@
 // Halaman daftar artikel opinions — Server Component
 // force-dynamic agar selalu fresh — tidak pakai ISR cache
 
-import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import OpinionCard from '@/components/opinions/OpinionCard'
 import Link from '@/components/ui/Link'
@@ -29,13 +28,7 @@ export default async function OpinionsPage({
 }: {
   searchParams: SearchParams
 }) {
-  let supabase
-  try {
-    supabase = createAdminClient()
-  } catch {
-    console.error('[opinions/page] Admin client gagal, fallback ke server client')
-    supabase = await createClient()
-  }
+  const supabase = await createClient()
   const page = Math.max(1, parseInt(searchParams?.page ?? '1', 10))
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { applySecurityHeaders } from '@/lib/security/headers'
 
 export async function middleware(request: NextRequest) {
   // Buat response dasar
@@ -33,11 +34,8 @@ export async function middleware(request: NextRequest) {
   // Perubahan cookies akan otomatis di-apply ke response via setAll di atas
   await supabase.auth.getUser()
 
-  // Tambahkan security headers ke semua response
-  // [H-01] Security headers dari audit
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  // Tambahkan centralized security headers & CSP ke response
+  applySecurityHeaders(response.headers)
 
   return response
 }

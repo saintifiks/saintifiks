@@ -5,8 +5,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAdmin } from '@/lib/admin-check'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { validateUUID, validateEnum, ValidationError } from '@/lib/security/validation'
 
 export const dynamic = 'force-dynamic'
+
+const ALLOWED_STATUS_FILTERS = ['pending', 'reviewed', 'dismissed', 'all'] as const
 
 // GET — semua laporan dengan detail artikel dan reporter
 export async function GET(request: NextRequest) {
@@ -16,7 +19,14 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const statusFilter = searchParams.get('status') // 'pending' | 'reviewed' | 'all'
+    const rawStatus = searchParams.get('status') ?? 'all'
+
+    let statusFilter: string
+    try {
+      statusFilter = validateEnum(rawStatus, ALLOWED_STATUS_FILTERS, 'Status filter')
+    } catch {
+      statusFilter = 'all'
+    }
 
     const adminClient = createAdminClient()
 
@@ -103,13 +113,13 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({ reports: result })
-  } catch (err) {
-    console.error('[admin/opinions/reports GET] Unexpected error:', err)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  } catch {
+    console.error('[admin/opinions/reports GET] Unexpected error occurred.')
+    return NextResponse.json({ error: 'Terjadi kesalahan server.' }, { status: 500 })
   }
 }
 
-// PATCH — tandai laporan sebagai reviewed
+// PATCH — tandai laporan sebagai reviewed atau dismissed
 export async function PATCH(request: NextRequest) {
   try {
     if (!(await isAdmin())) {
@@ -117,27 +127,27 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const reportId = typeof body.report_id === 'string' ? body.report_id.trim() : ''
-
-    if (!reportId) {
-      return NextResponse.json({ error: 'report_id wajib diisi' }, { status: 400 })
-    }
+    const reportId = validateUUID(body.report_id, 'Report ID')
+    const newStatus = validateEnum(body.status ?? 'reviewed', ['reviewed', 'dismissed'] as const, 'Status')
 
     const adminClient = createAdminClient()
 
     const { error } = await adminClient
       .from('article_reports')
-      .update({ status: 'reviewed' })
+      .update({ status: newStatus })
       .eq('id', reportId)
 
     if (error) {
-      console.error('[admin/opinions/reports PATCH] Error:', error.message)
-      return NextResponse.json({ error: 'Gagal mengupdate laporan' }, { status: 500 })
+      console.error('[admin/opinions/reports PATCH] Database error occurred.')
+      return NextResponse.json({ error: 'Gagal memperbarui laporan.' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('[admin/opinions/reports PATCH] Unexpected error:', err)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    if (err instanceof ValidationError) {
+      return NextResponse.json({ error: 'Data permintaan tidak valid.' }, { status: 400 })
+    }
+    console.error('[admin/opinions/reports PATCH] Unexpected error occurred.')
+    return NextResponse.json({ error: 'Terjadi kesalahan server.' }, { status: 500 })
   }
 }

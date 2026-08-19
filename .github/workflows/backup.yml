@@ -1,11 +1,13 @@
 name: Weekly Database Backup
 
-# Mengatur kapan robot ini berjalan
 on:
   schedule:
     # Berjalan otomatis setiap hari Minggu jam 00:00 UTC (07:00 WIB)
     - cron: '0 0 * * 0'
-  workflow_dispatch: # Mengizinkan kita mengeklik tombol 'Run' secara manual kapan saja
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   backup:
@@ -13,21 +15,25 @@ jobs:
     steps:
       - name: Install PostgreSQL 17 Client
         run: |
+          set -euo pipefail
           sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
           sudo apt-get update
           sudo apt-get install -y postgresql-client-17
 
-      - name: Ekspor Database (pg_dump)
+      - name: Ekspor Database (pg_dump) & Hitung Checksum
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          # Memaksa penggunaan pg_dump versi 17 dari direktori spesifik
+          set -euo pipefail
           /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" -F c -f database-backup.dump
+          sha256sum database-backup.dump > database-backup.dump.sha256
 
       - name: Simpan File ke GitHub Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: saintifiks-db-backup-${{ github.run_id }}
-          path: database-backup.dump
-          retention-days: 30 # GitHub otomatis menghapus file ini setelah 30 hari
+          path: |
+            database-backup.dump
+            database-backup.dump.sha256
+          retention-days: 30

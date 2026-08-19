@@ -2,12 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import { MetadataRoute } from 'next'
 import { getPublishedSitePage } from '@/lib/site-pages/data'
 import { sitePageDefinitions } from '@/lib/site-pages/registry'
+import { getSiteUrl } from '@/lib/site-url'
 
 // Revalidate setiap 24 jam (86400 detik)
 export const revalidate = 86400
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://saintifiks.vercel.app'
+  const baseUrl = getSiteUrl()
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
