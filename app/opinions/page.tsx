@@ -23,11 +23,12 @@ const PAGE_SIZE = 20
 
 type SearchParams = { page?: string }
 
-export default async function OpinionsPage({
-  searchParams,
-}: {
-  searchParams: SearchParams
-}) {
+export default async function OpinionsPage(
+  props: {
+    searchParams: Promise<SearchParams>
+  }
+) {
+  const searchParams = await props.searchParams;
   const supabase = await createClient()
   const page = Math.max(1, parseInt(searchParams?.page ?? '1', 10))
   const from = (page - 1) * PAGE_SIZE

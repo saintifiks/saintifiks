@@ -6,7 +6,8 @@ import { getSitePageDefinition } from '@/lib/site-pages/registry'
 
 export const dynamic = 'force-dynamic'
 
-export default async function SitePagePreview({ params }: { params: { slug: string } }) {
+export default async function SitePagePreview(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const definition = getSitePageDefinition(params.slug)
   if (!definition) notFound()
   const data = await getAdminSitePage(params.slug)

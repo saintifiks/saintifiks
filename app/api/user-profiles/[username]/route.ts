@@ -6,10 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: { username: string } }
-) {
+export async function GET(_request: NextRequest, props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   try {
     const { username } = params
 

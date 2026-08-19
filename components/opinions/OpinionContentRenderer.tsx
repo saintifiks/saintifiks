@@ -11,26 +11,8 @@ import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
-import dynamic from 'next/dynamic'
 import remarkCallout from '@/lib/supabase/remark/remarkCallout'
-
-const ChartBlock = dynamic(
-  () => import('@/components/artikel/ChartBlock'),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        className="my-8 flex min-h-44 items-center justify-center rounded border border-signal-warning/25 bg-signal-warning-surface p-6 text-center"
-        role="status"
-      >
-        <p className="font-helvetica text-sm leading-relaxed text-ink">
-          Grafik visual belum tersedia. Gunakan penjelasan dalam artikel sebagai
-          konteks utama.
-        </p>
-      </div>
-    ),
-  }
-)
+import ChartBlockClient from '@/components/artikel/ChartBlockClient'
 
 type OpinionContentRendererProps = {
   content: string
@@ -486,7 +468,7 @@ export default function OpinionContentRenderer({
           ),
 
           // Intercept div dengan class saintifiks-chart
-          // lalu render ChartBlock.
+          // lalu render Client Component.
           div: ({
             node,
             className,
@@ -512,7 +494,7 @@ export default function OpinionContentRenderer({
               )
 
               return (
-                <ChartBlock
+                <ChartBlockClient
                   identifier={
                     identifier
                   }

@@ -8,10 +8,11 @@ import OpinionEditorPage from '@/components/opinions/editor/OpinionEditorPage'
 export const dynamic = 'force-dynamic'
 
 type PageProps = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export default async function EditArtikelPage({ params }: PageProps) {
+export default async function EditArtikelPage(props: PageProps) {
+  const params = await props.params;
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
