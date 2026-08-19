@@ -6,16 +6,15 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { sanitizePostLoginDestination } from '@/lib/security/post-login-destination'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   
-  // Tangkap parameter 'next' dari URL, jika tidak ada, gunakan default '/dashboard'
-  // Validasi untuk mencegah open redirect attack (C-02)
+  // Tangkap parameter 'next' dari URL dan sanitasi dengan daftar allowlist ketat
   const rawNext = requestUrl.searchParams.get('next') ?? '/dashboard'
-  // Hanya izinkan path yang dimulai dengan / dan bukan protocol-relative URL (//)
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
+  const next = sanitizePostLoginDestination(rawNext)
   const origin = requestUrl.origin
 
   if (code) {

@@ -1,16 +1,10 @@
-// Rate limiting helper — in-memory store untuk free tier
-// Tidak menggunakan Redis/Vercel KV untuk menjaga simplicity dan cost
+// Rate limiting helper — interface adapter untuk kompatibilitas existing callers
+// NOT_A_DISTRIBUTED_SECURITY_BOUNDARY — lihat security/DISTRIBUTED_ABUSE_CONTROL.md
 
-interface RateLimitEntry {
-  count: number
-  resetAt: number
-}
-
-// Store in-memory (Map<identifier, entry>)
-const rateMap = new Map<string, RateLimitEntry>()
+import { checkLocalRateLimit } from '@/lib/security/rate-limit'
 
 /**
- * Check rate limit untuk identifier (biasanya IP address)
+ * Check rate limit untuk identifier (IP address atau user identifier)
  * @param identifier — IP address atau user identifier
  * @param limit — Maximum requests allowed (default: 60)
  * @param windowMs — Time window in milliseconds (default: 60_000 = 1 menit)
@@ -21,38 +15,11 @@ export function checkRateLimit(
   limit: number = 60,
   windowMs: number = 60_000
 ): { success: boolean; remaining: number; resetAt: number } {
-  const now = Date.now()
-  const entry = rateMap.get(identifier)
-
-  // Jika tidak ada entry atau sudah expired, buat entry baru
-  if (!entry || now > entry.resetAt) {
-    const newEntry: RateLimitEntry = {
-      count: 1,
-      resetAt: now + windowMs,
-    }
-    rateMap.set(identifier, newEntry)
-    return {
-      success: true,
-      remaining: limit - 1,
-      resetAt: newEntry.resetAt,
-    }
-  }
-
-  // Jika sudah melebihi limit, tolak
-  if (entry.count >= limit) {
-    return {
-      success: false,
-      remaining: 0,
-      resetAt: entry.resetAt,
-    }
-  }
-
-  // Increment count
-  entry.count++
+  const res = checkLocalRateLimit(identifier, limit, windowMs)
   return {
-    success: true,
-    remaining: limit - entry.count,
-    resetAt: entry.resetAt,
+    success: res.allowed,
+    remaining: res.remaining,
+    resetAt: res.resetAt,
   }
 }
 
