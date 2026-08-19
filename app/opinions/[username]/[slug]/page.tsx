@@ -17,10 +17,11 @@ import OpinionCommentsSection from '@/components/opinions/OpinionCommentsSection
 export const dynamic = 'force-dynamic'
 
 type PageProps = {
-  params: { username: string; slug: string }
+  params: Promise<{ username: string; slug: string }>
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const supabase = await createClient()
 
   const { data: profile } = await supabase
@@ -52,7 +53,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function OpinionArticlePage({ params }: PageProps) {
+export default async function OpinionArticlePage(props: PageProps) {
+  const params = await props.params;
   const supabase = await createClient()
 
   // Ambil profil penulis berdasarkan username

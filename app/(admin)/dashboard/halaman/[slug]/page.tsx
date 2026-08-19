@@ -8,7 +8,8 @@ import { getSitePageDefinition } from '@/lib/site-pages/registry'
 
 export const dynamic = 'force-dynamic'
 
-export default async function SitePageEditPage({ params }: { params: { slug: string } }) {
+export default async function SitePageEditPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const definition = getSitePageDefinition(params.slug)
   if (!definition) notFound()
 

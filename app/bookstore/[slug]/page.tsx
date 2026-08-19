@@ -16,14 +16,16 @@ type VariantData = {
   is_active: boolean
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const { data: book } = await supabase.from('books').select('title, description').eq('slug', params.slug).maybeSingle()
   if (!book) return { title: 'Buku Tidak Ditemukan' }
   return { title: `${book.title} — Saintifiks Bookstore`, description: book.description }
 }
 
-export default async function BookDetailPage({ params }: { params: { slug: string } }) {
+export default async function BookDetailPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
 
   const { data: book, error } = await supabase
@@ -42,7 +44,7 @@ export default async function BookDetailPage({ params }: { params: { slug: strin
   // Ekstraksi data author dengan aman menggunakan "unknown" untuk memuaskan TypeScript
   const rawAuthor = Array.isArray(book.authors) ? book.authors[0] : book.authors
   const authorName = (rawAuthor as unknown as { name: string } | null)?.name ?? 'Penulis Tidak Diketahui'
-  
+
   // Ekstraksi varian dengan aman
   const variants = (book.book_variants as unknown as VariantData[] | null)?.filter((v) => v.is_active) || []
 

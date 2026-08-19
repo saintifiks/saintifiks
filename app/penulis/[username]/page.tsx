@@ -10,10 +10,11 @@ import OpinionCard from '@/components/opinions/OpinionCard'
 export const dynamic = 'force-dynamic'
 
 type PageProps = {
-  params: { username: string }
+  params: Promise<{ username: string }>
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from('user_profiles')
@@ -34,7 +35,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function PenulisPage({ params }: PageProps) {
+export default async function PenulisPage(props: PageProps) {
+  const params = await props.params;
   const supabase = await createClient()
 
   // Ambil profil publik — hanya kolom yang aman (tidak expose user_id ke HTML)
