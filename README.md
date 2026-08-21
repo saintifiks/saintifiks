@@ -1,5 +1,7 @@
 # CONTEXT.md — Saintifiks Project Bible
-> Versi: 2.21 | Status: Live | Terakhir diperbarui: 15-08-2026
+> Versi: 2.22 | Status: Live | Terakhir diperbarui: 21-08-2026
+>
+> Perubahan v2.22 (Sesi #72–#75): security hardening repository, upgrade Next.js 16.3.1, dan baseline migrasi Supabase telah masuk ke `main`. Mutasi admin kini memiliki otorisasi fail-closed dan model membership eksplisit; validasi input, request-integrity, header keamanan, audit trail, batas laju lokal, integritas konten, backup terverifikasi checksum, serta CI keamanan tersedia di repository. Workflow Supabase juga memeriksa keselarasan migration dan `db push --dry-run`. Kontrol yang membutuhkan konfigurasi operator—misalnya WAF/rate limit terdistribusi, MFA control plane, DNS/email security, PITR, dan backup immutable—tetap dicatat sebagai belum terverifikasi/eksternal, bukan dianggap selesai.
 >
 > Perubahan v2.21 (Sesi #71): F1B-1 memperkeras input tabular dan model chart di atas canonical JSON v2 tanpa membuat schema v3; locale angka, typed review, referential integrity, unit tunggal, dan preflight output-readiness kini memiliki kontrak serta test permanen, sementara dataset/chart production tetap tertutup.
 >
@@ -151,7 +153,7 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 
 | Komponen | Teknologi | Alasan |
 |----------|-----------|--------|
-| Frontend | Next.js 14 (App Router) | SSG/SSR untuk SEO, React ecosystem, AI-friendly |
+| Frontend | Next.js 16.3.1 (App Router, React 19) | SSG/SSR untuk SEO, React ecosystem, dan baseline dependency yang telah diperbarui |
 | Hosting frontend | Vercel | Free tier cukup, deploy otomatis dari GitHub, CDN global |
 | Backend / Database | Supabase | PostgreSQL + Auth + Storage dalam satu platform, free tier, portable — tidak vendor-locked |
 | Version control | GitHub | Standar industri; UIthub bisa membaca repo ini untuk konteks AI per sesi |
@@ -159,17 +161,19 @@ Memutus rantai manipulasi epistemik dalam ruang publik Indonesia — bukan denga
 | Styling | Tailwind CSS v3 | Utility-first, AI-friendly, konsisten dengan ekosistem Next.js |
 | Auth pembaca | Supabase Auth + Google OAuth | Login via Google; tidak perlu buat akun baru; Supabase menangani seluruh flow; saat pengguna login, tombol keluar digantikan ikon belah ketupat dengan huruf inisial nama |
 | Editor artikel admin | Editorial Studio (TipTap sebagai mesin penyunting; canonical JSON Saintifiks sebagai sumber kebenaran) | Writer-first, local-first, server revision, preflight, dan publish snapshot atomik — lihat Seksi 11 Sesi #58–#63 |
-| Konten format | Canonical JSON Studio v1 untuk publikasi baru; Markdown untuk artikel legacy dan fallback kompatibilitas | Public page melakukan dual-read; tidak ada migrasi big-bang terhadap artikel lama |
+| Konten format | Canonical JSON Studio v2 untuk publikasi baru; Markdown untuk artikel legacy dan fallback kompatibilitas | Public page melakukan dual-read; evidence registry v2 dan snapshot publikasi tetap kompatibel tanpa migrasi big-bang artikel lama |
 | Markdown renderer legacy/fallback | react-markdown + remark-gfm + remark-math + rehype-katex + rehype-highlight + rehype-raw + rehype-sanitize | Tabel GFM, formula LaTeX, syntax highlighting, dan XSS protection tetap dipertahankan untuk artikel lama/fallback |
 | JSON parser toleran | json5 | Parser JSON yang menoleransi cacat sintaks dari output AI (trailing comma, unquoted keys) untuk config chart |
 | WYSIWYG editor (Opinions) | @tiptap/react + @tiptap/starter-kit + tiptap-markdown | Editor visual untuk platform Opinions dengan output Markdown — lihat Seksi 11 |
-| Rate limiting | In-memory Map (lib/rate-limit.ts) | IP-based rate limiting per endpoint; trade-off: tidak persisten antar serverless invocation — acceptable untuk free tier |
+| Rate limiting | Local in-memory limiter + kontrak endpoint-spesifik | Throttling best-effort per instance untuk mutasi dan analytics; bukan security boundary global pada serverless. Target WAF/Redis terdistribusi tetap terbuka (lihat `security/DISTRIBUTED_ABUSE_CONTROL.md`) |
+| Verifikasi keamanan | GitHub Actions: Security & Quality CI + Supabase Migration Check | TypeScript, contract test keamanan/Studio, lint, production build, status migration remote, serta `db push --dry-run` pada PR dan push ke `main` |
 
 ### Batasan Free Tier yang Harus Diperhatikan
 
 - **Supabase:** Project dihibernasi jika tidak ada aktivitas selama 7 hari. **Solusi wajib dan harus diimplementasikan di Sesi #1:** Cron job di Vercel yang query ringan ke database setiap 3 hari.
 - **Vercel:** 100GB bandwidth/bulan di free tier. Gambar artikel harus disimpan di Supabase Storage (bukan di repo GitHub) untuk mengurangi beban bandwidth Vercel.
 - **Supabase:** 500MB database storage, 2GB bandwidth, 50.000 MAU di free tier.
+- **Rate limiting lokal:** state tidak dibagi antar instance serverless; kontrol ini mengurangi abuse pada satu instance tetapi tidak menggantikan WAF atau Redis global.
 
 ### Keputusan yang Masih Terbuka
 - Tidak ada. Semua keputusan arsitektur dasar sudah diselesaikan.
@@ -403,8 +407,33 @@ app/api/indices/route.ts                    ← Endpoint polling client
 
 ## 5.5 BACKUP & DATA SAFETY
 
-- **Weekly database export** via GitHub Actions (pg_dump ke Supabase, disimpan sebagai artifact) — harus diimplementasikan sebelum konten pertama di-publish.
-- **Supabase free tier tidak memiliki Point-in-Time Recovery.** Backup manual adalah satu-satunya safety net.
+- **Weekly database export** via GitHub Actions setiap Minggu pukul 00:00 UTC (serta manual dispatch) menggunakan `pg_dump` PostgreSQL 17. Artifact disimpan 30 hari bersama checksum SHA-256.
+- Workflow backup memakai least privilege (`contents: read`), shell ketat, dan action upload yang dipin ke SHA. URL database tidak dicetak ke log.
+- Restore wajib diuji terlebih dahulu pada PostgreSQL/staging terisolasi, bukan pada database production aktif. Lihat `security/BACKUP_RECOVERY_RUNBOOK.md`.
+- **Supabase free tier tidak menyediakan Point-in-Time Recovery.** PITR, replikasi objek Storage, dan backup off-platform immutable masih merupakan dependency eksternal yang belum dibuktikan.
+
+---
+
+## 5.6 KEAMANAN, INTEGRITAS, DAN OPERASI
+
+> Status implementasi repository: terintegrasi di `main` melalui PR #130–#133. Status control plane eksternal dipisahkan secara eksplisit agar bukti repository tidak disalahartikan sebagai konfigurasi production.
+
+### Kontrol yang Terimplementasi di Repository
+
+- **Otorisasi admin fail-closed:** semua mutasi admin melakukan pemeriksaan server-side sendiri. Model `admin_memberships` mendukung peran `admin`, `publisher`, `moderator`, dan `security_admin`; fallback email lama hanya aktif melalui flag environment eksplisit.
+- **Validasi dan integritas request:** payload mempunyai allowlist/batas ukuran; mutasi browser memeriksa `Origin` tepercaya dan Fetch Metadata untuk menolak permintaan lintas-situs. Callback OAuth hanya menerima destinasi `next` dari allowlist path internal.
+- **Header dan konten:** middleware menerapkan `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, dan CSP struktural. Pipeline konten tetap memperlakukan input tersimpan sebagai tidak tepercaya dan memiliki contract test untuk sanitasi serta integritas editorial.
+- **Privilege dan audit:** operasi service-role dirutekan melalui capability server yang sempit; audit trail meminimalkan data dan melarang pencatatan rahasia. Integritas dokumen/snapshot memakai canonical manifest dan digest yang diuji.
+- **Upload dan abuse:** processor upload memverifikasi magic byte JPEG/PNG/WebP, membatasi ukuran, menghapus metadata, dan menghitung digest. Local rate limiter memberi batas per endpoint; respons 429 menyertakan informasi retry bila batas terlampaui.
+- **Supply chain dan database:** action GitHub yang dipakai workflow sensitif dipin ke SHA. Supabase CLI/config dan enam migration historis dilacak di repository; workflow CI membandingkan status migration linked dan mensimulasikan `db push` tanpa perubahan.
+
+### Batas Bukti dan Pekerjaan Eksternal
+
+- Local in-memory rate limit **bukan** pembatas global pada deployment serverless. WAF/edge rate limiting atau Redis terdistribusi belum dikonfigurasi.
+- MFA perangkat keras, proteksi branch GitHub, DNSSEC/CAA/DMARC, registry lock, monitoring CT, PITR, backup WORM lintas penyedia, KMS signing, dan external audit sink memerlukan tindakan operator pada control plane masing-masing.
+- Storage RLS production dan pemindaian malware otomatis belum dapat dibuktikan dari runner lokal. Arsitektur target serta prosedur verifikasi dicatat, tetapi tidak boleh dilaporkan sebagai completed.
+
+Referensi operasional: `security/IMPLEMENTATION_LEDGER.md`, `security/SECURITY_INVARIANTS.md`, `security/EXTERNAL_CONTROL_PLANE.md`, `security/STORAGE_SECURITY_RUNBOOK.md`, dan `security/DATABASE_AUTHORIZATION_TARGET.md`.
 
 ---
 
@@ -423,6 +452,7 @@ comments          — komentar publik (identitas internal tidak dikirim melalui 
 shares            — hitungan share anonim per platform (instagram, twitter, facebook, whatsapp, copy)
 analytics_events  — event tracking internal tanpa user_id (page_view, scroll_depth, dll — BUKAN untuk dijual)
 users             — akun pembaca (dikelola otomatis oleh Supabase Auth saat login pertama)
+admin_memberships — membership admin eksplisit (user_id, role, enabled, created_at, created_by); migration 20260819000000
 ```
 
 **Catatan koreksi:** Tabel `article_corrections` memiliki kolom `status` (pending/approved/rejected) untuk moderasi.
@@ -434,6 +464,8 @@ users             — akun pembaca (dikelola otomatis oleh Supabase Auth saat lo
 **Catatan chart:** Setiap artikel bisa memiliki satu atau lebih chart. Config Chart.js disimpan sebagai JSON di `article_charts`, di-render client-side via Chart.js saat halaman artikel dibuka. Chart bersifat interaktif.
 
 **Catatan analytics:** `analytics_events` dan `opinion_analytics_events` tidak lagi mengisi `user_id`. Event site-wide tidak dijalankan pada halaman detail Opinions karena halaman tersebut memiliki tracker khusus. `session_id` masih dipakai sebagai penanda pseudonim jangka pendek; kebijakan retensi dan desain agregasi lanjutan tetap menjadi pekerjaan P1.
+
+**Catatan admin membership:** `admin_memberships` memakai RLS dan FORCE RLS. User terautentikasi hanya dapat membaca membership miliknya sendiri; aplikasi menyaring baris `enabled=true` sebelum memberi akses admin. `service_role` dipakai untuk administrasi server-side. Model ini menggantikan asumsi bahwa satu alamat email saja merupakan boundary otorisasi.
 
 ### Aturan RLS (Row Level Security) — WAJIB
 
@@ -2051,6 +2083,46 @@ Format pengisian:
 
 ---
 
+[19-08-2026] KEPUTUSAN: Hardening keamanan memakai kontrol berlapis dengan status bukti yang eksplisit ← SESI #72
+              KONTRAK KEAMANAN:
+                - Mutasi harus mengautentikasi dan mengotorisasi dirinya sendiri; layout admin, UI, `robots.txt`, dan
+                  client request body bukan boundary otorisasi.
+                - Hak admin berpindah dari pengecekan email implisit menuju `admin_memberships` dengan RLS default-deny;
+                  fallback email hanya boleh diaktifkan sementara melalui environment flag eksplisit.
+                - Input, tujuan redirect OAuth, request lintas-situs, upload, rendering konten, capability service-role,
+                  audit trail, dan publication integrity diperlakukan sebagai boundary terpisah yang memiliki contract test.
+                - Rate limit `Map` lokal hanya merupakan mitigasi best-effort per instance. Ia tidak boleh diklaim sebagai
+                  kontrol abuse global dan tidak menggantikan WAF atau backend terdistribusi.
+              BATAS BUKTI:
+                - Kebijakan/konfigurasi production Supabase, Storage, Vercel, DNS, registrar, email, KMS, WAF, dan
+                  identitas operator tidak dapat dipastikan hanya dari source code.
+                - Kontrol eksternal dicatat `BLOCKED_EXTERNAL` atau `BLOCKED_MISSING_EVIDENCE`, bukan dianggap lulus.
+              VERIFIKASI: PR #130 menambah static/unit/content/editorial-integrity contract test, security CI, migration
+                           admin membership, runbook backup/Storage, ledger implementasi, dan dokumen target kontrol.
+
+[19-08-2026] KEPUTUSAN: Upgrade framework dilakukan sebagai checkpoint terpisah dan dapat diaudit ← SESI #73
+              IMPLEMENTASI:
+                - PR #131 memutakhirkan Next.js ke 16.3.1, React ke 19.2.8, ESLint ke 9.39.5, dan
+                  `eslint-config-next` ke 16.3.1; API request asinkron dimigrasikan sesuai kebutuhan framework.
+                - Konfigurasi ESLint flat menggantikan konfigurasi lama. Pengecualian React Hooks dibatasi pada file legacy
+                  yang sudah ada sebelum migrasi, sehingga aturan tetap berlaku bagi file lain.
+              VERIFIKASI: TypeScript, lint tanpa error, seluruh contract test, build production Turbopack, serta `npm audit`
+                           selesai tanpa vulnerability yang terlaporkan pada saat checkpoint. Warning legacy dicatat terpisah;
+                           migrasi `middleware.ts` ke konvensi `proxy.ts` belum menjadi bagian checkpoint ini.
+
+[19-08-2026] KEPUTUSAN: Migrasi Supabase adalah artefak source-controlled dengan validasi non-destruktif ← SESI #74–#75
+              IMPLEMENTASI:
+                - PR #132 menambahkan konfigurasi Supabase CLI sebagai baseline repository. Enam migration historis menjadi
+                  urutan lokal yang dapat diperiksa terhadap project linked.
+                - PR #133 menambahkan workflow `Supabase Migration Check` pada pull request dan push ke `main`.
+                  Workflow menjalankan `supabase migration list --linked` dan `supabase db push --dry-run --linked` dengan
+                  secret/variable GitHub yang diperlukan; tidak ada migration yang dipush oleh CI.
+              VERIFIKASI: Workflow migration dan Security & Quality CI tercatat lulus, dan dry run linked terakhir melaporkan
+                           remote database up to date. Prosedur rollback/perbaikan histori migration tetap harus memakai
+                           migration additive dan bukti database yang sesuai; tidak ada rewrite histori lama.
+
+---
+
 ## 12. LOG SESI
 Branch: Berbagai feature branches (dari feature/phase-0-foundation hingga feature/custom-favicon) ter-merge ke main
 Tujuan sesi: Menyelesaikan fondasi infrastruktur (Phase 0), sistem artikel & CMS (Phase 1-2), interaksi & analitik pembaca (Phase 3), optimasi SEO & keamanan (Phase 4), serta penyempurnaan fitur beranda & mesin render pasca-rilis.
@@ -3332,6 +3404,81 @@ Status akhir: Implementasi dan test F1B-1 lengkap secara lokal pada feature bran
               draft PR, preview deployment, atau bukti runtime production.
 Next step: Audit akhir seluruh diff F1B-1 sebagai satu paket, jalankan production build lokal, lalu siapkan staging hanya
            jika seluruh gerbang lulus dan owner memerintahkan kelanjutan.
+---
+
+[19-08-2026] SESI #72 — SECURITY HARDENING REPOSITORY
+Branch: `feature/security-hardening`; PR #130
+Tujuan sesi: Menurunkan hasil review keamanan ke kontrol aplikasi yang dapat diuji tanpa mengklaim konfigurasi provider
+              atau database production yang tidak dapat diinspeksi dari runner lokal.
+Yang dikerjakan:
+  [OTORISASI DAN PRIVILEGE]
+  - Server Action admin diperkaya dengan `requireAdmin()` fail-closed, validasi input terikat tipe/batas, dan masking
+    error. Capability server dipisahkan untuk CMS, publication, moderation, analytics, dan Storage.
+  - Migration additive `20260819000000_admin_memberships.sql` menambahkan membership admin eksplisit dengan peran
+    `admin`, `publisher`, `moderator`, dan `security_admin`, RLS/FORCE RLS, serta pembacaan membership diri sendiri untuk
+    user terautentikasi. Aplikasi memberi akses hanya pada baris `enabled=true`; fallback `ADMIN_EMAIL` hanya hidup jika
+    flag kompatibilitas dinyalakan eksplisit.
+
+  [REQUEST, KONTEN, DAN ABUSE]
+  - Allowlist/batas payload, integrity check Origin + Fetch Metadata, sanitasi tujuan `next` OAuth, header keamanan/CSP,
+    local rate-limit endpoint-spesifik, dan audit event berprinsip minimisasi diimplementasikan.
+  - Upload processor memeriksa magic byte JPEG/PNG/WebP, batas 5 MiB, penghapusan metadata, dan SHA-256; renderer serta
+    canonical manifest/digest memperoleh contract test integritas dan content security.
+  - `security/IMPLEMENTATION_LEDGER.md`, invariant, target otorisasi database, runbook Storage/backup, serta matriks
+    control plane eksternal ditambahkan sebagai batas operasional yang dapat diaudit.
+
+  [CI DAN BACKUP]
+  - `Security & Quality CI` menjalankan typecheck, static security contract, Studio contract, lint, dan production build.
+    Action sensitif dipin SHA dan backup mingguan memperoleh checksum SHA-256, least privilege, serta prosedur restore
+    terisolasi.
+
+Status akhir: PR #130 merged ke `main` sebagai implementasi repository. WAF/rate limit terdistribusi, Storage RLS
+              production, MFA/control plane, DNS/email security, PITR, backup immutable, KMS signer, dan external audit
+              sink tetap tidak terverifikasi atau memerlukan konfigurasi eksternal.
+---
+
+[19-08-2026] SESI #73 — NEXT.JS 16 SECURITY/COMPATIBILITY CHECKPOINT
+Branch: `security/next16-evaluation`; PR #131
+Tujuan sesi: Memutakhirkan framework dan dependency terkait untuk menghapus temuan dependency yang tersedia pada baseline,
+              tanpa menjadikannya refactor besar terhadap state React legacy.
+Yang dikerjakan:
+  - Next.js 16.3.1, React/React DOM 19.2.8, ESLint 9.39.5, dan `eslint-config-next` 16.3.1 diterapkan bersama perubahan
+    kompatibilitas async request API, typegen, dan flat ESLint config.
+  - Package override mengunci `nanoid` 3.3.18; konfigurasi lint membatasi exception rule React Hooks ke file legacy yang
+    memang memerlukan refactor khusus, bukan mematikan rule secara global.
+  - TypeScript, lint tanpa error, Studio/security/content/editorial-integrity test, build Turbopack, dan audit dependency
+    dieksekusi pada checkpoint. `npm audit` melaporkan 0 vulnerability saat verifikasi.
+
+Status akhir: PR #131 merged ke `main`. Warning legacy lint dan warning konvensi `middleware`→`proxy` didokumentasikan
+              sebagai pekerjaan terpisah; tidak ada klaim bahwa warning tersebut telah diperbaiki oleh checkpoint.
+---
+
+[19-08-2026] SESI #74 — SUPABASE CLI DAN MIGRATION BASELINE
+Branch: `chore/supabase-migration-baseline`; PR #132
+Tujuan sesi: Menjadikan konfigurasi CLI dan histori migration sebagai artefak repository agar drift database dapat diperiksa
+              secara repeatable.
+Yang dikerjakan:
+  - `supabase/config.toml` dan ignore file CLI ditambahkan tanpa secret; konfigurasi menempatkan migration sebagai bagian
+    source control dan memakai PostgreSQL 17 untuk local/shadow database.
+  - Enam migration lokal dikonfirmasi sebagai baseline yang selaras dengan remote; histori lama tidak ditulis ulang.
+
+Status akhir: PR #132 merged ke `main`. Baseline menyediakan mekanisme verifikasi, bukan izin untuk menjalankan perubahan
+              database production tanpa migration additive dan pemeriksaan eksplisit.
+---
+
+[21-08-2026] SESI #75 — SUPABASE MIGRATION CI
+Branch: `security/supabase-migration-deploy`; PR #133
+Tujuan sesi: Menambahkan gerbang CI yang mendeteksi drift migration tanpa membuat perubahan database dari pipeline.
+Yang dikerjakan:
+  - Workflow `Supabase Migration Check` dipicu pada pull request dan push ke `main`; CLI yang dipin disiapkan, project
+    linked melalui GitHub secret/variable, lalu menjalankan `migration list` dan `db push --dry-run`.
+  - Workflow tidak menjalankan `db push` aktual. Ia mengembalikan kegagalan bila histori lokal/remote atau rencana push
+    tidak dapat divalidasi.
+  - PR #133 merged; workflow dan Security & Quality CI yang terkait tercatat lulus. Verifikasi CLI linked terakhir
+    melaporkan remote database up to date.
+
+Status akhir: Branch implementasi dan remote branch telah dihapus setelah merge. Migration production berikutnya tetap
+              memerlukan review additive, merge/deploy, serta verifikasi sesuai runbook.
 ---
 
 ## 13. REFERENSI & RESOURCE
