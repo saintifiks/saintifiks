@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { ArrowRight, BarChart3, BookOpen, CheckCircle2, Clock3, FileText, MessageSquareText, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { getPendingCounts } from '@/lib/admin-pending'
 import PageHeader from '@/components/admin/PageHeader'
-import Badge from '@/components/ui/Badge'
+import { formatTanggalPendek } from '@/lib/format-date'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,25 +14,45 @@ type Article = {
   created_at: string
 }
 
-function formatTanggal(tanggal: string): string {
-  return new Date(tanggal).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
+const sectionTitle = 'font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary'
+const rowLink =
+  'underline decoration-border-default/40 decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-fast group-hover:decoration-text-primary'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: articles, error } = await supabase
-    .from('articles')
-    .select('id, title, is_published, published_at, created_at')
-    .order('created_at', { ascending: false })
+  const [{ data: articles, error }, pending] = await Promise.all([
+    supabase
+      .from('articles')
+      .select('id, title, is_published, published_at, created_at')
+      .order('created_at', { ascending: false }),
+    getPendingCounts(),
+  ])
 
   const daftarArtikel: Article[] = articles ?? []
   const drafts = daftarArtikel.filter((article) => !article.is_published)
   const published = daftarArtikel.filter((article) => article.is_published)
-  const latest = daftarArtikel.slice(0, 5)
+
+  // Antrean "perlu dikerjakan": hal yang menunggu keputusan manusia, urut dari yang paling mendesak.
+  const queue = [
+    {
+      href: '/dashboard/koreksi',
+      label: 'Usulan koreksi',
+      note: 'Dari pembaca. Yang disetujui tampil terbuka di artikel.',
+      count: pending['/dashboard/koreksi'] ?? 0,
+    },
+    {
+      href: '/dashboard/opinions',
+      label: 'Laporan Argumen',
+      note: 'Tulisan pembaca yang dilaporkan melanggar pedoman.',
+      count: pending['/dashboard/opinions'] ?? 0,
+    },
+    {
+      href: '/dashboard/artikel',
+      label: 'Draf artikel',
+      note: 'Belum diterbitkan.',
+      count: drafts.length,
+    },
+  ]
 
   return (
     <main aria-labelledby="dashboard-title">
@@ -40,174 +60,98 @@ export default async function DashboardPage() {
         titleId="dashboard-title"
         eyebrow="Ruang kerja"
         title="Beranda"
-        description="Pusat kendali untuk melanjutkan pekerjaan editorial dan membuka area yang memerlukan perhatian."
-        actions={
-          <Link
-            href="/dashboard/artikel/baru"
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-interactive-primary px-4 py-2.5 text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
-          >
-            <Plus aria-hidden="true" size={17} />
-            Artikel baru
-          </Link>
-        }
+        description="Yang menunggu keputusan Anda hari ini, lalu pekerjaan editorial yang bisa dilanjutkan."
       />
 
       {error && (
-        <div role="alert" className="mb-6 rounded-lg border border-signal-danger/30 bg-signal-danger-surface px-4 py-3 text-sm text-signal-danger">
+        <p role="alert" className="mb-8 border-l border-signal-danger pl-4 font-interface text-sm text-signal-danger">
           Data artikel belum dapat dimuat. Coba muat ulang halaman.
-        </div>
+        </p>
       )}
 
-      <section aria-labelledby="overview-heading" className="mb-8">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <div>
-            <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-text-tertiary">Ringkasan</p>
-            <h2 id="overview-heading" className="mt-1 text-base font-semibold text-text-primary">Kondisi konten saat ini</h2>
-          </div>
-          <Link href="/dashboard/artikel" className="hidden items-center gap-1 text-sm font-medium text-text-link hover:underline sm:flex">
-            Semua artikel <ArrowRight aria-hidden="true" size={15} />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border border-border-default/15 bg-surface-elevated p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-text-secondary">Perlu dilanjutkan</p>
-              <Clock3 aria-hidden="true" size={18} className="text-signal-warning" />
-            </div>
-            <p className="mt-3 text-3xl font-semibold tabular-nums text-text-primary">{drafts.length}</p>
-            <p className="mt-1 text-xs text-text-tertiary">Artikel berstatus draf</p>
-          </div>
-
-          <div className="rounded-lg border border-border-default/15 bg-surface-elevated p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-text-secondary">Sudah terbit</p>
-              <CheckCircle2 aria-hidden="true" size={18} className="text-signal-success" />
-            </div>
-            <p className="mt-3 text-3xl font-semibold tabular-nums text-text-primary">{published.length}</p>
-            <p className="mt-1 text-xs text-text-tertiary">Artikel tersedia untuk publik</p>
-          </div>
-
-          <div className="rounded-lg border border-border-default/15 bg-surface-elevated p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-text-secondary">Total artikel</p>
-              <FileText aria-hidden="true" size={18} className="text-interactive-primary" />
-            </div>
-            <p className="mt-3 text-3xl font-semibold tabular-nums text-text-primary">{daftarArtikel.length}</p>
-            <p className="mt-1 text-xs text-text-tertiary">Draf dan artikel terbit</p>
-          </div>
-        </div>
+      <section aria-labelledby="queue-heading">
+        <h2 id="queue-heading" className={`mb-4 ${sectionTitle}`}>
+          Perlu dikerjakan
+        </h2>
+        <ul className="divide-y divide-border-default/20 border-y border-border-default/20">
+          {queue.map((item) => (
+            <li key={item.href}>
+              <Link href={item.href} className="group flex items-center justify-between gap-6 py-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-interactive-primary">
+                <div className="min-w-0">
+                  <p className={`font-display text-lg text-text-primary ${rowLink}`}>{item.label}</p>
+                  <p className="mt-1 font-display text-body-sm italic text-text-secondary">{item.note}</p>
+                </div>
+                <p
+                  className={[
+                    'shrink-0 font-mono text-display-sm tabular-nums',
+                    item.count > 0 ? 'text-text-primary' : 'text-text-tertiary',
+                  ].join(' ')}
+                  aria-label={`${item.count} menunggu`}
+                >
+                  {item.count}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.75fr)]">
-        <section aria-labelledby="draft-heading" className="rounded-lg border border-border-default/15 bg-surface-elevated">
-          <div className="flex items-center justify-between border-b border-border-default/15 px-5 py-4">
-            <div>
-              <h2 id="draft-heading" className="text-base font-semibold text-text-primary">Lanjutkan draf</h2>
-              <p className="mt-0.5 text-xs text-text-tertiary">Pekerjaan editorial yang belum diterbitkan</p>
-            </div>
-            <Badge>{drafts.length}</Badge>
-          </div>
-
+      <div className="mt-14 grid gap-12 lg:grid-cols-2">
+        <section aria-labelledby="draft-heading">
+          <h2 id="draft-heading" className={`mb-4 ${sectionTitle}`}>
+            Lanjutkan draf
+          </h2>
           {drafts.length === 0 ? (
-            <div className="px-5 py-12 text-center">
-              <CheckCircle2 aria-hidden="true" className="mx-auto text-signal-success" size={26} />
-              <p className="mt-3 text-sm font-medium text-text-primary">Tidak ada draf tertunda</p>
-              <p className="mt-1 text-xs text-text-tertiary">Semua artikel sudah diterbitkan.</p>
-            </div>
+            <p className="py-4 font-display text-body-base italic text-text-secondary">
+              Tidak ada draf tertunda. Semua artikel sudah diterbitkan.
+            </p>
           ) : (
-            <ul className="divide-y divide-border-default/10">
+            <ul className="divide-y divide-border-default/15 border-y border-border-default/15">
               {drafts.slice(0, 5).map((article) => (
                 <li key={article.id}>
                   <Link
                     href={`/dashboard/artikel/${article.id}/edit`}
-                    className="group flex min-h-[68px] items-center justify-between gap-4 px-5 py-3 hover:bg-surface-sunken/35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-interactive-primary"
+                    className="group block py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-interactive-primary"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-text-primary group-hover:text-text-link">{article.title}</p>
-                      <p className="mt-1 flex items-center gap-1.5 text-xs text-text-tertiary">
-                        <Clock3 aria-hidden="true" size={12} />
-                        Dibuat {formatTanggal(article.created_at)}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs font-medium text-text-link">Lanjutkan</span>
+                    <p className={`truncate font-display text-base text-text-primary ${rowLink}`}>{article.title}</p>
+                    <p className="mt-1 font-mono text-caption text-text-tertiary">
+                      Dibuat {formatTanggalPendek(article.created_at)}
+                    </p>
                   </Link>
                 </li>
               ))}
             </ul>
           )}
-
           {drafts.length > 5 && (
-            <div className="border-t border-border-default/15 px-5 py-3">
-              <Link href="/dashboard/artikel" className="inline-flex items-center gap-1 text-xs font-medium text-text-link hover:underline">
-                Lihat semua draf <ArrowRight aria-hidden="true" size={13} />
-              </Link>
-            </div>
+            <Link href="/dashboard/artikel" className="mt-4 inline-block font-interface text-sm text-text-secondary underline decoration-border-default/40 decoration-1 underline-offset-[6px] hover:text-text-primary hover:decoration-text-primary">
+              Semua draf ({drafts.length})
+            </Link>
           )}
         </section>
 
-        <section aria-labelledby="areas-heading" className="rounded-lg border border-border-default/15 bg-surface-elevated p-5">
-          <h2 id="areas-heading" className="text-base font-semibold text-text-primary">Area kerja</h2>
-          <p className="mt-1 text-xs text-text-tertiary">Buka modul sesuai pekerjaan yang ingin dilakukan.</p>
-
-          <div className="mt-5 space-y-2">
-            {[
-              { href: '/dashboard/opinions', label: 'Moderasi Opinions', description: 'Tinjau laporan dan status tulisan', icon: MessageSquareText },
-              { href: '/dashboard/analytics', label: 'Analytics', description: 'Evaluasi performa konten', icon: BarChart3 },
-              { href: '/dashboard/bookstore', label: 'Bookstore', description: 'Kelola buku, penulis, dan penerbit', icon: BookOpen },
-            ].map((area) => {
-              const Icon = area.icon
-              return (
-                <Link
-                  key={area.href}
-                  href={area.href}
-                  className="group flex items-center gap-3 rounded-lg border border-transparent p-3 hover:border-border-default/15 hover:bg-surface-sunken/35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-signal-info-surface text-interactive-primary">
-                    <Icon aria-hidden="true" size={17} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium text-text-primary">{area.label}</span>
-                    <span className="block truncate text-xs text-text-tertiary">{area.description}</span>
-                  </span>
-                  <ArrowRight aria-hidden="true" size={15} className="text-text-tertiary group-hover:text-text-link" />
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      </div>
-
-      {latest.length > 0 && (
-        <section aria-labelledby="recent-heading" className="mt-8">
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <div>
-              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-text-tertiary">Aktivitas terbaru</p>
-              <h2 id="recent-heading" className="mt-1 text-base font-semibold text-text-primary">Artikel terakhir diperbarui</h2>
-            </div>
-            <Link href="/dashboard/artikel" className="inline-flex items-center gap-1 text-xs font-medium text-text-link hover:underline">
-              Buka daftar <ArrowRight aria-hidden="true" size={13} />
-            </Link>
-          </div>
-          <div className="overflow-hidden rounded-lg border border-border-default/15 bg-surface-elevated">
-            <ul className="divide-y divide-border-default/10">
-              {latest.map((article) => (
-                <li key={article.id} className="flex items-center justify-between gap-4 px-5 py-3.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-text-primary">{article.title}</p>
-                    <p className="mt-1 text-xs text-text-tertiary">
-                      {formatTanggal(article.published_at ?? article.created_at)}
-                    </p>
-                  </div>
-                  <Badge variant={article.is_published ? 'success' : 'default'}>
-                    {article.is_published ? 'Terbit' : 'Draf'}
-                  </Badge>
+        <section aria-labelledby="recent-heading">
+          <h2 id="recent-heading" className={`mb-4 ${sectionTitle}`}>
+            Baru terbit
+          </h2>
+          {published.length === 0 ? (
+            <p className="py-4 font-display text-body-base italic text-text-secondary">Belum ada artikel terbit.</p>
+          ) : (
+            <ul className="divide-y divide-border-default/15 border-y border-border-default/15">
+              {published.slice(0, 5).map((article) => (
+                <li key={article.id} className="py-4">
+                  <p className="truncate font-display text-base text-text-primary">{article.title}</p>
+                  <p className="mt-1 font-mono text-caption text-text-tertiary">
+                    Terbit {formatTanggalPendek(article.published_at ?? article.created_at)}
+                  </p>
                 </li>
               ))}
             </ul>
-          </div>
+          )}
+          <p className="mt-4 font-mono text-caption text-text-tertiary">
+            {daftarArtikel.length} artikel · {published.length} terbit · {drafts.length} draf
+          </p>
         </section>
-      )}
+      </div>
     </main>
   )
 }
