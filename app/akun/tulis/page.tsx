@@ -4,6 +4,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import OpinionEditorPage from '@/components/opinions/editor/OpinionEditorPage'
+import { createStudioDocumentV2 } from '@/lib/editorial-studio/document'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,5 +22,13 @@ export default async function TulisPage() {
     .eq('user_id', user.id)
     .maybeSingle()
 
-  return <OpinionEditorPage hasProfile={!!profile} authorUsername={profile?.username} mode="create" />
+  return (
+    <OpinionEditorPage
+      hasProfile={!!profile}
+      authorUsername={profile?.username}
+      authorUserId={user.id}
+      initialDocument={createStudioDocumentV2()}
+      mode="create"
+    />
+  )
 }

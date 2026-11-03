@@ -4,6 +4,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import OpinionEditorPage from '@/components/opinions/editor/OpinionEditorPage'
+import { opinionDocumentFor } from '@/lib/opinions/studio-document'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,18 +30,12 @@ export default async function EditArtikelPage(props: PageProps) {
   // Ambil artikel — pastikan milik user ini
   const { data: article } = await supabase
     .from('opinion_articles')
-    .select('id, title, content, excerpt, cover_image_url, status, slug_locked')
+    .select('id, title, content, studio_document, excerpt, cover_image_url, status, slug_locked')
     .eq('id', params.id)
     .eq('author_id', user.id)
     .maybeSingle()
 
   if (!article) notFound()
-
-  // Ambil chart configs
-  const { data: charts } = await supabase
-    .from('opinion_article_charts')
-    .select('chart_id, config')
-    .eq('opinion_article_id', params.id)
 
   return (
     <OpinionEditorPage
@@ -49,14 +44,11 @@ export default async function EditArtikelPage(props: PageProps) {
       mode="edit"
       articleId={article.id}
       initialTitle={article.title}
-      initialContent={article.content}
+      authorUserId={user.id}
+      initialDocument={opinionDocumentFor(article)}
       initialExcerpt={article.excerpt ?? ''}
       initialCoverImageUrl={article.cover_image_url ?? ''}
       initialStatus={article.status as 'draft' | 'published' | 'hidden'}
-      initialCharts={(charts ?? []).map((c) => ({
-        chart_id: c.chart_id,
-        config: c.config as object,
-      }))}
       slugLocked={article.slug_locked}
     />
   )

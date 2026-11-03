@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateSlug } from '@/lib/slug'
 import { createClient } from '@/lib/supabase/server'
+import { prepareOpinionDocument } from '@/lib/opinions/studio-document'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,7 +106,12 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
       }
     }
 
-    if (typeof body.content === 'string') {
+    if (body.studio_document !== undefined && body.studio_document !== null) {
+      const prepared = prepareOpinionDocument(body.studio_document)
+      if (!prepared.ok) return NextResponse.json({ error: prepared.error }, { status: 400 })
+      updates.studio_document = prepared.document
+      updates.content = prepared.markdown
+    } else if (typeof body.content === 'string') {
       if (body.content.length > 50000) {
         return NextResponse.json({ error: 'Konten maksimal 50.000 karakter' }, { status: 400 })
       }

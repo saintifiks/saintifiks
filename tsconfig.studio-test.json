@@ -16,6 +16,8 @@
     "lib/editorial-studio/preflight.ts",
     "lib/editorial-studio/server-retry-policy.ts",
     "lib/editorial-studio/sync-contract.ts",
-    "scripts/editorial-studio-contract.test.ts"
+    "lib/opinions/studio-document.ts",
+    "scripts/editorial-studio-contract.test.ts",
+    "scripts/opinion-studio-document.test.ts"
   ]
 }
