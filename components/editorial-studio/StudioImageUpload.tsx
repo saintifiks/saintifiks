@@ -95,13 +95,13 @@ export default function StudioImageUpload({
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="font-interface text-xs font-semibold text-text-primary">{label}</p>
-          <p className="mt-1 font-interface text-[11px] leading-relaxed text-text-tertiary">{description}</p>
+          <p className="mt-1 font-interface text-caption leading-relaxed text-text-tertiary">{description}</p>
         </div>
         {previewUrl && !uploading && (
           <button
             type="button"
             onClick={removeImage}
-            className={`inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-lg px-3 font-interface text-xs font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}
+            className={`inline-flex min-h-[44px] shrink-0 items-center gap-1.5 px-3 font-interface text-xs font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}
           >
             <Trash2 aria-hidden="true" size={14} /> Hapus
           </button>
@@ -112,13 +112,13 @@ export default function StudioImageUpload({
         type="button"
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
-        className={`relative mt-3 flex min-h-40 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border-default/30 bg-surface-sunken/45 text-center hover:border-border-accent hover:bg-signal-info-surface/35 disabled:cursor-wait ${focusRing}`}
+        className={`relative mt-3 flex min-h-40 w-full items-center justify-center overflow-hidden border border-dashed border-border-default/30 bg-surface-sunken/45 text-center hover:border-border-accent hover:bg-signal-info-surface/35 disabled:cursor-wait ${focusRing}`}
       >
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={previewUrl} alt={previewAlt} className="absolute inset-0 h-full w-full object-cover" />
         ) : null}
-        <span className={`relative z-base flex flex-col items-center px-5 py-7 ${previewUrl ? 'rounded-lg bg-surface-elevated/90 shadow-sm' : ''}`}>
+        <span className={`relative z-base flex flex-col items-center px-5 py-7 ${previewUrl ? 'bg-surface-elevated/90' : ''}`}>
           {uploading
             ? <LoaderCircle aria-hidden="true" className="animate-spin text-interactive-primary" size={24} />
             : <ImagePlus aria-hidden="true" className="text-text-tertiary" size={24} />}

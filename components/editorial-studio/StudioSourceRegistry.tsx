@@ -26,7 +26,7 @@ type SourceForm = {
 }
 
 const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary'
-const fieldClass = `mt-2 min-h-[44px] w-full rounded-lg border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm text-text-primary placeholder:text-text-tertiary ${focusRing}`
+const fieldClass = `mt-2 min-h-[44px] w-full border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm text-text-primary placeholder:text-text-tertiary ${focusRing}`
 
 function emptyForm(): SourceForm {
   return {
@@ -200,10 +200,10 @@ export default function StudioSourceRegistry({
   }
 
   return (
-    <section aria-labelledby="studio-sources-title" className="rounded-2xl border border-border-default/15 bg-surface-elevated p-4 shadow-sm sm:p-5">
+    <section aria-labelledby="studio-sources-title" className="border border-border-default/15 bg-surface-elevated p-4 sm:p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-2xl">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-text-tertiary">Langkah 1 · Bukti</p>
+          <p className="font-mono text-kicker font-medium uppercase tracking-[0.14em] text-text-tertiary">Langkah 1 · Bukti</p>
           <h2 id="studio-sources-title" className="mt-1 font-interface text-base font-semibold text-text-primary">Sumber naskah</h2>
           <p className="mt-1 font-interface text-xs leading-relaxed text-text-secondary">Daftarkan sumber sebelum menyisipkan sitasi. Sitasi hanya dapat menunjuk sumber yang ada di registry ini.</p>
         </div>
@@ -211,14 +211,14 @@ export default function StudioSourceRegistry({
           type="button"
           onClick={openNewSource}
           disabled={sources.length >= STUDIO_EVIDENCE_LIMITS.sources}
-          className={`inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}`}
+          className={`inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}`}
         >
           <Plus aria-hidden="true" size={17} /> Tambah sumber
         </button>
       </div>
 
       {sources.length === 0 ? (
-        <div className="mt-4 flex items-start gap-3 rounded-xl bg-surface-sunken/65 px-4 py-3">
+        <div className="mt-4 flex items-start gap-3 bg-surface-sunken/65 px-4 py-3">
           <FileSearch aria-hidden="true" className="mt-0.5 shrink-0 text-text-tertiary" size={18} />
           <p className="font-interface text-sm leading-relaxed text-text-secondary">Belum ada sumber. Naskah tetap dapat ditulis, tetapi sitasi belum dapat disisipkan.</p>
         </div>
@@ -228,20 +228,20 @@ export default function StudioSourceRegistry({
             const referenceCount = counts.get(source.id) ?? 0
             const pendingDelete = pendingDeleteId === source.id
             return (
-              <li key={source.id} className="rounded-xl border border-border-default/15 bg-surface-page p-3">
+              <li key={source.id} className="border border-border-default/15 bg-surface-page p-3">
                 <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-interface text-sm font-semibold text-text-primary">{source.title}</p>
-                    <p className="mt-0.5 truncate font-mono text-[10px] text-text-tertiary">{sourceHost(source.url)}</p>
+                    <p className="mt-0.5 truncate font-mono text-kicker text-text-tertiary">{sourceHost(source.url)}</p>
                     <p className="mt-2 font-interface text-xs text-text-secondary">{referenceCount > 0 ? `Dipakai oleh ${referenceCount} referensi` : 'Belum dirujuk dalam naskah'}</p>
                   </div>
                   <div className="flex shrink-0 gap-1">
                     {source.url && (
-                      <a href={source.url} target="_blank" rel="noreferrer" aria-label={`Buka sumber ${source.title}`} className={`flex h-11 w-11 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>
+                      <a href={source.url} target="_blank" rel="noreferrer" aria-label={`Buka sumber ${source.title}`} className={`flex h-11 w-11 items-center justify-center text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>
                         <ExternalLink aria-hidden="true" size={16} />
                       </a>
                     )}
-                    <button type="button" aria-label={`Edit sumber ${source.title}`} onClick={() => openEditSource(source)} className={`flex h-11 w-11 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>
+                    <button type="button" aria-label={`Edit sumber ${source.title}`} onClick={() => openEditSource(source)} className={`flex h-11 w-11 items-center justify-center text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>
                       <Pencil aria-hidden="true" size={16} />
                     </button>
                     <button
@@ -250,18 +250,18 @@ export default function StudioSourceRegistry({
                       disabled={referenceCount > 0}
                       title={referenceCount > 0 ? 'Lepaskan seluruh sitasi, metodologi, dan dataset yang merujuk sumber ini terlebih dahulu.' : 'Hapus sumber'}
                       onClick={() => setPendingDeleteId(source.id)}
-                      className={`flex h-11 w-11 items-center justify-center rounded-lg text-signal-danger hover:bg-signal-danger-surface disabled:cursor-not-allowed disabled:opacity-35 ${focusRing}`}
+                      className={`flex h-11 w-11 items-center justify-center text-signal-danger hover:bg-signal-danger-surface disabled:cursor-not-allowed disabled:opacity-35 ${focusRing}`}
                     >
                       <Trash2 aria-hidden="true" size={16} />
                     </button>
                   </div>
                 </div>
                 {pendingDelete && (
-                  <div className="mt-3 rounded-lg bg-signal-danger-surface p-3">
+                  <div className="mt-3 p-3">
                     <p className="font-interface text-xs leading-relaxed text-text-primary">Hapus sumber ini dari registry?</p>
                     <div className="mt-2 flex gap-2">
-                      <button type="button" onClick={() => deleteSource(source.id)} className={`min-h-[44px] rounded-lg bg-signal-danger px-3 font-interface text-xs font-semibold text-text-on-inverse ${focusRing}`}>Ya, hapus</button>
-                      <button type="button" onClick={() => setPendingDeleteId(null)} className={`min-h-[44px] rounded-lg px-3 font-interface text-xs font-semibold text-text-primary hover:bg-surface-elevated ${focusRing}`}>Batal</button>
+                      <button type="button" onClick={() => deleteSource(source.id)} className={`min-h-[44px] bg-signal-danger px-3 font-interface text-xs font-semibold text-text-on-inverse ${focusRing}`}>Ya, hapus</button>
+                      <button type="button" onClick={() => setPendingDeleteId(null)} className={`min-h-[44px] px-3 font-interface text-xs font-semibold text-text-primary hover:bg-surface-elevated ${focusRing}`}>Batal</button>
                     </div>
                   </div>
                 )}
@@ -280,14 +280,14 @@ export default function StudioSourceRegistry({
             aria-modal="true"
             aria-labelledby="studio-source-dialog-title"
             onSubmit={(event) => { event.preventDefault(); saveSource() }}
-            className="relative z-base max-h-[min(820px,calc(100dvh-32px))] w-full max-w-[680px] overflow-y-auto rounded-2xl border border-border-default/20 bg-surface-elevated p-5 shadow-lg sm:p-7"
+            className="relative z-base max-h-[min(820px,calc(100dvh-32px))] w-full max-w-[680px] overflow-y-auto border border-border-default/20 bg-surface-elevated p-5 sm:p-7"
           >
             <header className="flex items-start justify-between gap-4">
               <div>
                 <h2 id="studio-source-dialog-title" className="font-interface text-lg font-semibold text-text-primary">{editingId ? 'Edit sumber' : 'Tambah sumber'}</h2>
                 <p className="mt-1 font-interface text-xs leading-relaxed text-text-tertiary">URL dan judul wajib agar pembaca dapat memeriksa bukti yang dirujuk.</p>
               </div>
-              <button type="button" aria-label="Tutup" onClick={() => setDialogOpen(false)} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-surface-sunken ${focusRing}`}><X aria-hidden="true" size={19} /></button>
+              <button type="button" aria-label="Tutup" onClick={() => setDialogOpen(false)} className={`flex h-11 w-11 shrink-0 items-center justify-center hover:bg-surface-sunken ${focusRing}`}><X aria-hidden="true" size={19} /></button>
             </header>
 
             <div className="mt-6 space-y-4">
@@ -324,11 +324,11 @@ export default function StudioSourceRegistry({
               </label>
             </div>
 
-            {error && <p role="alert" className="mt-4 rounded-lg bg-signal-danger-surface px-3 py-2.5 font-interface text-xs text-signal-danger">{error}</p>}
+            {error && <p role="alert" className="mt-4 px-3 py-2.5 font-interface text-xs text-signal-danger">{error}</p>}
 
             <footer className="mt-7 flex justify-end gap-2 border-t border-border-default/15 pt-5">
-              <button type="button" onClick={() => setDialogOpen(false)} className={`min-h-[44px] rounded-lg px-4 font-interface text-sm font-semibold text-text-secondary hover:bg-surface-sunken ${focusRing}`}>Batal</button>
-              <button type="submit" className={`min-h-[44px] rounded-lg bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover ${focusRing}`}>Simpan sumber</button>
+              <button type="button" onClick={() => setDialogOpen(false)} className={`min-h-[44px] px-4 font-interface text-sm font-semibold text-text-secondary hover:bg-surface-sunken ${focusRing}`}>Batal</button>
+              <button type="submit" className={`min-h-[44px] bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover ${focusRing}`}>Simpan sumber</button>
             </footer>
           </form>
         </div>

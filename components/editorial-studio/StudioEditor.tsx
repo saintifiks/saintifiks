@@ -147,11 +147,11 @@ function ToolbarButton({
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
       className={[
-        'flex shrink-0 items-center justify-center rounded-lg text-text-secondary transition-colors duration-swift',
+        'flex shrink-0 items-center justify-center text-text-secondary transition-colors duration-swift',
         focusRing,
         compact ? 'h-10 w-10' : 'h-11 w-11',
         active
-          ? 'bg-signal-info-surface text-interactive-primary'
+          ? 'text-interactive-primary'
           : 'hover:bg-surface-sunken hover:text-text-primary',
         disabled ? 'cursor-not-allowed opacity-35' : '',
       ].join(' ')}
@@ -765,7 +765,7 @@ export default function StudioEditor({
 
   if (!editor) {
     return (
-      <div className="flex min-h-[720px] items-center justify-center rounded-2xl border border-border-default/15 bg-surface-elevated text-sm text-text-tertiary">
+      <div className="flex min-h-[720px] items-center justify-center border border-border-default/15 bg-surface-elevated text-sm text-text-tertiary">
         Menyiapkan ruang tulis...
       </div>
     )
@@ -947,8 +947,8 @@ export default function StudioEditor({
   })()
 
   return (
-    <section aria-label="Ruang tulis artikel" className="relative overflow-visible rounded-2xl border border-border-default/15 bg-surface-elevated shadow-sm">
-      <div className="sticky top-0 z-raised rounded-t-2xl border-b border-border-default/15 bg-surface-elevated/95 px-2 py-2 backdrop-blur sm:px-4">
+    <section aria-label="Ruang tulis artikel" className="relative overflow-visible border border-border-default/15 bg-surface-elevated">
+      <div className="sticky top-0 z-raised border-b border-border-default/15 bg-surface-elevated/95 px-2 py-2 backdrop-blur sm:px-4">
         <div
           role="toolbar"
           aria-label="Pemformatan artikel"
@@ -984,7 +984,7 @@ export default function StudioEditor({
                 else if (value === 'code-block') editor.chain().focus().setCodeBlock().run()
                 else editor.chain().focus().setParagraph().run()
               }}
-              className={`h-11 appearance-none rounded-lg border-0 bg-transparent py-2 pl-3 pr-9 font-interface text-sm font-medium text-text-primary hover:bg-surface-sunken ${focusRing}`}
+              className={`h-11 appearance-none border-0 bg-transparent py-2 pl-3 pr-9 font-interface text-sm font-medium text-text-primary hover:bg-surface-sunken ${focusRing}`}
             >
               <option value="paragraph">Teks</option>
               <option value="heading-2">Judul bagian</option>
@@ -1029,7 +1029,7 @@ export default function StudioEditor({
           </ToolbarButton>
 
           <span className="ml-auto hidden shrink-0 items-center gap-2 pl-4 font-interface text-xs text-text-tertiary xl:flex">
-            Ketik <kbd className="rounded border border-border-default/20 bg-surface-sunken px-1.5 py-0.5 font-mono text-[10px] text-text-secondary">/</kbd> untuk menyisipkan blok
+            Ketik <kbd className="border border-border-default/20 bg-surface-sunken px-1.5 py-0.5 font-mono text-kicker text-text-secondary">/</kbd> untuk menyisipkan blok
           </span>
         </div>
 
@@ -1037,18 +1037,18 @@ export default function StudioEditor({
           <div role="toolbar" aria-label="Alat blok terpilih" className="flex flex-wrap items-center gap-1 border-t border-border-default/15 px-1 pt-2 font-interface text-xs">
             {editor.isActive('table') && (
               <>
-                <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()} className={`min-h-[40px] rounded-lg px-3 font-semibold text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>Tambah baris</button>
-                <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()} className={`min-h-[40px] rounded-lg px-3 font-semibold text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>Tambah kolom</button>
-                <button type="button" onClick={() => editor.chain().focus().deleteRow().run()} className={`min-h-[40px] rounded-lg px-3 font-semibold text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>Hapus baris</button>
-                <button type="button" onClick={() => editor.chain().focus().deleteColumn().run()} className={`min-h-[40px] rounded-lg px-3 font-semibold text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>Hapus kolom</button>
-                <button type="button" onClick={() => editor.chain().focus().deleteTable().run()} className={`min-h-[40px] rounded-lg px-3 font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}>Hapus tabel</button>
+                <button type="button" onClick={() => editor.chain().focus().addRowAfter().run()} className={`min-h-[40px] px-3 font-semibold text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>Tambah baris</button>
+                <button type="button" onClick={() => editor.chain().focus().addColumnAfter().run()} className={`min-h-[40px] px-3 font-semibold text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>Tambah kolom</button>
+                <button type="button" onClick={() => editor.chain().focus().deleteRow().run()} className={`min-h-[40px] px-3 font-semibold text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>Hapus baris</button>
+                <button type="button" onClick={() => editor.chain().focus().deleteColumn().run()} className={`min-h-[40px] px-3 font-semibold text-text-secondary hover:bg-surface-sunken hover:text-text-primary ${focusRing}`}>Hapus kolom</button>
+                <button type="button" onClick={() => editor.chain().focus().deleteTable().run()} className={`min-h-[40px] px-3 font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}>Hapus tabel</button>
               </>
             )}
             {selectedSemanticNode && (
-              <button type="button" onClick={() => openSemanticDialog(selectedSemanticNode.type, selectedSemanticNode.position, selectedSemanticNode.attrs)} className={`min-h-[40px] rounded-lg px-3 font-semibold text-interactive-primary hover:bg-signal-info-surface ${focusRing}`}>Edit blok terpilih</button>
+              <button type="button" onClick={() => openSemanticDialog(selectedSemanticNode.type, selectedSemanticNode.position, selectedSemanticNode.attrs)} className={`min-h-[40px] px-3 font-semibold text-interactive-primary hover:bg-signal-info-surface ${focusRing}`}>Edit blok terpilih</button>
             )}
             {selectedCitationNode && (
-              <button type="button" onClick={() => openCitationDialog(selectedCitationNode.position, selectedCitationNode.attrs)} className={`min-h-[44px] rounded-lg px-3 font-semibold text-interactive-primary hover:bg-signal-info-surface ${focusRing}`}>Edit sitasi terpilih</button>
+              <button type="button" onClick={() => openCitationDialog(selectedCitationNode.position, selectedCitationNode.attrs)} className={`min-h-[44px] px-3 font-semibold text-interactive-primary hover:bg-signal-info-surface ${focusRing}`}>Edit sitasi terpilih</button>
             )}
           </div>
         )}
@@ -1059,11 +1059,11 @@ export default function StudioEditor({
               event.preventDefault()
               applyLink()
             }}
-            className="absolute right-3 top-[calc(100%+8px)] z-modal w-[min(360px,calc(100vw-24px))] rounded-xl border border-border-default/20 bg-surface-elevated p-3 shadow-lg"
+            className="absolute right-3 top-[calc(100%+8px)] z-modal w-[min(360px,calc(100vw-24px))] border border-border-default/20 bg-surface-elevated p-3"
           >
             <div className="flex items-center justify-between gap-3">
               <label htmlFor="studio-link-input" className="font-interface text-xs font-semibold text-text-primary">Tautan</label>
-              <button type="button" aria-label="Tutup pengaturan tautan" onClick={() => setLinkPanelOpen(false)} className={`flex h-10 w-10 items-center justify-center rounded-lg hover:bg-surface-sunken ${focusRing}`}>
+              <button type="button" aria-label="Tutup pengaturan tautan" onClick={() => setLinkPanelOpen(false)} className={`flex h-10 w-10 items-center justify-center hover:bg-surface-sunken ${focusRing}`}>
                 <X aria-hidden="true" size={17} />
               </button>
             </div>
@@ -1074,17 +1074,17 @@ export default function StudioEditor({
               onChange={(event) => setLinkValue(event.target.value)}
               placeholder="https://sumber.example"
               inputMode="url"
-              className={`mt-1 h-11 w-full rounded-lg border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary placeholder:text-text-tertiary ${focusRing}`}
+              className={`mt-1 h-11 w-full border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary placeholder:text-text-tertiary ${focusRing}`}
             />
             {linkError && <p role="alert" className="mt-2 font-interface text-xs text-signal-danger">{linkError}</p>}
             <div className="mt-3 flex justify-end gap-2">
               {editor.isActive('link') && (
-                <button type="button" onClick={removeLink} className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg px-3 font-interface text-xs font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}>
+                <button type="button" onClick={removeLink} className={`inline-flex min-h-[44px] items-center gap-2 px-3 font-interface text-xs font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}>
                   <Unlink aria-hidden="true" size={15} />
                   Hapus
                 </button>
               )}
-              <button type="submit" className={`min-h-[44px] rounded-lg bg-interactive-primary px-4 font-interface text-xs font-semibold text-text-on-inverse hover:bg-interactive-primary-hover ${focusRing}`}>
+              <button type="submit" className={`min-h-[44px] bg-interactive-primary px-4 font-interface text-xs font-semibold text-text-on-inverse hover:bg-interactive-primary-hover ${focusRing}`}>
                 Terapkan
               </button>
             </div>
@@ -1116,7 +1116,7 @@ export default function StudioEditor({
 
         <div className="relative">
           {editorIsEmpty && (
-            <p aria-hidden="true" className="pointer-events-none absolute left-0 top-3 font-display text-body-base text-text-tertiary/70">
+            <p aria-hidden="true" className="pointer-events-none absolute left-0 top-3 font-display text-body-base italic text-text-tertiary">
               Mulai menulis, atau ketik / untuk memilih blok...
             </p>
           )}
@@ -1132,21 +1132,21 @@ export default function StudioEditor({
               '[&_.ProseMirror>ol]:mb-6 [&_.ProseMirror>ol]:max-w-content [&_.ProseMirror>ol]:list-decimal [&_.ProseMirror>ol]:pl-7',
               '[&_.ProseMirror_li]:my-1.5',
               '[&_.ProseMirror_a]:text-interactive-primary [&_.ProseMirror_a]:underline [&_.ProseMirror_a]:decoration-border-accent [&_.ProseMirror_a]:underline-offset-4',
-              '[&_.ProseMirror_code:not(pre_code)]:rounded [&_.ProseMirror_code:not(pre_code)]:bg-surface-sunken [&_.ProseMirror_code:not(pre_code)]:px-1.5 [&_.ProseMirror_code:not(pre_code)]:py-0.5 [&_.ProseMirror_code:not(pre_code)]:font-mono [&_.ProseMirror_code:not(pre_code)]:text-[0.88em]',
-              '[&_.ProseMirror_pre]:my-6 [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_pre]:rounded-lg [&_.ProseMirror_pre]:bg-surface-inverse [&_.ProseMirror_pre]:p-5 [&_.ProseMirror_pre]:font-mono [&_.ProseMirror_pre]:text-sm [&_.ProseMirror_pre]:text-text-on-inverse',
+               '[&_.ProseMirror_code:not(pre_code)]:bg-surface-sunken [&_.ProseMirror_code:not(pre_code)]:px-1.5 [&_.ProseMirror_code:not(pre_code)]:py-0.5 [&_.ProseMirror_code:not(pre_code)]:font-mono [&_.ProseMirror_code:not(pre_code)]:text-[0.88em]',
+              '[&_.ProseMirror_pre]:my-6 [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_pre]:bg-surface-inverse [&_.ProseMirror_pre]:p-5 [&_.ProseMirror_pre]:font-mono [&_.ProseMirror_pre]:text-sm [&_.ProseMirror_pre]:text-text-on-inverse',
               '[&_.ProseMirror_hr]:my-10 [&_.ProseMirror_hr]:border-0 [&_.ProseMirror_hr]:border-t [&_.ProseMirror_hr]:border-border-default/25',
               '[&_.ProseMirror_table]:my-8 [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:font-interface [&_.ProseMirror_table]:text-sm',
               '[&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-border-default/25 [&_.ProseMirror_th]:bg-surface-sunken [&_.ProseMirror_th]:p-3 [&_.ProseMirror_th]:text-left [&_.ProseMirror_th]:font-semibold',
               '[&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-border-default/25 [&_.ProseMirror_td]:p-3',
-              '[&_[data-studio-callout]]:my-7 [&_[data-studio-callout]]:max-w-content [&_[data-studio-callout]]:rounded-r-lg [&_[data-studio-callout]]:border-l-4 [&_[data-studio-callout]]:border-signal-info [&_[data-studio-callout]]:bg-signal-info-surface [&_[data-studio-callout]]:px-5 [&_[data-studio-callout]]:py-4',
+              '[&_[data-studio-callout]]:my-7 [&_[data-studio-callout]]:max-w-content [&_[data-studio-callout]]:border-l-4 [&_[data-studio-callout]]:border-border-default/40 [&_[data-studio-callout]]:bg-signal-info-surface [&_[data-studio-callout]]:px-5 [&_[data-studio-callout]]:py-4',
               '[&_[data-studio-citation]]:mx-1 [&_[data-studio-citation]]:inline-flex [&_[data-studio-citation]]:cursor-default [&_[data-studio-citation]]:rounded-full [&_[data-studio-citation]]:bg-signal-info-surface [&_[data-studio-citation]]:px-2 [&_[data-studio-citation]]:py-0.5 [&_[data-studio-citation]]:font-interface [&_[data-studio-citation]]:text-xs [&_[data-studio-citation]]:font-medium [&_[data-studio-citation]]:text-interactive-primary',
-              '[&_[data-studio-footnote]]:mx-0.5 [&_[data-studio-footnote]]:cursor-default [&_[data-studio-footnote]]:rounded [&_[data-studio-footnote]]:bg-surface-sunken [&_[data-studio-footnote]]:px-1.5 [&_[data-studio-footnote]]:font-interface [&_[data-studio-footnote]]:text-[10px] [&_[data-studio-footnote]]:font-semibold [&_[data-studio-footnote]]:text-text-secondary',
-              '[&_[data-studio-figure]]:my-8 [&_[data-studio-figure]]:max-w-content [&_[data-studio-figure]]:cursor-pointer [&_[data-studio-figure]]:overflow-hidden [&_[data-studio-figure]]:rounded-xl [&_[data-studio-figure]]:border [&_[data-studio-figure]]:border-border-default/25 [&_[data-studio-figure]]:bg-surface-sunken/40 [&_[data-studio-figure]]:font-interface [&_[data-studio-figure]]:text-sm [&_[data-studio-figure]]:text-text-secondary',
+              '[&_[data-studio-footnote]]:mx-0.5 [&_[data-studio-footnote]]:cursor-default [&_[data-studio-footnote]]:bg-surface-sunken [&_[data-studio-footnote]]:px-1.5 [&_[data-studio-footnote]]:font-interface [&_[data-studio-footnote]]:text-kicker [&_[data-studio-footnote]]:font-semibold [&_[data-studio-footnote]]:text-text-secondary',
+              '[&_[data-studio-figure]]:my-8 [&_[data-studio-figure]]:max-w-content [&_[data-studio-figure]]:cursor-pointer [&_[data-studio-figure]]:overflow-hidden [&_[data-studio-figure]]:border [&_[data-studio-figure]]:border-border-default/25 [&_[data-studio-figure]]:bg-surface-sunken/40 [&_[data-studio-figure]]:font-interface [&_[data-studio-figure]]:text-sm [&_[data-studio-figure]]:text-text-secondary',
               '[&_[data-studio-figure]_img]:h-auto [&_[data-studio-figure]_img]:w-full [&_[data-studio-figure]_img]:object-cover',
               '[&_[data-studio-figure]_figcaption]:px-4 [&_[data-studio-figure]_figcaption]:py-3 [&_[data-studio-figure]_figcaption]:text-left [&_[data-studio-figure]_figcaption]:text-xs',
-              '[&_[data-studio-chart]]:my-8 [&_[data-studio-chart]]:max-w-content [&_[data-studio-chart]]:rounded-xl [&_[data-studio-chart]]:border [&_[data-studio-chart]]:border-border-default/20 [&_[data-studio-chart]]:bg-surface-sunken/60 [&_[data-studio-chart]]:p-10 [&_[data-studio-chart]]:text-center [&_[data-studio-chart]]:font-interface [&_[data-studio-chart]]:text-sm [&_[data-studio-chart]]:font-medium',
-              '[&_[data-studio-dataset]]:my-6 [&_[data-studio-dataset]]:max-w-content [&_[data-studio-dataset]]:rounded-lg [&_[data-studio-dataset]]:border [&_[data-studio-dataset]]:border-border-default/20 [&_[data-studio-dataset]]:px-4 [&_[data-studio-dataset]]:py-3 [&_[data-studio-dataset]]:font-mono [&_[data-studio-dataset]]:text-xs',
-              '[&_[data-studio-equation]]:my-7 [&_[data-studio-equation]]:max-w-content [&_[data-studio-equation]]:rounded-lg [&_[data-studio-equation]]:bg-surface-sunken [&_[data-studio-equation]]:p-6 [&_[data-studio-equation]]:text-center [&_[data-studio-equation]]:font-mono [&_[data-studio-equation]]:text-sm',
+              '[&_[data-studio-chart]]:my-8 [&_[data-studio-chart]]:max-w-content [&_[data-studio-chart]]:border [&_[data-studio-chart]]:border-border-default/20 [&_[data-studio-chart]]:bg-surface-sunken/60 [&_[data-studio-chart]]:p-10 [&_[data-studio-chart]]:text-center [&_[data-studio-chart]]:font-interface [&_[data-studio-chart]]:text-sm [&_[data-studio-chart]]:font-medium',
+              '[&_[data-studio-dataset]]:my-6 [&_[data-studio-dataset]]:max-w-content [&_[data-studio-dataset]]:border [&_[data-studio-dataset]]:border-border-default/20 [&_[data-studio-dataset]]:px-4 [&_[data-studio-dataset]]:py-3 [&_[data-studio-dataset]]:font-mono [&_[data-studio-dataset]]:text-xs',
+              '[&_[data-studio-equation]]:my-7 [&_[data-studio-equation]]:max-w-content [&_[data-studio-equation]]:bg-surface-sunken [&_[data-studio-equation]]:p-6 [&_[data-studio-equation]]:text-center [&_[data-studio-equation]]:font-mono [&_[data-studio-equation]]:text-sm',
               '[&_.ProseMirror-selectednode]:outline [&_.ProseMirror-selectednode]:outline-2 [&_.ProseMirror-selectednode]:outline-offset-2 [&_.ProseMirror-selectednode]:outline-interactive-primary',
             ].join(' ')}
           />
@@ -1163,7 +1163,7 @@ export default function StudioEditor({
           role="toolbar"
           aria-label="Format teks terpilih"
           style={{ top: selectionMenu.top, left: selectionMenu.left } as CSSProperties}
-          className="fixed z-modal flex items-center gap-0.5 rounded-xl border border-border-default/20 bg-surface-inverse p-1.5 text-text-on-inverse shadow-lg"
+          className="fixed z-modal flex items-center gap-0.5 border border-border-default/20 bg-surface-inverse p-1.5 text-text-on-inverse"
         >
           <ToolbarButton compact label="Tebal" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
             <Bold aria-hidden="true" size={17} />
@@ -1190,13 +1190,13 @@ export default function StudioEditor({
           role="listbox"
           aria-label="Sisipkan blok"
           style={{ top: slashState.top, left: slashState.left } as CSSProperties}
-          className="fixed z-modal flex max-h-[calc(100dvh-24px)] w-[min(344px,calc(100vw-24px))] flex-col overflow-hidden rounded-xl border border-border-default/20 bg-surface-elevated shadow-lg"
+          className="fixed z-modal flex max-h-[calc(100dvh-24px)] w-[min(344px,calc(100vw-24px))] flex-col overflow-hidden border border-border-default/20 bg-surface-elevated"
         >
           <div className="shrink-0 border-b border-border-default/15 px-4 py-3">
             <p className="font-interface text-xs font-semibold text-text-primary">
               {slashState.query ? `Hasil untuk "${slashState.query}"` : 'Sisipkan blok'}
             </p>
-            <p className="mt-0.5 font-interface text-[11px] text-text-tertiary">Panah untuk memilih | Enter untuk menyisipkan | Esc untuk menutup</p>
+            <p className="mt-0.5 font-interface text-caption text-text-tertiary">Panah untuk memilih | Enter untuk menyisipkan | Esc untuk menutup</p>
           </div>
           <div className="min-h-0 max-h-[356px] flex-1 touch-pan-y overflow-y-auto overscroll-contain p-2 [scrollbar-gutter:stable]">
             {filteredCommands.length > 0 ? filteredCommands.map((command, index) => {
@@ -1213,12 +1213,12 @@ export default function StudioEditor({
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => runSlashCommand(command)}
                   className={[
-                    'flex min-h-[58px] w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors',
+                    'flex min-h-[58px] w-full items-center gap-3 px-3 py-2 text-left transition-colors',
                     focusRing,
-                    selected ? 'bg-signal-info-surface' : 'hover:bg-surface-sunken',
+                    selected ? 'bg-ink/5' : 'hover:bg-surface-sunken',
                   ].join(' ')}
                 >
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${selected ? 'border-border-accent/35 bg-surface-elevated text-interactive-primary' : 'border-border-default/15 bg-surface-sunken text-text-secondary'}`}>
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center border ${selected ? 'border-border-accent/35 bg-surface-elevated text-interactive-primary' : 'border-border-default/15 bg-surface-sunken text-text-secondary'}`}>
                     <Icon aria-hidden="true" size={18} />
                   </span>
                   <span className="min-w-0">
@@ -1237,17 +1237,17 @@ export default function StudioEditor({
       {citationDialog && (
         <div className="fixed inset-0 z-modal flex items-center justify-center p-4 sm:p-8">
           <button type="button" aria-label="Tutup pengaturan sitasi" onClick={() => setCitationDialog(null)} className="absolute inset-0 bg-surface-overlay/60" />
-          <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="studio-citation-dialog-title" className="relative z-base max-h-[min(680px,calc(100dvh-32px))] w-full max-w-[620px] overflow-y-auto rounded-2xl border border-border-default/20 bg-surface-elevated p-5 shadow-lg sm:p-7">
+          <section ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="studio-citation-dialog-title" className="relative z-base max-h-[min(680px,calc(100dvh-32px))] w-full max-w-[620px] overflow-y-auto border border-border-default/20 bg-surface-elevated p-5 sm:p-7">
             <header className="flex items-start justify-between gap-4">
               <div>
                 <h2 id="studio-citation-dialog-title" className="font-interface text-lg font-semibold text-text-primary">{citationDialog.position === null ? 'Sisipkan sitasi' : 'Edit sitasi'}</h2>
                 <p className="mt-1 font-interface text-xs leading-relaxed text-text-tertiary">Sitasi harus menunjuk satu sumber nyata dari registry naskah.</p>
               </div>
-              <button type="button" aria-label="Tutup" onClick={() => setCitationDialog(null)} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-surface-sunken ${focusRing}`}><X aria-hidden="true" size={19} /></button>
+              <button type="button" aria-label="Tutup" onClick={() => setCitationDialog(null)} className={`flex h-11 w-11 shrink-0 items-center justify-center hover:bg-surface-sunken ${focusRing}`}><X aria-hidden="true" size={19} /></button>
             </header>
 
             {sources.length === 0 ? (
-              <div className="mt-6 rounded-xl bg-signal-warning-surface px-4 py-3">
+              <div className="mt-6 px-4 py-3">
                 <p role="alert" className="font-interface text-sm leading-relaxed text-text-primary">Belum ada sumber yang dapat dipilih. Tutup dialog ini lalu tambahkan sumber pada bagian “Sumber naskah”.</p>
               </div>
             ) : (
@@ -1258,7 +1258,7 @@ export default function StudioEditor({
                     autoFocus
                     value={citationDialog.sourceId}
                     onChange={(event) => selectCitationSource(event.target.value)}
-                    className={`mt-2 min-h-[44px] w-full rounded-lg border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`}
+                    className={`mt-2 min-h-[44px] w-full border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`}
                   >
                     <option value="">Pilih sumber...</option>
                     {sources.map((source) => <option key={source.id} value={source.id}>{source.title}</option>)}
@@ -1266,38 +1266,38 @@ export default function StudioEditor({
                 </label>
                 <label className="block">
                   <span className="font-interface text-xs font-semibold text-text-primary">Label sitasi <span className="text-signal-danger">*</span></span>
-                  <span className="mt-1 block font-interface text-[11px] leading-relaxed text-text-tertiary">Gunakan nama singkat yang mudah dikenali, misalnya “BPS” atau “WHO 2025”.</span>
+                  <span className="mt-1 block font-interface text-caption leading-relaxed text-text-tertiary">Gunakan nama singkat yang mudah dikenali, misalnya “BPS” atau “WHO 2025”.</span>
                   <input
                     value={citationDialog.label}
                     onChange={(event) => { setCitationDialog((current) => current ? { ...current, label: event.target.value } : current); setCitationError(null) }}
                     maxLength={180}
-                    className={`mt-2 min-h-[44px] w-full rounded-lg border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`}
+                    className={`mt-2 min-h-[44px] w-full border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`}
                   />
                 </label>
                 <label className="block">
                   <span className="font-interface text-xs font-semibold text-text-primary">Lokator spesifik (opsional)</span>
-                  <span className="mt-1 block font-interface text-[11px] leading-relaxed text-text-tertiary">Contoh: halaman 17, tabel 3, atau paragraf 8.</span>
+                  <span className="mt-1 block font-interface text-caption leading-relaxed text-text-tertiary">Contoh: halaman 17, tabel 3, atau paragraf 8.</span>
                   <input
                     value={citationDialog.locator}
                     onChange={(event) => { setCitationDialog((current) => current ? { ...current, locator: event.target.value } : current); setCitationError(null) }}
                     maxLength={300}
-                    className={`mt-2 min-h-[44px] w-full rounded-lg border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`}
+                    className={`mt-2 min-h-[44px] w-full border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`}
                   />
                 </label>
               </div>
             )}
 
-            {citationError && <p role="alert" className="mt-4 rounded-lg bg-signal-danger-surface px-3 py-2.5 font-interface text-xs text-signal-danger">{citationError}</p>}
+            {citationError && <p role="alert" className="mt-4 px-3 py-2.5 font-interface text-xs text-signal-danger">{citationError}</p>}
 
             <footer className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-border-default/15 pt-5">
               <div>
                 {citationDialog.position !== null && (
-                  <button type="button" onClick={deleteCitationNode} className={`min-h-[44px] rounded-lg px-3 font-interface text-xs font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}>Hapus sitasi</button>
+                  <button type="button" onClick={deleteCitationNode} className={`min-h-[44px] px-3 font-interface text-xs font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}>Hapus sitasi</button>
                 )}
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setCitationDialog(null)} className={`min-h-[44px] rounded-lg px-4 font-interface text-sm font-semibold text-text-secondary hover:bg-surface-sunken ${focusRing}`}>Batal</button>
-                <button type="button" disabled={sources.length === 0} onClick={applyCitationNode} className={`min-h-[44px] rounded-lg bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}`}>{citationDialog.position === null ? 'Sisipkan' : 'Simpan perubahan'}</button>
+                <button type="button" onClick={() => setCitationDialog(null)} className={`min-h-[44px] px-4 font-interface text-sm font-semibold text-text-secondary hover:bg-surface-sunken ${focusRing}`}>Batal</button>
+                <button type="button" disabled={sources.length === 0} onClick={applyCitationNode} className={`min-h-[44px] bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}`}>{citationDialog.position === null ? 'Sisipkan' : 'Simpan perubahan'}</button>
               </div>
             </footer>
           </section>
@@ -1317,7 +1317,7 @@ export default function StudioEditor({
             role="dialog"
             aria-modal="true"
             aria-labelledby="studio-semantic-dialog-title"
-            className="relative z-base max-h-[min(760px,calc(100vh-32px))] w-full max-w-[620px] overflow-y-auto rounded-2xl border border-border-default/20 bg-surface-elevated p-5 shadow-lg sm:p-7"
+            className="relative z-base max-h-[min(760px,calc(100vh-32px))] w-full max-w-[620px] overflow-y-auto border border-border-default/20 bg-surface-elevated p-5 sm:p-7"
           >
             <header className="flex items-start justify-between gap-4">
               <div>
@@ -1328,7 +1328,7 @@ export default function StudioEditor({
                   {semanticDialog.position === null ? 'Lengkapi blok sebelum disisipkan.' : 'Perbarui blok yang dipilih. Perubahan langsung masuk ke naskah.'}
                 </p>
               </div>
-              <button type="button" aria-label="Tutup" onClick={() => setSemanticDialog(null)} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-surface-sunken ${focusRing}`}>
+              <button type="button" aria-label="Tutup" onClick={() => setSemanticDialog(null)} className={`flex h-11 w-11 shrink-0 items-center justify-center hover:bg-surface-sunken ${focusRing}`}>
                 <X aria-hidden="true" size={19} />
               </button>
             </header>
@@ -1343,23 +1343,23 @@ export default function StudioEditor({
                 />
                 <label className="block">
                   <span className="font-interface text-xs font-semibold text-text-primary">Deskripsi alternatif <span className="text-signal-danger">*</span></span>
-                  <span className="mt-1 block font-interface text-[11px] leading-relaxed text-text-tertiary">Jelaskan informasi visual untuk pembaca yang tidak dapat melihat gambar.</span>
+                  <span className="mt-1 block font-interface text-caption leading-relaxed text-text-tertiary">Jelaskan informasi visual untuk pembaca yang tidak dapat melihat gambar.</span>
                   <textarea
                     value={semanticDialog.values.alt}
                     onChange={(event) => updateSemanticValue('alt', event.target.value)}
                     rows={3}
                     maxLength={500}
-                    className={`mt-2 w-full rounded-lg border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm text-text-primary ${focusRing}`}
+                    className={`mt-2 w-full border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm text-text-primary ${focusRing}`}
                   />
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block">
                     <span className="font-interface text-xs font-semibold text-text-primary">Keterangan</span>
-                    <textarea value={semanticDialog.values.caption} onChange={(event) => updateSemanticValue('caption', event.target.value)} rows={3} maxLength={500} className={`mt-2 w-full rounded-lg border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm text-text-primary ${focusRing}`} />
+                    <textarea value={semanticDialog.values.caption} onChange={(event) => updateSemanticValue('caption', event.target.value)} rows={3} maxLength={500} className={`mt-2 w-full border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm text-text-primary ${focusRing}`} />
                   </label>
                   <label className="block">
                     <span className="font-interface text-xs font-semibold text-text-primary">Kredit atau sumber</span>
-                    <textarea value={semanticDialog.values.credit} onChange={(event) => updateSemanticValue('credit', event.target.value)} rows={3} maxLength={300} className={`mt-2 w-full rounded-lg border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm text-text-primary ${focusRing}`} />
+                    <textarea value={semanticDialog.values.credit} onChange={(event) => updateSemanticValue('credit', event.target.value)} rows={3} maxLength={300} className={`mt-2 w-full border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm text-text-primary ${focusRing}`} />
                   </label>
                 </div>
               </div>
@@ -1375,7 +1375,7 @@ export default function StudioEditor({
                   rows={5}
                   maxLength={2_000}
                   placeholder="Tuliskan keterangan tambahan atau detail sumber..."
-                  className={`mt-2 w-full rounded-lg border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm leading-relaxed text-text-primary placeholder:text-text-tertiary ${focusRing}`}
+                  className={`mt-2 w-full border border-border-default/25 bg-surface-page px-3 py-2.5 font-interface text-sm leading-relaxed text-text-primary placeholder:text-text-tertiary ${focusRing}`}
                 />
               </label>
             )}
@@ -1392,29 +1392,29 @@ export default function StudioEditor({
                     maxLength={2_000}
                     placeholder="E = mc^2"
                     spellCheck={false}
-                    className={`mt-2 w-full rounded-lg border border-border-default/25 bg-surface-inverse px-3 py-3 font-mono text-sm text-text-on-inverse placeholder:text-text-tertiary ${focusRing}`}
+                    className={`mt-2 w-full border border-border-default/25 bg-surface-inverse px-3 py-3 font-mono text-sm text-text-on-inverse placeholder:text-text-tertiary ${focusRing}`}
                   />
                 </label>
                 <label className="block">
                   <span className="font-interface text-xs font-semibold text-text-primary">Label atau keterangan (opsional)</span>
-                  <input value={semanticDialog.values.label} onChange={(event) => updateSemanticValue('label', event.target.value)} maxLength={300} className={`mt-2 h-11 w-full rounded-lg border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`} />
+                  <input value={semanticDialog.values.label} onChange={(event) => updateSemanticValue('label', event.target.value)} maxLength={300} className={`mt-2 h-11 w-full border border-border-default/25 bg-surface-page px-3 font-interface text-sm text-text-primary ${focusRing}`} />
                 </label>
               </div>
             )}
 
-            {semanticError && <p role="alert" className="mt-4 rounded-lg bg-signal-danger-surface px-3 py-2.5 font-interface text-xs text-signal-danger">{semanticError}</p>}
+            {semanticError && <p role="alert" className="mt-4 px-3 py-2.5 font-interface text-xs text-signal-danger">{semanticError}</p>}
 
             <footer className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-border-default/15 pt-5">
               <div>
                 {semanticDialog.position !== null && (
-                  <button type="button" onClick={deleteSemanticNode} className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg px-3 font-interface text-xs font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}>
+                  <button type="button" onClick={deleteSemanticNode} className={`inline-flex min-h-[44px] items-center gap-2 px-3 font-interface text-xs font-semibold text-signal-danger hover:bg-signal-danger-surface ${focusRing}`}>
                     Hapus blok
                   </button>
                 )}
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setSemanticDialog(null)} className={`min-h-[44px] rounded-lg px-4 font-interface text-sm font-semibold text-text-secondary hover:bg-surface-sunken ${focusRing}`}>Batal</button>
-                <button type="button" onClick={applySemanticNode} className={`min-h-[44px] rounded-lg bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover ${focusRing}`}>
+                <button type="button" onClick={() => setSemanticDialog(null)} className={`min-h-[44px] px-4 font-interface text-sm font-semibold text-text-secondary hover:bg-surface-sunken ${focusRing}`}>Batal</button>
+                <button type="button" onClick={applySemanticNode} className={`min-h-[44px] bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover ${focusRing}`}>
                   {semanticDialog.position === null ? 'Sisipkan' : 'Simpan perubahan'}
                 </button>
               </div>
