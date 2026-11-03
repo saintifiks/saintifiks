@@ -122,7 +122,7 @@ function EvidenceDataTable({
       role="region"
       aria-label={`Tabel data ${caption}`}
       tabIndex={0}
-      className="mt-4 overflow-x-auto rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-primary focus-visible:ring-offset-2"
+      className="mt-4 overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-primary focus-visible:ring-offset-2"
     >
       <table className="w-full border-collapse font-interface text-sm">
         <caption className="sr-only">{caption}</caption>
@@ -170,7 +170,7 @@ function DatasetEvidenceBlock({
   return (
     <section
       aria-labelledby={`studio-dataset-${dataset.id}`}
-      className="my-8 rounded-lg border border-border-default/20 bg-surface-sunken/30 p-5"
+      className="my-8 border border-border-default/20 bg-surface-sunken/30 p-5"
     >
       <div className="flex items-start gap-3">
         <Database aria-hidden="true" className="mt-1 shrink-0 text-text-tertiary" size={18} />
@@ -223,7 +223,7 @@ function ChartEvidenceBlock({
   return (
     <figure
       aria-labelledby={`studio-chart-${chart.id}`}
-      className="my-9 rounded-lg border border-border-default/20 bg-surface-sunken/30 p-5"
+      className="my-9 border border-border-default/20 bg-surface-sunken/30 p-5"
     >
       <div className="flex items-start gap-3">
         <BarChart3 aria-hidden="true" className="mt-1 shrink-0 text-interactive-primary" size={20} />
@@ -297,7 +297,7 @@ function renderMarkedText(text: string, marks: StudioMark[] | undefined, key: st
         break
       case 'code':
         output = (
-          <code key={markKey} className="rounded bg-surface-sunken px-1.5 py-0.5 font-mono text-[0.85em]">
+          <code key={markKey} className="bg-surface-sunken px-1.5 py-0.5 font-mono text-[0.85em]">
             {output}
           </code>
         )
@@ -397,7 +397,7 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
         <pre
           key={key}
           data-block-id={stableId}
-          className="my-6 overflow-x-auto rounded-lg bg-surface-inverse p-5 font-mono text-sm text-text-on-inverse"
+          className="my-6 overflow-x-auto bg-surface-inverse p-5 font-mono text-sm text-text-on-inverse"
         >
           <code>{node.content?.map((child) => child.text ?? '').join('')}</code>
         </pre>
@@ -413,7 +413,7 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
           key={key}
           data-block-id={stableId}
           data-tone={tone}
-          className="my-7 rounded-r-lg border-l-4 border-signal-info bg-signal-info-surface px-5 py-4"
+          className="my-7 border-l-4 border-border-default/40 px-5 py-4"
         >
           <p className="mb-2 font-interface text-kicker-lg font-semibold uppercase tracking-wider text-text-secondary">
             {calloutLabel(tone)}
@@ -434,7 +434,7 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
             key={key}
             href={`#${sourceAnchorId(sourceId)}`}
             data-block-id={stableId}
-            className="mx-1 inline-flex rounded-full bg-signal-info-surface px-2 py-0.5 align-baseline font-interface text-xs font-medium text-interactive-primary no-underline"
+            className="mx-1 inline-flex rounded-full px-2 py-0.5 align-baseline font-interface text-xs font-medium text-interactive-primary no-underline"
             aria-label={`Sitasi ${label}: ${source.title}${locator ? `, ${locator}` : ''}`}
             title={source.title}
           >
@@ -446,7 +446,7 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
         <span
           key={key}
           data-block-id={stableId}
-          className="mx-1 inline-flex rounded-full bg-signal-info-surface px-2 py-0.5 align-baseline font-interface text-xs font-medium text-interactive-primary no-underline"
+          className="mx-1 inline-flex rounded-full px-2 py-0.5 align-baseline font-interface text-xs font-medium text-interactive-primary no-underline"
           aria-label={`Sitasi ${label}${locator ? `, ${locator}` : ''}`}
           title={`sourceId: ${sourceId}`}
         >
@@ -470,12 +470,12 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
         <figure key={key} data-block-id={stableId} className="my-9">
           {figureSource ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={figureSource} alt={stringAttr(node, 'alt')} className="h-auto w-full rounded-lg" />
+            <img src={figureSource} alt={stringAttr(node, 'alt')} className="h-auto w-full" />
           ) : (
             <div
               role="img"
               aria-label={stringAttr(node, 'alt')}
-              className="flex min-h-56 items-center justify-center rounded-lg border border-dashed border-border-default/30 bg-surface-sunken/55 p-8 text-center"
+              className="flex min-h-56 items-center justify-center border border-dashed border-border-default/30 bg-surface-sunken/55 p-8 text-center"
             >
               <div>
                 <ImageIcon aria-hidden="true" className="mx-auto mb-3 text-text-tertiary" size={28} />
@@ -494,7 +494,7 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
     }
     case 'equation':
       return (
-        <figure key={key} data-block-id={stableId} className="my-8 rounded-lg bg-surface-sunken px-6 py-7 text-center">
+        <figure key={key} data-block-id={stableId} className="my-8 bg-surface-sunken px-6 py-7 text-center">
           <code className="font-mono text-sm text-text-primary">{stringAttr(node, 'latex')}</code>
           {stringAttr(node, 'label') && (
             <figcaption className="mt-3 font-interface text-caption text-text-secondary">
@@ -514,12 +514,12 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
         <figure
           key={key}
           data-block-id={stableId}
-          className="my-9 flex min-h-64 items-center justify-center rounded-lg border border-border-default/20 bg-surface-sunken/45 p-8 text-center"
+          className="my-9 flex min-h-64 items-center justify-center border border-border-default/20 bg-surface-sunken/45 p-8 text-center"
         >
           <div>
             <BarChart3 aria-hidden="true" className="mx-auto mb-3 text-interactive-primary" size={30} />
             <p className="font-interface text-sm font-semibold">{stringAttr(node, 'title')}</p>
-            <figcaption className="mt-1 font-mono text-[10px] text-text-tertiary">
+            <figcaption className="mt-1 font-mono text-kicker text-text-tertiary">
               chartId: {stringAttr(node, 'chartId')}
             </figcaption>
           </div>
@@ -536,12 +536,12 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
         <aside
           key={key}
           data-block-id={stableId}
-          className="my-7 flex items-start gap-3 rounded-lg border border-border-default/20 px-4 py-3"
+          className="my-7 flex items-start gap-3 border border-border-default/20 px-4 py-3"
         >
           <Database aria-hidden="true" className="mt-0.5 shrink-0 text-text-tertiary" size={18} />
           <div>
             <p className="font-interface text-sm font-medium">{stringAttr(node, 'label')}</p>
-            <p className="mt-1 font-mono text-[10px] text-text-tertiary">
+            <p className="mt-1 font-mono text-kicker text-text-tertiary">
               datasetId: {stringAttr(node, 'datasetId')}
             </p>
           </div>
@@ -678,7 +678,7 @@ export default function StudioRenderer({ document }: StudioRendererProps) {
     : validateStudioDocument(document)
   if (!validation.ok) {
     return (
-      <section role="alert" className="rounded-lg border border-signal-danger/30 bg-signal-danger-surface p-5 font-interface text-sm text-text-primary">
+      <section role="alert" className="border border-signal-danger/30 p-5 font-interface text-sm text-text-primary">
         Dokumen tidak dapat dirender karena kontraknya tidak valid.
       </section>
     )
