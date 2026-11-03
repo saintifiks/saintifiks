@@ -26,7 +26,7 @@ export default function Header() {
   if (pathname.startsWith('/dashboard')) return null
 
   return (
-    <header className="sticky top-0 z-sticky border-b border-border-default/15 bg-surface-page">
+    <header className="site-header sticky top-0 z-sticky border-b border-border-default/15 bg-surface-page">
       <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-5 lg:h-[72px] lg:px-8">
         <nav aria-label="Navigasi utama" className="hidden items-center gap-8 lg:flex">
           {PRIMARY_NAV.map((item) => (

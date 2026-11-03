@@ -9,6 +9,8 @@ const config: Config = {
   // Dark mode dikendalikan via atribut data-theme pada <html> (toggle manual + default OS).
   // Script anti-FOUC di layout.tsx selalu men-set data-theme, jadi preferensi OS tetap terbaca.
   darkMode: ['selector', '[data-theme="dark"]'],
+  // Hover hanya berlaku di perangkat yang benar-benar punya kursor; di layar sentuh keadaan hover tidak "menyangkut" setelah diketuk.
+  future: { hoverOnlyWhenSupported: true },
   theme: {
     extend: {
       // Saintifiks color palette V2 - Mendukung Opacity Modifier (/10, /20, dst)

@@ -860,3 +860,10 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
     font-size: calc(19px * var(--reader-scale, 1));
   }
 }
+
+/* Ponsel landscape (layar pendek): header tidak menempel, agar area baca tidak habis oleh header + bilah aksi. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .site-header {
+    position: static;
+  }
+}
