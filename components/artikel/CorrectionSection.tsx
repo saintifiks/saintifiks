@@ -10,6 +10,7 @@ import { submitCorrection } from '@/app/(admin)/dashboard/koreksi/actions'
 import { Button, Field, IconButton, Sheet, Textarea, useToast } from '@/components/ui'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { signInWithGoogle } from '@/lib/auth-client'
+import { correctionApi, type ContentKind } from '@/lib/engagement/kinds'
 
 type Correction = {
   id: string
@@ -22,9 +23,30 @@ type Correction = {
 type CorrectionSectionProps = {
   articleId: string
   corrections: Correction[]
+  kind?: ContentKind
 }
 
-export default function CorrectionSection({ articleId, corrections }: CorrectionSectionProps) {
+async function sendOpinionCorrection(
+  id: string,
+  original: string,
+  corrected: string,
+  explanation: string
+): Promise<{ error?: string }> {
+  try {
+    const res = await fetch(correctionApi.opinionUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: correctionApi.opinionBody(id, original, corrected, explanation),
+    })
+    if (res.ok) return {}
+    const data = (await res.json().catch(() => null)) as { error?: string } | null
+    return { error: data?.error ?? 'Gagal mengirim koreksi.' }
+  } catch {
+    return { error: 'Gagal mengirim koreksi.' }
+  }
+}
+
+export default function CorrectionSection({ articleId, corrections, kind = 'article' }: CorrectionSectionProps) {
   const { userId } = useAuth()
   const toast = useToast()
   const pathname = usePathname()
@@ -52,15 +74,18 @@ export default function CorrectionSection({ articleId, corrections }: Correction
     }
 
     setSending(true)
-    const result = await submitCorrection({
-      article_id: articleId,
-      original_text: original,
-      corrected_text: corrected,
-      explanation,
-    })
+    const result: { error?: string } =
+      kind === 'opinion'
+        ? await sendOpinionCorrection(articleId, original, corrected, explanation)
+        : await submitCorrection({
+            article_id: articleId,
+            original_text: original,
+            corrected_text: corrected,
+            explanation,
+          })
     setSending(false)
 
-    if ('error' in result && result.error) {
+    if (result.error) {
       toast({ message: result.error, tone: 'danger' })
       return
     }
@@ -68,7 +93,7 @@ export default function CorrectionSection({ articleId, corrections }: Correction
     setCorrected('')
     setExplanation('')
     setOpen(false)
-    toast({ message: 'Usulan koreksi Anda akan ditinjau redaksi. Terima kasih.', tone: 'success', label: 'Terkirim' })
+    toast({ message: 'Usulan koreksi Anda akan ditinjau. Terima kasih.', tone: 'success', label: 'Terkirim' })
   }
 
   return (

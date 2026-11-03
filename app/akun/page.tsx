@@ -136,7 +136,7 @@ export default async function AkunPage() {
                               Ubah
                             </UiLink>
                             {status === 'published' && (
-                              <UiLink href={`/opinions/${profile.username}/${a.slug}`} variant="muted">
+                              <UiLink href={`/argumen/${profile.username}/${a.slug}`} variant="muted">
                                 Lihat
                               </UiLink>
                             )}

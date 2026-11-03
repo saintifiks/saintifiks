@@ -23,7 +23,7 @@ type DrawerProps = {
 
 // Tautan navigasi utama (format besar 40px, sesuai spesifikasi).
 const NAV_ITEMS: { label: string; href: string }[] = [
-  { label: 'Argumen', href: '/opinions' },
+  { label: 'Argumen', href: '/argumen' },
   { label: 'Akun', href: '/akun' },
   { label: 'Tentang Kami', href: '/tentang-kami' },
   { label: 'Koreksi', href: '/koreksi' },

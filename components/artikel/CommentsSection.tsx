@@ -10,6 +10,7 @@ import { Button, IconButton, Sheet, Textarea, useToast } from '@/components/ui'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { saveIntent, signInWithGoogle, takeIntent } from '@/lib/auth-client'
 import { formatTanggalPendek } from '@/lib/format-date'
+import { commentApi, type ContentKind } from '@/lib/engagement/kinds'
 
 type Comment = {
   id: string
@@ -19,11 +20,12 @@ type Comment = {
 
 type CommentsSectionProps = {
   articleId: string
+  kind?: ContentKind
 }
 
 const draftKey = (articleId: string) => `saintifiks-comment-draft:${articleId}`
 
-export default function CommentsSection({ articleId }: CommentsSectionProps) {
+export default function CommentsSection({ articleId, kind = 'article' }: CommentsSectionProps) {
   const { userId, ready } = useAuth()
   const toast = useToast()
   const pathname = usePathname()
@@ -44,7 +46,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
   // Satu permintaan saat halaman dibuka (untuk jumlah); daftar ikut dipakai panel.
   useEffect(() => {
     let active = true
-    fetch(`/api/comments?articleId=${articleId}`)
+    fetch(commentApi.listUrl(kind, articleId))
       .then((res) => (res.ok ? res.json() : { comments: [] }))
       .then((data) => {
         if (active) setComments(data.comments ?? [])
@@ -56,7 +58,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
     return () => {
       active = false
     }
-  }, [articleId])
+  }, [articleId, kind])
 
   // Buka panel bila pengguna baru kembali dari Google untuk berkomentar. Ditunda satu giliran agar
   // bukan pembaruan state sinkron di dalam efek.
@@ -84,10 +86,10 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
     if (!content || sending) return
     setSending(true)
     try {
-      const res = await fetch('/api/comments', {
+      const res = await fetch(commentApi.url(kind), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ article_id: articleId, content }),
+        body: commentApi.body(kind, articleId, content),
       })
       if (!res.ok) throw new Error(String(res.status))
       const data = await res.json()

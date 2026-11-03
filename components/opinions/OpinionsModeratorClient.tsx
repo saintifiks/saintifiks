@@ -149,7 +149,7 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                       <div className="flex items-center gap-3 flex-wrap">
                         {article && (
                           <Link
-                            href={`/opinions/${author?.username}/${article.slug}`}
+                            href={`/argumen/${author?.username}/${article.slug}`}
                             target="_blank"
                             className="font-interface text-xs text-text-link hover:opacity-70 transition-opacity duration-150"
                           >
@@ -231,7 +231,7 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                   <div className="flex items-center gap-3 justify-end">
                     {!isHidden && author && (
                       <Link
-                        href={`/opinions/${author.username}/${article.slug}`}
+                        href={`/argumen/${author.username}/${article.slug}`}
                         target="_blank"
                         className="font-interface text-xs text-warm-gray hover:text-ink transition-colors duration-150"
                       >

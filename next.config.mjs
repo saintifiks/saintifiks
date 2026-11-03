@@ -14,6 +14,14 @@ const nextConfig = {
     ],
   },
 
+  // Alamat lama Argumen (/opinions) dialihkan permanen ke /argumen; tautan dan hasil pencarian lama tetap sampai.
+  async redirects() {
+    return [
+      { source: '/opinions', destination: '/argumen', permanent: true },
+      { source: '/opinions/:path*', destination: '/argumen/:path*', permanent: true },
+    ];
+  },
+
   // Hapus console.log di production agar tidak bocor ke browser pengunjung
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
