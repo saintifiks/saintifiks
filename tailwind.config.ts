@@ -39,6 +39,7 @@ const config: Config = {
         'interactive-primary':        'rgb(var(--color-interactive-primary) / <alpha-value>)',
         'interactive-primary-hover':  'rgb(var(--color-interactive-primary-hover) / <alpha-value>)',
         'interactive-primary-active': 'rgb(var(--color-interactive-primary-active) / <alpha-value>)',
+        'interactive-primary-disabled': 'rgb(var(--color-interactive-primary-disabled) / <alpha-value>)',
         'signal-success':          'rgb(var(--color-signal-success) / <alpha-value>)',
         'signal-success-surface':  'rgb(var(--color-signal-success-surface) / <alpha-value>)',
         'signal-warning':          'rgb(var(--color-signal-warning) / <alpha-value>)',
@@ -48,12 +49,9 @@ const config: Config = {
         'signal-info':             'rgb(var(--color-signal-info) / <alpha-value>)',
         'signal-info-surface':     'rgb(var(--color-signal-info-surface) / <alpha-value>)',
       },
-      // Font families V2
+      // Font families: display (Libre Baskerville) untuk judul & isi, interface (Plex Sans) untuk UI, mono (Plex Mono) untuk angka
       fontFamily: {
         display:   ['var(--font-display)', 'Georgia', 'serif'],
-        libre:     ['var(--font-display)', 'Georgia', 'serif'],
-        body:      ['"Source Serif 4"', 'var(--font-body)', 'Georgia', 'serif'],
-        lora:      ['var(--font-lora)', 'Lora', 'Georgia', 'serif'],
         interface: ['"IBM Plex Sans"', 'var(--font-interface)', 'Arial', 'sans-serif'],
         mono:      ['"IBM Plex Mono"', 'var(--font-mono)', '"Courier New"', 'monospace'],
         sans:      ['"IBM Plex Sans"', 'var(--font-interface)', 'Arial', 'sans-serif'],
@@ -95,6 +93,7 @@ const config: Config = {
         deliberate: 'var(--duration-deliberate)',
       },
       zIndex: {
+        base: 'var(--z-base)',
         raised: 'var(--z-raised)',
         dropdown: 'var(--z-dropdown)',
         sticky: 'var(--z-sticky)',
