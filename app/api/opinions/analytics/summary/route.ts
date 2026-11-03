@@ -3,6 +3,7 @@
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,7 +64,9 @@ export async function GET() {
       .select('opinion_article_id, event_type')
       .in('opinion_article_id', articleIds)
 
-    const { data: allLikes } = await supabase
+    // articleIds berasal dari artikel milik user yang login (diverifikasi di atas); opinion_likes tidak
+    // lagi bisa dibaca publik, jadi dibaca lewat admin client.
+    const { data: allLikes } = await createAdminClient()
       .from('opinion_likes')
       .select('opinion_article_id')
       .in('opinion_article_id', articleIds)

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 
@@ -17,10 +18,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
+    // Dibaca lewat admin client (server-only): tabel comments tidak lagi bisa dibaca publik lewat REST
+    // karena memuat user_id. Kolom yang diambil sengaja tanpa user_id.
+    const supabase = createAdminClient()
 
-    // [CATATAN] Tidak melakukan join ke auth.users karena tabel tersebut 
-    // berada di schema auth dan tidak bisa diakses via PostgREST dengan anon key
     const { data, error } = await supabase
       .from('comments')
       .select('id, content, created_at')
