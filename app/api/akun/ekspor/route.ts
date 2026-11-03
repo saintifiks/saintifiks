@@ -3,6 +3,7 @@
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { logSecurityEvent } from '@/lib/security/audit'
 
 export const dynamic = 'force-dynamic'
@@ -14,6 +15,8 @@ export async function GET() {
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Tidak terautentikasi' }, { status: 401 })
 
+  // Kolom user_id koreksi tidak terbaca publik, jadi koreksi milik sendiri dibaca server dengan service_role.
+  const admin = createAdminClient()
   const [profile, articles, comments, opinionComments, likes, opinionLikes, bookmarks, articleCorrections, opinionCorrections] =
     await Promise.all([
       supabase.from('user_profiles').select('username, display_name, bio, avatar_url, created_at').eq('user_id', user.id).maybeSingle(),
@@ -23,8 +26,8 @@ export async function GET() {
       supabase.from('likes').select('article_id, created_at').eq('user_id', user.id),
       supabase.from('opinion_likes').select('opinion_article_id, created_at').eq('user_id', user.id),
       supabase.from('bookmarks').select('article_id, created_at').eq('user_id', user.id),
-      supabase.from('article_corrections').select('id, article_id, original_text, corrected_text, explanation, status, created_at').eq('user_id', user.id),
-      supabase.from('opinion_corrections').select('id, opinion_article_id, original_text, corrected_text, explanation, status, created_at').eq('user_id', user.id),
+      admin.from('article_corrections').select('id, article_id, original_text, corrected_text, explanation, status, created_at').eq('user_id', user.id),
+      admin.from('opinion_corrections').select('id, opinion_article_id, original_text, corrected_text, explanation, status, created_at').eq('user_id', user.id),
     ])
 
   logSecurityEvent({ event: 'ACCOUNT_EXPORT', actorId: user.id, resourceType: 'account', resourceId: user.id, result: 'success' })
