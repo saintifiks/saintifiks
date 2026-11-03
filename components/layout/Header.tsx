@@ -11,7 +11,7 @@ import { IconButton } from '@/components/ui'
 import ThemeToggle from '@/components/layout/ThemeToggle'
 import Drawer from '@/components/layout/Drawer'
 import Wordmark from '@/components/layout/Wordmark'
-import AccountLink from '@/components/layout/AccountLink'
+import AccountMenu from '@/components/layout/AccountMenu'
 
 const PRIMARY_NAV: { label: string; href: string }[] = [
   { label: 'Argumen', href: '/opinions' },
@@ -23,7 +23,7 @@ export default function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const pathname = usePathname()
 
-  if (pathname.startsWith('/dashboard')) return null
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/masuk')) return null
 
   return (
     <>
@@ -43,7 +43,7 @@ export default function Header() {
           </div>
 
           <div className="flex items-center justify-end gap-1 lg:gap-3">
-            <AccountLink className="hidden lg:inline-block" />
+            <AccountMenu className="hidden lg:flex" />
             <ThemeToggle />
             <IconButton
               icon="menu"

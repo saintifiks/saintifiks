@@ -42,7 +42,13 @@ export async function GET(request: NextRequest) {
     )
 
     // Tukar kode auth menjadi sesi yang aktif di browser pengguna
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      return NextResponse.redirect(`${origin}/masuk?error=gagal&next=${encodeURIComponent(next)}`)
+    }
+  } else if (requestUrl.searchParams.get('error')) {
+    // Pengguna membatalkan di layar Google atau Google menolak.
+    return NextResponse.redirect(`${origin}/masuk?error=batal&next=${encodeURIComponent(next)}`)
   }
 
   // Setelah sesi berhasil dibuat, arahkan ke rute dinamis (artikel) atau default (/dashboard)

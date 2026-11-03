@@ -4,7 +4,7 @@
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { Avatar, Badge, Button, Field, Icon, IconButton, Input, iconNames } from '@/components/ui'
+import { Avatar, Badge, Button, Field, Icon, IconButton, Input, Menu, iconNames } from '@/components/ui'
 import Link from '@/components/ui/Link'
 import { ToastView } from '@/components/ui/Toast'
 import { coreIconNames } from '@/components/ui/core-icons'
@@ -402,6 +402,27 @@ export default function DesignSystemPage() {
                     <Avatar key={n} name={n} size="md" className="ring-2 ring-paper" />
                   ))}
                 </div>
+              </div>
+
+              <p className="mb-3 mt-10 font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">
+                Menu akun
+              </p>
+              <div className="flex justify-end border-y border-border-default/20 py-3">
+                <Menu
+                  label="Menu akun"
+                  trigger={<Avatar name="Putri Ayu" size="sm" />}
+                  heading={
+                    <>
+                      <p className="truncate font-display text-base text-text-primary">Putri Ayu</p>
+                      <p className="mt-0.5 truncate font-mono text-caption text-text-tertiary">putri@contoh.id</p>
+                    </>
+                  }
+                  items={[
+                    { label: 'Akun saya', href: '#avatar' },
+                    { label: 'Tulis artikel', href: '#avatar' },
+                    { label: 'Keluar', href: '#avatar' },
+                  ]}
+                />
               </div>
             </Section>
 

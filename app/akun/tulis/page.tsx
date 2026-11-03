@@ -12,7 +12,7 @@ export default async function TulisPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/auth/callback?next=/akun/tulis')
+    redirect('/masuk?next=/akun/tulis')
   }
 
   const { data: profile } = await supabase

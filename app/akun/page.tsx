@@ -1,37 +1,42 @@
-// Halaman dashboard penulis (/akun) — Server Component
-// Menampilkan daftar artikel, analitik, dan link ke profil publik
+// Akun — halaman milik pembaca. Pembaca baru melihat akunnya dan ajakan menulis; penulis melihat artikel dan
+// analitiknya. Nama pengguna (profil penulis) dibuat saat pertama kali menulis, bukan di gerbang masuk.
 
-import { createClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
+import { createClient } from '@/lib/supabase/server'
+import { Avatar, Badge, Button } from '@/components/ui'
+import UiLink from '@/components/ui/Link'
 import OpinionAnalyticsDashboard from '@/components/opinions/OpinionAnalyticsDashboard'
-import AkunClient from '@/components/opinions/AkunClient'
-import PreLogin from '@/components/layout/PreLogin'
+import SignOutButton from '@/components/auth/SignOutButton'
+import { formatTanggalPendek } from '@/lib/format-date'
 
+export const metadata: Metadata = { title: 'Akun — Saintifiks', robots: { index: false, follow: false } }
 export const dynamic = 'force-dynamic'
 
-function formatTanggal(tanggal: string): string {
-  return new Date(tanggal).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="border-t border-border-default/20 py-10">
+      <h2 className="mb-6 font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">
+        {title}
+      </h2>
+      {children}
+    </section>
+  )
 }
+
+const statusVariant = { published: 'success', hidden: 'danger', draft: 'default' } as const
+const statusLabel = { published: 'Diterbitkan', hidden: 'Disembunyikan', draft: 'Draf' } as const
+
+type ArticleRow = { id: string; title: string; slug: string; status: string; updated_at: string }
 
 export default async function AkunPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  // Belum login → tampilkan halaman pra-login (gerbang masuk akun)
-  if (!user) {
-    return (
-      <PreLogin
-        next="/akun"
-        title="Masuk ke Akun"
-        description="Masuk untuk melihat dan mengelola artikel Anda di Saintifiks."
-      />
-    )
-  }
+  if (!user) redirect('/masuk?next=/akun')
 
   const { data: profile } = await supabase
     .from('user_profiles')
@@ -39,151 +44,119 @@ export default async function AkunPage() {
     .eq('user_id', user.id)
     .maybeSingle()
 
-  // Belum punya profil → tampilkan UsernameSetup (wrapped di Client Component)
-  if (!profile) {
-    return <AkunClient hasProfile={false} />
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+  const googleName = typeof meta.full_name === 'string' ? meta.full_name : typeof meta.name === 'string' ? meta.name : null
+  const googleAvatar =
+    typeof meta.avatar_url === 'string' ? meta.avatar_url : typeof meta.picture === 'string' ? meta.picture : null
+  const name = profile?.display_name ?? googleName ?? 'Akun Saintifiks'
+  const avatar = profile?.avatar_url ?? googleAvatar
+
+  let list: ArticleRow[] = []
+  if (profile) {
+    const { data } = await supabase
+      .from('opinion_articles')
+      .select('id, title, slug, status, updated_at')
+      .eq('author_id', user.id)
+      .order('updated_at', { ascending: false })
+    list = (data ?? []) as ArticleRow[]
   }
 
-  // Ambil semua artikel penulis
-  const { data: articles } = await supabase
-    .from('opinion_articles')
-    .select('id, title, slug, status, slug_locked, published_at, created_at, updated_at')
-    .eq('author_id', user.id)
-    .order('updated_at', { ascending: false })
-
-  const daftarArtikel = articles ?? []
-
   return (
-    <main className="min-h-screen bg-paper">
-      <div className="max-w-4xl mx-auto px-6 py-12">
-
-        {/* Header profil */}
-        <div className="flex items-start justify-between mb-12">
-          <div className="flex items-center gap-4">
-            {profile.avatar_url ? (
-              <Image
-                src={profile.avatar_url}
-                alt={profile.display_name}
-                width={56}
-                height={56}
-                className="rounded-full border border-ink/10 object-cover flex-shrink-0"
-              />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-ink flex items-center justify-center flex-shrink-0">
-                <span className="font-display text-xl font-bold text-paper">
-                  {profile.display_name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-            <div>
-              <h1 className="font-display text-2xl font-bold text-ink">
-                {profile.display_name}
-              </h1>
-              <Link
-                href={`/penulis/${profile.username}`}
-                className="font-interface text-xs text-warm-gray hover:text-text-link transition-colors duration-150"
-              >
-                @{profile.username} · Lihat profil publik →
-              </Link>
-            </div>
+    <main className="min-h-screen bg-surface-page">
+      <div className="mx-auto max-w-4xl px-5 pb-24 pt-10 lg:px-8 lg:pt-14">
+        <header className="flex items-center gap-5">
+          <Avatar name={name} src={avatar} size="lg" />
+          <div className="min-w-0">
+            <h1 className="truncate font-display text-display-sm leading-tight text-text-primary">{name}</h1>
+            <p className="mt-1 truncate font-mono text-caption text-text-tertiary">
+              {user.email}
+              {profile && (
+                <>
+                  {' · '}
+                  <UiLink href={`/penulis/${profile.username}`} variant="muted">
+                    @{profile.username}
+                  </UiLink>
+                </>
+              )}
+            </p>
           </div>
+        </header>
 
-          <Link
-            href="/akun/tulis"
-            className="font-interface text-sm bg-ink text-paper px-5 py-2.5 hover:opacity-80 transition-opacity duration-150 flex-shrink-0"
-          >
-            + Tulis Artikel
-          </Link>
-        </div>
-
-        {/* Daftar artikel */}
-        <section className="mb-16">
-          <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-5">
-            Artikel Saya ({daftarArtikel.length})
-          </h2>
-
-          {daftarArtikel.length === 0 ? (
-            <div className="border border-ink/10 py-20 text-center">
-              <p className="font-interface text-sm text-warm-gray mb-4">
-                Kamu belum punya artikel. Mulai menulis sekarang.
-              </p>
-              <Link
-                href="/akun/tulis"
-                className="font-interface text-sm bg-ink text-paper px-6 py-2.5 hover:opacity-80 transition-opacity duration-150"
-              >
-                Tulis Artikel Pertama
-              </Link>
-            </div>
-          ) : (
-            <div className="border border-ink/10">
-              {/* Header tabel */}
-              <div className="grid grid-cols-[1fr_110px_160px_80px] px-5 py-3 border-b border-ink/10 bg-ink/[0.03]">
-                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Judul</span>
-                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Status</span>
-                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Terakhir diubah</span>
-                <span />
+        <div className="mt-10">
+          <Section title="Menulis">
+            {!profile ? (
+              <div className="max-w-xl">
+                <p className="font-display text-body-base leading-relaxed text-text-secondary">
+                  Argumen adalah ruang pembaca untuk menulis analisis dan pendapat. Untuk mulai, Anda perlu nama penulis
+                  yang tampil di artikel.
+                </p>
+                <Link href="/akun/tulis" className="mt-6 inline-block">
+                  <Button>Mulai menulis</Button>
+                </Link>
               </div>
-
-              {daftarArtikel.map((artikel) => (
-                <div
-                  key={artikel.id}
-                  className="grid grid-cols-[1fr_110px_160px_80px] px-5 py-4 border-b border-ink/10 last:border-b-0 items-center hover:bg-ink/[0.015] transition-colors duration-100"
-                >
-                  <span className="font-display text-base font-bold text-ink leading-snug pr-4 truncate">
-                    {artikel.title}
-                  </span>
-
-                  <span className={`text-center font-interface text-xs px-2.5 py-1 ${
-                    artikel.status === 'published'
-                      ? 'text-signal-success bg-signal-success/10'
-                      : artikel.status === 'hidden'
-                      ? 'text-signal-danger bg-signal-danger/10'
-                      : 'text-warm-gray bg-ink/5'
-                  }`}>
-                    {artikel.status === 'published'
-                      ? 'Diterbitkan'
-                      : artikel.status === 'hidden'
-                      ? 'Disembunyikan'
-                      : 'Draft'}
-                  </span>
-
-                  <span className="font-interface text-xs text-warm-gray">
-                    {formatTanggal(artikel.updated_at)}
-                  </span>
-
-                  <div className="flex items-center gap-3 justify-end">
-                    <Link
-                      href={`/akun/artikel/${artikel.id}/edit`}
-                      className="font-interface text-xs text-text-link hover:opacity-60 transition-opacity duration-150"
-                    >
-                      Edit
-                    </Link>
-                    {artikel.status === 'published' && (
-                      <Link
-                        href={`/opinions/${profile.username}/${artikel.slug}`}
-                        className="font-interface text-xs text-warm-gray hover:text-ink transition-colors duration-150"
-                        target="_blank"
-                      >
-                        ↗
-                      </Link>
-                    )}
-                  </div>
+            ) : (
+              <>
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <p className="font-mono text-caption text-text-tertiary">{list.length} artikel</p>
+                  <Link href="/akun/tulis">
+                    <Button size="sm">Tulis artikel baru</Button>
+                  </Link>
                 </div>
-              ))}
+
+                {list.length === 0 ? (
+                  <p className="font-display text-body-base italic text-text-secondary">
+                    Belum ada artikel. Tulis yang pertama.
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-border-default/15 border-y border-border-default/15">
+                    {list.map((a) => {
+                      const status = (a.status in statusVariant ? a.status : 'draft') as keyof typeof statusVariant
+                      return (
+                        <li key={a.id} className="flex flex-wrap items-center gap-x-6 gap-y-2 py-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-display text-lg text-text-primary">{a.title}</p>
+                            <p className="mt-1 font-mono text-caption text-text-tertiary">
+                              Diubah {formatTanggalPendek(a.updated_at)}
+                            </p>
+                          </div>
+                          <Badge variant={statusVariant[status]}>{statusLabel[status]}</Badge>
+                          <div className="flex items-center gap-5">
+                            <UiLink href={`/akun/artikel/${a.id}/edit`} variant="muted">
+                              Ubah
+                            </UiLink>
+                            {status === 'published' && (
+                              <UiLink href={`/opinions/${profile.username}/${a.slug}`} variant="muted">
+                                Lihat
+                              </UiLink>
+                            )}
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+
+                {list.some((a) => a.status === 'published') && (
+                  <div className="mt-12">
+                    <h3 className="mb-5 font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">
+                      Analitik
+                    </h3>
+                    <OpinionAnalyticsDashboard />
+                  </div>
+                )}
+              </>
+            )}
+          </Section>
+
+          <Section title="Pengaturan">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <p className="font-display text-body-sm text-text-secondary">
+                Masuk dengan Google sebagai <span className="text-text-primary">{user.email}</span>.
+              </p>
+              <SignOutButton />
             </div>
-          )}
-        </section>
-
-        {/* Analitik */}
-        {daftarArtikel.some((a) => a.status === 'published') && (
-          <section>
-            <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-5">
-              Analitik
-            </h2>
-            <OpinionAnalyticsDashboard />
-          </section>
-        )}
-
+          </Section>
+        </div>
       </div>
     </main>
   )

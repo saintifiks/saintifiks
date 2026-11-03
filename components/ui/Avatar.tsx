@@ -1,5 +1,3 @@
-import Image from 'next/image'
-
 const sizes = { sm: 28, md: 40, lg: 56 } as const
 
 export type AvatarProps = {
@@ -16,11 +14,13 @@ export default function Avatar({ name, src, size = 'md', className = '' }: Avata
 
   if (src) {
     return (
-      <Image
+      // eslint-disable-next-line @next/next/no-img-element -- foto Google/Supabase dari host bervariasi; ukuran kecil
+      <img
         src={src}
         alt={name}
         width={px}
         height={px}
+        referrerPolicy="no-referrer"
         className={['shrink-0 rounded-full object-cover', className].filter(Boolean).join(' ')}
       />
     )
