@@ -1,6 +1,6 @@
 // [PERBAIKAN V2] — Update ke Design System V2
 
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import ArticleRenderer from '@/components/artikel/ArticleRenderer'
@@ -14,7 +14,9 @@ import {
 
 // [STABIL] Fitur social interaction sudah berjalan, hemat quota with cache 1 jam
 // Note: Koreksi dan interaksi (like/share/comment) tetap real-time via Client Components
-export const revalidate = 3600  // Cache 1 jam — artikel jarang berubah, quota efisien
+// Cache 10 menit (ISR). Terbit/ubah/tarik lewat dashboard menyegarkan segera (revalidatePublicContent);
+// koreksi yang disetujui langsung di basis data muncul paling lambat dalam 10 menit.
+export const revalidate = 600
 
 // [PERBAIKAN SESI #15]
 // Tipe article_corrections diperbarui: tambah kolom 'status' untuk filter approved
@@ -47,9 +49,25 @@ type Props = {
   params: Promise<{ slug: string }>
 }
 
+// Artikel terbit dirender saat build/deploy (langsung siap di cache); artikel baru dirender saat pertama diminta
+// lalu di-cache (dynamicParams default true). Bila basis data tak terjangkau saat build, cukup kembalikan daftar kosong.
+export async function generateStaticParams() {
+  try {
+    const { data } = await createPublicClient()
+      .from('articles')
+      .select('slug')
+      .eq('is_published', true)
+      .order('published_at', { ascending: false })
+      .limit(100)
+    return (data ?? []).map((a) => ({ slug: a.slug as string }))
+  } catch {
+    return []
+  }
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data: article } = await supabase
     .from('articles')
@@ -87,7 +105,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ArtikelPage({ params }: Props) {
   const { slug } = await params
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data: article, error } = await supabase
     .from('articles')

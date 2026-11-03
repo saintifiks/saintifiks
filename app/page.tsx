@@ -3,7 +3,7 @@
 // ditangani komponen klien HomeFeed.
 
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import HomeFeed, { type FeedArticle } from '@/components/layout/HomeFeed'
 import { formatTanggalPanjang } from '@/lib/format-date'
 
@@ -36,7 +36,8 @@ function hitungMenitBaca(content: string | null): number {
 }
 
 export default async function BerandaPage() {
-  const supabase = await createClient()
+  // Klien tanpa cookie: halaman ini disimpan di cache (revalidate) dan sama untuk semua pengunjung.
+  const supabase = createPublicClient()
 
   // Kolom category/kicker/country ditambahkan pada migration Sesi #47.
   const { data: articles, error } = await supabase

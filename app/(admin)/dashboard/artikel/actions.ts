@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/admin-check'
 import { redirect } from 'next/navigation'
+import { revalidatePublicContent } from '@/lib/revalidate-content'
 import {
   requiredString,
   optionalString,
@@ -98,6 +99,7 @@ export async function buatArtikelBaru(data: {
   if (shouldRedirect) {
     redirect('/dashboard')
   }
+  revalidatePublicContent()
   return { sukses: true }
 }
 
@@ -166,6 +168,7 @@ export async function updateArtikel(
       }
     }
 
+    revalidatePublicContent()
     return { sukses: true }
   } catch (error) {
     if (error instanceof ValidationError) return { error: error.message }
@@ -199,6 +202,7 @@ export async function terbitkanArtikel(id: string): Promise<HasilAksi> {
   if (shouldRedirect) {
     redirect('/dashboard')
   }
+  revalidatePublicContent()
   return { sukses: true }
 }
 
@@ -219,6 +223,7 @@ export async function jadikanDraft(id: string): Promise<HasilAksi> {
       return { error: 'Gagal mengubah status artikel.' }
     }
 
+    revalidatePublicContent()
     return { sukses: true }
   } catch (error) {
     if (error instanceof ValidationError) return { error: error.message }
