@@ -100,7 +100,7 @@ export default function BookDetailActions({ bookId, title, author, coverImageUrl
             <Button variant="secondary" className="w-full" disabled>Stok Habis</Button>
           ) : (
             <div className="flex gap-4">
-              <div className="flex items-center border border-border-default/50 rounded-md bg-white">
+              <div className="flex items-center border border-border-default/50 bg-surface-page">
                 <button type="button" onClick={handleDecrease} disabled={quantity <= 1} className="w-11 h-11 flex items-center justify-center text-text-primary hover:bg-border-default/20 disabled:opacity-30">-</button>
                 <span className="w-10 font-interface text-center text-sm font-semibold">{quantity}</span>
                 <button type="button" onClick={handleIncrease} disabled={quantity >= selectedVariant.stock_qty} className="w-11 h-11 flex items-center justify-center text-text-primary hover:bg-border-default/20 disabled:opacity-30">+</button>

@@ -144,7 +144,7 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
             <select
               value={chartType}
               onChange={(e) => setChartType(e.target.value)}
-              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
+              className="w-full border border-ink/15 bg-transparent px-3 py-2 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
             >
               {CHART_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -162,7 +162,7 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
               value={chartTitle}
               onChange={(e) => { setChartTitle(e.target.value); setError('') }}
               placeholder="Contoh: Pertumbuhan PDB 2020–2024"
-              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
+              className="w-full border border-ink/15 bg-transparent px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
             />
           </div>
 
@@ -189,7 +189,7 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
                     type="text"
                     value={lbl}
                     onChange={(e) => updateLabel(idx, e.target.value)}
-                    className="flex-1 border border-ink/15 bg-white px-3 py-1.5 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
+                    className="flex-1 border border-ink/15 bg-transparent px-3 py-1.5 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
                   />
                   <button
                     type="button"
@@ -229,7 +229,7 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
                       value={ds.label}
                       onChange={(e) => updateDataset(idx, 'label', e.target.value)}
                       placeholder="Nama dataset"
-                      className="flex-1 border border-ink/15 bg-white px-3 py-1.5 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
+                      className="flex-1 border border-ink/15 bg-transparent px-3 py-1.5 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
                     />
                     <button
                       type="button"
@@ -245,7 +245,7 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
                     value={ds.value}
                     onChange={(e) => updateDataset(idx, 'value', e.target.value)}
                     placeholder={`Nilai (pisahkan koma, harus ${labels.length} nilai)`}
-                    className="w-full border border-ink/15 bg-white px-3 py-1.5 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
+                    className="w-full border border-ink/15 bg-transparent px-3 py-1.5 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
                   />
                 </div>
               ))}

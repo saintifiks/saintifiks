@@ -154,7 +154,7 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Opsional"
-              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
+              className="w-full border border-ink/15 bg-transparent px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
             />
           </div>
           <div>
@@ -166,7 +166,7 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
               value={source}
               onChange={(e) => setSource(e.target.value)}
               placeholder="Opsional"
-              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
+              className="w-full border border-ink/15 bg-transparent px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
             />
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
               value={urlInput}
               onChange={(e) => { setUrlInput(e.target.value); setError('') }}
               placeholder="https://..."
-              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40 mb-4"
+              className="w-full border border-ink/15 bg-transparent px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40 mb-4"
             />
             <div className="flex gap-3 justify-end">
               <button

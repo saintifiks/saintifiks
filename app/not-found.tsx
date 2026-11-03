@@ -1,4 +1,4 @@
-import Link from '@/components/ui/Link'
+import NextLink from 'next/link'
 
 export const metadata = {
   title: 'Halaman Tidak Ditemukan — Saintifiks',
@@ -26,7 +26,7 @@ export default function NotFound() {
         </div>
 
         <p
-          className="font-mono text-6xl font-normal text-text-tertiary/40 mb-4"
+          className="font-mono text-6xl font-normal text-text-tertiary mb-4"
           aria-hidden="true"
         >
           404
@@ -41,12 +41,12 @@ export default function NotFound() {
           tidak pernah ada.
         </p>
 
-        <Link
+        <NextLink
           href="/"
-          className="inline-flex min-h-[44px] items-center justify-center rounded bg-interactive-primary px-5 py-3 font-interface text-sm font-semibold text-text-on-inverse no-underline transition-colors duration-fast hover:bg-interactive-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
+          className="inline-flex min-h-[44px] items-center justify-center bg-interactive-primary px-6 font-interface text-caption-lg font-semibold uppercase tracking-widest text-text-on-inverse transition-colors duration-fast hover:bg-interactive-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
         >
           Kembali ke Beranda
-        </Link>
+        </NextLink>
       </div>
     </div>
   )
