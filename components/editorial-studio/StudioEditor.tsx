@@ -194,6 +194,28 @@ function AutoGrowTextarea({
 
   useEffect(() => resizeTextarea(ref.current), [value])
 
+  // Tinggi harus dihitung ulang saat huruf web selesai dimuat dan saat lebar berubah (ukuran huruf judul mengikuti
+  // lebar layar). Tanpa ini, tinggi yang diukur sebelum gaya/huruf siap tertinggal terlalu kecil dan judul terpotong.
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+    let cancelled = false
+    void document.fonts?.ready.then(() => {
+      if (!cancelled) resizeTextarea(element)
+    })
+    let lastWidth = element.clientWidth
+    const observer = new ResizeObserver(() => {
+      if (element.clientWidth === lastWidth) return
+      lastWidth = element.clientWidth
+      resizeTextarea(element)
+    })
+    observer.observe(element)
+    return () => {
+      cancelled = true
+      observer.disconnect()
+    }
+  }, [])
+
   return (
     <label className="block">
       <span className="sr-only">{label}</span>
