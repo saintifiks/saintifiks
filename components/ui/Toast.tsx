@@ -97,13 +97,13 @@ export function ToastView({
   const tone = item.tone ?? 'neutral'
   const duration = item.duration ?? 4000
   const actionClass =
-    'inline-flex min-h-[36px] shrink-0 items-center px-2 font-interface text-caption font-semibold uppercase tracking-widest text-paper underline decoration-paper/40 decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-fast hover:decoration-paper'
+    'inline-flex min-h-[36px] shrink-0 items-center px-2 font-interface text-caption font-semibold uppercase tracking-widest text-ink underline decoration-ink/40 decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-fast hover:decoration-ink'
 
   return (
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
       className={[
-        'pointer-events-auto relative flex w-full max-w-lg items-stretch overflow-hidden rounded-none bg-night text-paper shadow-lg',
+        'surface-night pointer-events-auto relative flex w-full max-w-lg items-stretch overflow-hidden rounded-none border border-ink/15 bg-paper text-ink shadow-lg',
         live ? 'toast-card' : '',
       ]
         .filter(Boolean)
@@ -112,7 +112,7 @@ export function ToastView({
       {tone === 'danger' && <span aria-hidden="true" className="w-1 shrink-0 bg-signal-danger" />}
       <div className="flex min-w-0 flex-1 items-center gap-4 py-3 pl-4 pr-2">
         <div className="min-w-0 flex-1">
-          <p className="font-interface text-kicker font-semibold uppercase tracking-widest text-paper/60">
+          <p className="font-interface text-kicker font-semibold uppercase tracking-widest text-ink/60">
             {item.label ?? defaultLabel[tone]}
           </p>
           <p className="mt-1 font-display text-sm leading-snug">{item.message}</p>
@@ -138,7 +138,7 @@ export function ToastView({
           type="button"
           onClick={onDismiss}
           aria-label="Tutup notifikasi"
-          className="flex h-9 w-9 shrink-0 items-center justify-center text-paper/60 transition-colors duration-moderate hover:text-paper"
+          className="flex h-9 w-9 shrink-0 items-center justify-center text-ink/60 transition-colors duration-moderate hover:text-ink"
         >
           <Icon name="close" size="sm" />
         </button>
@@ -147,7 +147,7 @@ export function ToastView({
         <span
           aria-hidden="true"
           style={{ ['--toast-duration' as string]: `${duration}ms` }}
-          className="toast-bar absolute inset-x-0 bottom-0 h-px bg-paper/70"
+          className="toast-bar absolute inset-x-0 bottom-0 h-px bg-ink/70"
         />
       )}
     </div>

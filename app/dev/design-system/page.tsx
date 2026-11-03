@@ -148,7 +148,7 @@ export default function DesignSystemPage() {
                     Teks, garis, tombol
                   </span>
                 </div>
-                <div className="col-span-2 flex flex-col justify-between bg-night p-4 text-paper">
+                <div className="surface-night col-span-2 flex flex-col justify-between bg-paper p-4 text-ink">
                   <span className="font-display text-2xl">Malam</span>
                   <span className="font-mono text-caption">
                     {'#'}0F1620
