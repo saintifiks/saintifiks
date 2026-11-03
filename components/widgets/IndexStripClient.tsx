@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import NextLink from 'next/link'
 import type { IndexItem } from '@/lib/indices/types'
 import { INDICES_DEFAULT_POLL_MS, INDICES_MIN_POLL_MS } from '@/lib/indices/types'
 import { trendWindowLabel } from '@/lib/indices/trend'
@@ -72,12 +71,6 @@ export default function IndexStripClient({
   return (
     <aside className="surface-night bg-paper text-ink" aria-label="Angka: indikator ekonomi dan tata kelola">
       <div className="mx-auto flex max-w-6xl items-stretch">
-        <NextLink
-          href="/angka"
-          className="flex shrink-0 items-center border-r border-border-default/30 px-4 font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-primary underline decoration-transparent decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-fast hover:decoration-text-primary lg:pl-8"
-        >
-          Angka
-        </NextLink>
         <div className="index-ticker-scroll min-w-0 flex-1 overflow-x-auto overscroll-x-contain">
           <dl className="m-0 flex h-10 min-w-max items-center">
             {items.map((item, i) => (
