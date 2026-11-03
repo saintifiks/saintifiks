@@ -14,7 +14,7 @@ import Wordmark from '@/components/layout/Wordmark'
 import AccountMenu from '@/components/layout/AccountMenu'
 
 const PRIMARY_NAV: { label: string; href: string }[] = [
-  { label: 'Argumen', href: '/opinions' },
+  { label: 'Argumen', href: '/argumen' },
   { label: 'Koreksi', href: '/koreksi' },
   { label: 'Tentang', href: '/tentang-kami' },
 ]

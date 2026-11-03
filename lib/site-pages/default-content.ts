@@ -46,7 +46,7 @@ export const aboutDefaultContent: SitePageContent = {
             {
               title: 'Argumen',
               body: 'Ruang bagi pembaca untuk menerbitkan pemikirannya sendiri. Setiap tulisan merupakan pandangan penulisnya, bukan posisi editorial Saintifiks.',
-              href: '/opinions',
+              href: '/argumen',
               linkLabel: 'Jelajahi Argumen',
             },
             {

@@ -90,7 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .map((o) => {
       const username = sitemapProfileMap[o.author_id]
       return {
-        url: `${baseUrl}/opinions/${username}/${o.slug}`,
+        url: `${baseUrl}/argumen/${username}/${o.slug}`,
         lastModified: new Date(o.updated_at),
         changeFrequency: 'weekly' as const,
         priority: 0.7,

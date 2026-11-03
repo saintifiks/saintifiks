@@ -10,12 +10,14 @@ const STATIC_ALLOWED_DESTINATIONS = new Set([
   '/akun/tulis',
   '/akun/bacaan',
   '/koreksi',
+  '/argumen',
   '/opinions',
   '/bookstore',
 ])
 
 const DYNAMIC_ROUTE_PATTERNS = [
   /^\/artikel\/[a-z0-9-]+$/,
+  /^\/argumen\/[a-zA-Z0-9_.-]+\/[a-z0-9-]+$/,
   /^\/opinions\/[a-zA-Z0-9_.-]+\/[a-z0-9-]+$/,
   /^\/penulis\/[a-zA-Z0-9_.-]+$/,
   /^\/dashboard\/artikel(?:\/[0-9a-fA-F-]+(?:\/edit)?)?$/,

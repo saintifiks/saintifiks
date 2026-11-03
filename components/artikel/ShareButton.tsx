@@ -9,15 +9,23 @@ import { toPng } from 'html-to-image'
 import { usePathname } from 'next/navigation'
 import { IconButton, Sheet, useToast } from '@/components/ui'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { shareApi, type ContentKind } from '@/lib/engagement/kinds'
 
 type ShareButtonProps = {
   articleId: string
   articleTitle: string
   articleExcerpt?: string | null
   articleSlug: string
+  kind?: ContentKind
 }
 
-export default function ShareButton({ articleId, articleTitle, articleExcerpt, articleSlug }: ShareButtonProps) {
+export default function ShareButton({
+  articleId,
+  articleTitle,
+  articleExcerpt,
+  articleSlug,
+  kind = 'article',
+}: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
@@ -103,10 +111,10 @@ export default function ShareButton({ articleId, articleTitle, articleExcerpt, a
   // Track share ke database
   const trackShare = async (platform: string) => {
     try {
-      await fetch('/api/shares', {
+      await fetch(shareApi.url(kind), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ article_id: articleId, platform }),
+        body: shareApi.body(kind, articleId, platform),
       })
     } catch (error) {
       console.error('Error tracking share:', error)

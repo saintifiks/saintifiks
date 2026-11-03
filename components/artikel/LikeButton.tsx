@@ -9,12 +9,14 @@ import { usePathname } from 'next/navigation'
 import { IconButton, useToast } from '@/components/ui'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { saveIntent, signInWithGoogle, takeIntent } from '@/lib/auth-client'
+import { likeApi, type ContentKind } from '@/lib/engagement/kinds'
 
 type LikeButtonProps = {
   articleId: string
+  kind?: ContentKind
 }
 
-export default function LikeButton({ articleId }: LikeButtonProps) {
+export default function LikeButton({ articleId, kind = 'article' }: LikeButtonProps) {
   const { userId, ready } = useAuth()
   const toast = useToast()
   const pathname = usePathname()
@@ -26,7 +28,7 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
     async (next: boolean) => {
       setLiked(next)
       setBusy(true)
-      if (next) {
+      if (next && kind === 'article') {
         fetch('/api/analytics', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -40,13 +42,8 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
         }).catch(() => {})
       }
       try {
-        const res = await fetch('/api/likes', {
-          method: next ? 'POST' : 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ articleId }),
-          cache: 'no-store',
-          credentials: 'include',
-        })
+        const req = likeApi.request(kind, articleId, next)
+        const res = await fetch(req.url, { ...req.init, cache: 'no-store', credentials: 'include' })
         if (!res.ok) throw new Error(String(res.status))
       } catch {
         setLiked(!next)
@@ -55,7 +52,7 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
         setBusy(false)
       }
     },
-    [articleId, pathname, toast]
+    [articleId, kind, pathname, toast]
   )
 
   // Status suka hanya ditanyakan bila sudah login — pembaca anonim tidak memicu permintaan.
@@ -63,11 +60,11 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
   useEffect(() => {
     if (!ready || !userId) return
     let active = true
-    fetch(`/api/likes?articleId=${articleId}`, { cache: 'no-store', credentials: 'include' })
+    fetch(likeApi.statusUrl(kind, articleId), { cache: 'no-store', credentials: 'include' })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active) return
-        const already = !!data?.isLiked
+        const already = likeApi.isLiked(kind, data)
         if (data) setLiked(already)
         if (takeIntent('like', articleId) && !already) {
           void send(true)
@@ -78,7 +75,7 @@ export default function LikeButton({ articleId }: LikeButtonProps) {
     return () => {
       active = false
     }
-  }, [ready, userId, articleId, send, toast])
+  }, [ready, userId, articleId, kind, send, toast])
 
   function handleClick() {
     if (!userId) {
