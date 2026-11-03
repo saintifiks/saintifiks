@@ -34,12 +34,8 @@ export default async function BacaanPage() {
   const rows = ((data ?? []) as unknown as Row[]).filter((r) => r.articles)
 
   return (
-    <main className="min-h-screen bg-surface-page">
-      <div className="mx-auto max-w-3xl px-5 pb-24 pt-10 lg:px-8 lg:pt-14">
-        <UiLink href="/akun" variant="muted">
-          Akun
-        </UiLink>
-        <h1 className="mt-6 font-display text-display-sm leading-tight text-text-primary">Daftar Bacaan</h1>
+    <div>
+        <h2 className="font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">Daftar Bacaan</h2>
         <p className="mt-2 font-mono text-caption text-text-tertiary">{rows.length} artikel tersimpan</p>
 
         {rows.length === 0 ? (
@@ -77,7 +73,6 @@ export default async function BacaanPage() {
             })}
           </ul>
         )}
-      </div>
-    </main>
+    </div>
   )
 }
