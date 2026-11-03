@@ -1,15 +1,8 @@
-// Halaman login — gerbang masuk (Google OAuth via Supabase)
-// Memakai komponen PreLogin agar selaras Design System V2 (mendukung dark mode).
-// Tujuan default setelah login: /dashboard (area admin).
+// /login adalah alamat lama. Semua orang kini masuk lewat /masuk; peran menentukan tujuan.
+// Dipertahankan agar tautan lama dan pengalihan admin (redirect('/login')) tetap bekerja.
 
-import PreLogin from '@/components/layout/PreLogin'
+import { redirect } from 'next/navigation'
 
 export default function LoginPage() {
-  return (
-    <PreLogin
-      next="/dashboard"
-      title="Masuk"
-      description="Masuk untuk mengelola Saintifiks."
-    />
-  )
+  redirect('/masuk?next=/dashboard')
 }

@@ -52,6 +52,10 @@ export default function Drawer({ open, onClose }: DrawerProps) {
   // Status login dari AuthProvider (satu langganan untuk seluruh situs).
   const { userId } = useAuth()
   const isLoggedIn = !!userId
+  // Pintu akun: "Masuk" bila belum login, "Akun" bila sudah.
+  const navItems = NAV_ITEMS.map((item) =>
+    item.href === '/akun' && !isLoggedIn ? { label: 'Masuk', href: '/masuk' } : item
+  )
 
   // Kelola mount/unmount agar animasi keluar sempat diputar.
   useEffect(() => {
@@ -272,7 +276,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
 
           {/* Navigasi utama */}
           <nav className="mt-4 flex flex-col gap-4">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

@@ -17,7 +17,7 @@ export default async function EditArtikelPage(props: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect(`/auth/callback?next=/akun/artikel/${params.id}/edit`)
+    redirect(`/masuk?next=${encodeURIComponent(`/akun/artikel/${params.id}/edit`)}`)
   }
 
   const { data: profile } = await supabase

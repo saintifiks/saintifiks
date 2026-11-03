@@ -11,7 +11,8 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         '/(admin)/',      // Area admin
         '/api/',          // API routes (bukan untuk indexing)
-        '/login',         // Halaman login
+        '/login',         // Halaman login lama (diarahkan ke /masuk)
+        '/masuk',         // Halaman masuk
         '/akun/tulis',    // Halaman tulis opini
         '/akun/artikel/', // Halaman edit artikel individual
       ],
