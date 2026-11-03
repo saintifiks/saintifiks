@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowDown, ArrowUp, Eye, Plus, RotateCcw, Save, Send, Trash2 } from 'lucide-react'
 import { publishSitePage, restoreSitePageRevision, saveSitePageDraft } from '@/app/(admin)/dashboard/halaman/actions'
 import type { SitePageBlock, SitePageContent, SitePageRevisionRow, SitePageSection } from '@/lib/site-pages/types'
 
@@ -21,8 +20,13 @@ type EditorProps = {
   history: SitePageRevisionRow[]
 }
 
-const inputClass = 'mt-1.5 w-full rounded-lg border border-border-default/25 bg-surface-page px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-border-accent focus:outline-none focus:ring-2 focus:ring-interactive-primary/15'
-const smallButtonClass = 'inline-flex min-h-[36px] items-center justify-center gap-1.5 rounded border border-border-default/20 px-2.5 py-1.5 text-xs font-semibold text-text-secondary hover:bg-surface-sunken/60 hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary disabled:cursor-not-allowed disabled:opacity-40'
+const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary'
+// Isian bergaris (sama dengan komponen Input): satu garis bawah yang menebal saat difokus.
+const inputClass = 'mt-1.5 w-full min-h-[44px] rounded-none border-0 border-b border-border-default/40 bg-transparent px-0 py-2 font-display text-base text-text-primary placeholder:italic placeholder:text-text-tertiary transition-[border-color,box-shadow] duration-moderate focus:border-border-default focus:shadow-[0_1px_0_0_rgb(var(--color-ink))] focus:outline-none'
+// Tombol kecil: label bergaris bawah tipis, tanpa kotak dan tanpa ikon.
+const smallButtonClass = `inline-flex min-h-[36px] items-center font-interface text-caption font-semibold uppercase tracking-widest text-text-primary underline decoration-text-primary/35 decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-fast hover:decoration-text-primary disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}`
+const blockButtonClass = `flex min-h-[44px] w-full items-center justify-center bg-interactive-primary px-4 font-interface text-caption-lg font-semibold uppercase tracking-widest text-text-on-inverse transition-colors duration-fast hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:bg-interactive-primary-disabled disabled:text-text-tertiary ${focusRing}`
+const outlineLinkClass = `flex min-h-[44px] w-full items-center justify-center border border-border-default/40 font-interface text-caption-lg font-semibold uppercase tracking-widest text-text-primary transition-colors duration-fast hover:border-border-default ${focusRing}`
 
 const blockLabels: Record<SitePageBlock['type'], string> = {
   paragraph: 'Paragraf',
@@ -39,8 +43,8 @@ const blockLabels: Record<SitePageBlock['type'], string> = {
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-xs font-semibold text-text-primary">{label}</span>
-      {hint && <span className="ml-2 text-[11px] font-normal text-text-tertiary">{hint}</span>}
+      <span className="font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">{label}</span>
+      {hint && <span className="ml-2 font-mono text-caption font-normal normal-case tracking-normal text-text-tertiary">{hint}</span>}
       {children}
     </label>
   )
@@ -74,13 +78,13 @@ function BlockEditor({
   onMove: (direction: -1 | 1) => void
 }) {
   return (
-    <div className="rounded-lg border border-border-default/15 bg-surface-page p-4">
+    <div className="border border-border-default/20 bg-surface-page p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-interactive-primary">{blockLabels[block.type]}</p>
-        <div className="flex items-center gap-1">
-          <button type="button" className={smallButtonClass} aria-label="Pindahkan blok ke atas" disabled={index === 0} onClick={() => onMove(-1)}><ArrowUp size={14} /></button>
-          <button type="button" className={smallButtonClass} aria-label="Pindahkan blok ke bawah" disabled={index === total - 1} onClick={() => onMove(1)}><ArrowDown size={14} /></button>
-          <button type="button" className={`${smallButtonClass} text-signal-danger`} onClick={onRemove}><Trash2 size={14} /> Hapus</button>
+        <p className="font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-primary">{blockLabels[block.type]}</p>
+        <div className="flex items-center gap-4">
+          <button type="button" className={smallButtonClass} aria-label="Pindahkan blok ke atas" disabled={index === 0} onClick={() => onMove(-1)}>Atas</button>
+          <button type="button" className={smallButtonClass} aria-label="Pindahkan blok ke bawah" disabled={index === total - 1} onClick={() => onMove(1)}>Bawah</button>
+          <button type="button" className={`${smallButtonClass} text-signal-danger decoration-signal-danger/40`} onClick={onRemove}>Hapus</button>
         </div>
       </div>
 
@@ -108,7 +112,7 @@ function BlockEditor({
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Judul opsional"><input className={inputClass} value={block.title ?? ''} onChange={(event) => onChange({ ...block, title: event.target.value })} /></Field>
-            <Field label="Nada"><select className={inputClass} value={block.tone ?? 'info'} onChange={(event) => onChange({ ...block, tone: event.target.value as 'info' | 'warning' })}><option value="info">Informasi</option><option value="warning">Peringatan</option></select></Field>
+            <Field label="Nada"><select className={`${inputClass} select-arrow appearance-none pr-6`} value={block.tone ?? 'info'} onChange={(event) => onChange({ ...block, tone: event.target.value as 'info' | 'warning' })}><option value="info">Informasi</option><option value="warning">Peringatan</option></select></Field>
           </div>
           <Field label="Isi catatan"><textarea rows={4} className={inputClass} value={block.body} onChange={(event) => onChange({ ...block, body: event.target.value })} /></Field>
         </div>
@@ -117,7 +121,7 @@ function BlockEditor({
       {block.type === 'cards' && (
         <div className="space-y-4">
           {block.items.map((item, itemIndex) => (
-            <div key={itemIndex} className="rounded border border-border-default/15 p-3">
+            <div key={itemIndex} className="border border-border-default/20 p-3">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Label opsional"><input className={inputClass} value={item.eyebrow ?? ''} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, eyebrow: event.target.value }; onChange({ ...block, items }) }} /></Field>
                 <Field label="Judul kartu"><input className={inputClass} value={item.title} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, title: event.target.value }; onChange({ ...block, items }) }} /></Field>
@@ -127,49 +131,49 @@ function BlockEditor({
                 <Field label="Tujuan tautan opsional"><input className={inputClass} value={item.href ?? ''} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, href: event.target.value }; onChange({ ...block, items }) }} /></Field>
                 <Field label="Teks tautan"><input className={inputClass} value={item.linkLabel ?? ''} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, linkLabel: event.target.value }; onChange({ ...block, items }) }} /></Field>
               </div>
-              {block.items.length > 1 && <button type="button" className={`${smallButtonClass} mt-3 text-signal-danger`} onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== itemIndex) })}>Hapus kartu</button>}
+              {block.items.length > 1 && <button type="button" className={`${smallButtonClass} mt-3 text-signal-danger decoration-signal-danger/40`} onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== itemIndex) })}>Hapus kartu</button>}
             </div>
           ))}
-          <button type="button" className={smallButtonClass} onClick={() => onChange({ ...block, items: [...block.items, { title: '', body: '' }] })}><Plus size={14} /> Tambah kartu</button>
+          <button type="button" className={smallButtonClass} onClick={() => onChange({ ...block, items: [...block.items, { title: '', body: '' }] })}>Tambah kartu</button>
         </div>
       )}
 
       {block.type === 'steps' && (
         <div className="space-y-4">
           {block.items.map((item, itemIndex) => (
-            <div key={itemIndex} className="grid gap-3 rounded border border-border-default/15 p-3 sm:grid-cols-[minmax(0,1fr)_2fr_auto]">
+            <div key={itemIndex} className="grid gap-3 border border-border-default/20 p-3 sm:grid-cols-[minmax(0,1fr)_2fr_auto]">
               <Field label={`Judul langkah ${itemIndex + 1}`}><input className={inputClass} value={item.title} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, title: event.target.value }; onChange({ ...block, items }) }} /></Field>
               <Field label="Penjelasan"><textarea rows={3} className={inputClass} value={item.body} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, body: event.target.value }; onChange({ ...block, items }) }} /></Field>
-              {block.items.length > 1 && <button type="button" aria-label="Hapus langkah" className={`${smallButtonClass} self-end text-signal-danger`} onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== itemIndex) })}><Trash2 size={14} /></button>}
+              {block.items.length > 1 && <button type="button" aria-label="Hapus langkah" className={`${smallButtonClass} self-end text-signal-danger decoration-signal-danger/40`} onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== itemIndex) })}>Hapus</button>}
             </div>
           ))}
-          <button type="button" className={smallButtonClass} onClick={() => onChange({ ...block, items: [...block.items, { title: '', body: '' }] })}><Plus size={14} /> Tambah langkah</button>
+          <button type="button" className={smallButtonClass} onClick={() => onChange({ ...block, items: [...block.items, { title: '', body: '' }] })}>Tambah langkah</button>
         </div>
       )}
 
       {block.type === 'definitions' && (
         <div className="space-y-4">
           {block.items.map((item, itemIndex) => (
-            <div key={itemIndex} className="grid gap-3 rounded border border-border-default/15 p-3 sm:grid-cols-[minmax(0,1fr)_2fr_auto]">
+            <div key={itemIndex} className="grid gap-3 border border-border-default/20 p-3 sm:grid-cols-[minmax(0,1fr)_2fr_auto]">
               <Field label="Istilah"><input className={inputClass} value={item.term} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, term: event.target.value }; onChange({ ...block, items }) }} /></Field>
               <Field label="Penjelasan"><textarea rows={3} className={inputClass} value={item.description} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, description: event.target.value }; onChange({ ...block, items }) }} /></Field>
-              {block.items.length > 1 && <button type="button" aria-label="Hapus istilah" className={`${smallButtonClass} self-end text-signal-danger`} onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== itemIndex) })}><Trash2 size={14} /></button>}
+              {block.items.length > 1 && <button type="button" aria-label="Hapus istilah" className={`${smallButtonClass} self-end text-signal-danger decoration-signal-danger/40`} onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== itemIndex) })}>Hapus</button>}
             </div>
           ))}
-          <button type="button" className={smallButtonClass} onClick={() => onChange({ ...block, items: [...block.items, { term: '', description: '' }] })}><Plus size={14} /> Tambah istilah</button>
+          <button type="button" className={smallButtonClass} onClick={() => onChange({ ...block, items: [...block.items, { term: '', description: '' }] })}>Tambah istilah</button>
         </div>
       )}
 
       {block.type === 'subsections' && (
         <div className="space-y-4">
           {block.items.map((item, itemIndex) => (
-            <div key={itemIndex} className="rounded border border-border-default/15 p-3">
+            <div key={itemIndex} className="border border-border-default/20 p-3">
               <Field label="Judul subbagian"><input className={inputClass} value={item.title} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, title: event.target.value }; onChange({ ...block, items }) }} /></Field>
               <Field label="Paragraf" hint="Satu paragraf per baris"><textarea rows={5} className={inputClass} value={item.paragraphs.join('\n')} onChange={(event) => { const items = [...block.items]; items[itemIndex] = { ...item, paragraphs: event.target.value.split('\n') }; onChange({ ...block, items }) }} /></Field>
-              {block.items.length > 1 && <button type="button" className={`${smallButtonClass} mt-3 text-signal-danger`} onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== itemIndex) })}>Hapus subbagian</button>}
+              {block.items.length > 1 && <button type="button" className={`${smallButtonClass} mt-3 text-signal-danger decoration-signal-danger/40`} onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== itemIndex) })}>Hapus subbagian</button>}
             </div>
           ))}
-          <button type="button" className={smallButtonClass} onClick={() => onChange({ ...block, items: [...block.items, { title: '', paragraphs: [''] }] })}><Plus size={14} /> Tambah subbagian</button>
+          <button type="button" className={smallButtonClass} onClick={() => onChange({ ...block, items: [...block.items, { title: '', paragraphs: [''] }] })}>Tambah subbagian</button>
         </div>
       )}
 
@@ -271,9 +275,9 @@ export default function SitePageEditor(props: EditorProps) {
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="min-w-0 space-y-6">
-        {message && <div role="status" className={`rounded-lg border px-4 py-3 text-sm ${message.tone === 'success' ? 'border-signal-success/30 bg-signal-success-surface text-text-primary' : 'border-signal-danger/30 bg-signal-danger-surface text-signal-danger'}`}>{message.text}</div>}
+        {message && <div role={message.tone === 'error' ? 'alert' : 'status'} className={`border-l pl-4 font-display text-body-sm leading-relaxed ${message.tone === 'success' ? 'border-border-default text-text-primary' : 'border-signal-danger text-signal-danger'}`}>{message.text}</div>}
 
-        <section className="rounded-lg border border-border-default/15 bg-surface-elevated p-5 sm:p-6">
+        <section className="border border-border-default/20 p-5 sm:p-6">
           <h2 className="font-display text-lg font-bold text-text-primary">Identitas halaman</h2>
           <div className="mt-5 space-y-4">
             <Field label="Label kecil"><input className={inputClass} value={content.kicker ?? ''} onChange={(event) => changeContent({ ...content, kicker: event.target.value })} /></Field>
@@ -283,7 +287,7 @@ export default function SitePageEditor(props: EditorProps) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-border-default/15 bg-surface-elevated p-5 sm:p-6">
+        <section className="border border-border-default/20 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
             <div><h2 className="font-display text-lg font-bold text-text-primary">Sorotan atas</h2><p className="mt-1 text-xs text-text-tertiary">Fakta singkat atau ringkasan sebelum isi utama.</p></div>
           </div>
@@ -297,7 +301,7 @@ export default function SitePageEditor(props: EditorProps) {
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-text-primary">Kartu ringkasan</p>
                 {content.highlights.map((highlight, index) => (
-                  <div key={index} className="rounded border border-border-default/15 p-3">
+                  <div key={index} className="border border-border-default/20 p-3">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Field label="Label"><input className={inputClass} value={highlight.label ?? ''} onChange={(event) => { const highlights = [...(content.highlights ?? [])]; highlights[index] = { ...highlight, label: event.target.value }; changeContent({ ...content, highlights }) }} /></Field>
                       <Field label="Judul"><input className={inputClass} value={highlight.title} onChange={(event) => { const highlights = [...(content.highlights ?? [])]; highlights[index] = { ...highlight, title: event.target.value }; changeContent({ ...content, highlights }) }} /></Field>
@@ -321,13 +325,13 @@ export default function SitePageEditor(props: EditorProps) {
           {content.sections.map((section, sectionIndex) => {
             const required = props.requiredSectionIds.includes(section.id)
             return (
-              <section key={section.id} className="rounded-lg border border-border-default/15 bg-surface-elevated p-5 shadow-xs sm:p-6">
+              <section key={section.id} className="border border-border-default/20 p-5 sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-default/10 pb-4">
-                  <div><p className="font-mono text-[10px] uppercase tracking-widest text-text-tertiary">Bagian {sectionIndex + 1}{required ? ' · Wajib' : ''}</p><h2 className="mt-1 font-display text-lg font-bold text-text-primary">{section.title}</h2></div>
-                  <div className="flex gap-1">
-                    <button type="button" className={smallButtonClass} disabled={sectionIndex === 0} onClick={() => moveSection(sectionIndex, -1)}><ArrowUp size={14} /><span className="sr-only">Naik</span></button>
-                    <button type="button" className={smallButtonClass} disabled={sectionIndex === content.sections.length - 1} onClick={() => moveSection(sectionIndex, 1)}><ArrowDown size={14} /><span className="sr-only">Turun</span></button>
-                    <button type="button" className={`${smallButtonClass} text-signal-danger`} disabled={required} title={required ? 'Bagian wajib tidak dapat dihapus' : undefined} onClick={() => removeSection(sectionIndex)}><Trash2 size={14} /> Hapus</button>
+                  <div><p className="font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-tertiary">Bagian {sectionIndex + 1}{required ? ' · Wajib' : ''}</p><h2 className="mt-1 font-display text-lg font-bold text-text-primary">{section.title}</h2></div>
+                  <div className="flex gap-4">
+                    <button type="button" className={smallButtonClass} disabled={sectionIndex === 0} onClick={() => moveSection(sectionIndex, -1)}>Naik</button>
+                    <button type="button" className={smallButtonClass} disabled={sectionIndex === content.sections.length - 1} onClick={() => moveSection(sectionIndex, 1)}>Turun</button>
+                    <button type="button" className={`${smallButtonClass} text-signal-danger decoration-signal-danger/40`} disabled={required} title={required ? 'Bagian wajib tidak dapat dihapus' : undefined} onClick={() => removeSection(sectionIndex)}>Hapus</button>
                   </div>
                 </div>
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -353,19 +357,19 @@ export default function SitePageEditor(props: EditorProps) {
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <select id={`block-type-${sectionIndex}`} className="min-h-[40px] rounded border border-border-default/20 bg-surface-page px-3 text-xs text-text-primary" defaultValue="paragraph">
+                  <select id={`block-type-${sectionIndex}`} className={`${inputClass} select-arrow mt-0 min-h-[40px] w-auto appearance-none pr-6 text-sm`} defaultValue="paragraph">
                     {Object.entries(blockLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                   </select>
-                  <button type="button" className={smallButtonClass} onClick={() => { const select = document.getElementById(`block-type-${sectionIndex}`) as HTMLSelectElement; replaceSection(sectionIndex, { ...section, blocks: [...section.blocks, newBlock(select.value as SitePageBlock['type'])] }) }}><Plus size={14} /> Tambah blok</button>
+                  <button type="button" className={smallButtonClass} onClick={() => { const select = document.getElementById(`block-type-${sectionIndex}`) as HTMLSelectElement; replaceSection(sectionIndex, { ...section, blocks: [...section.blocks, newBlock(select.value as SitePageBlock['type'])] }) }}>Tambah blok</button>
                 </div>
               </section>
             )
           })}
         </div>
 
-        <button type="button" className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border-accent/50 bg-signal-info-surface/40 text-sm font-semibold text-text-link hover:bg-signal-info-surface" onClick={addSection}><Plus size={16} /> Tambah bagian</button>
+        <button type="button" className={outlineLinkClass} onClick={addSection}>Tambah bagian</button>
 
-        <section className="rounded-lg border border-border-default/15 bg-surface-elevated p-5 sm:p-6">
+        <section className="border border-border-default/20 p-5 sm:p-6">
           <h2 className="font-display text-lg font-bold text-text-primary">Catatan kaki</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Label opsional"><input className={inputClass} value={content.footer?.label ?? ''} onChange={(event) => changeContent({ ...content, footer: { label: event.target.value, body: content.footer?.body ?? '' } })} /></Field>
@@ -375,12 +379,12 @@ export default function SitePageEditor(props: EditorProps) {
       </div>
 
       <aside className="space-y-5 xl:sticky xl:top-6 xl:self-start">
-        <section className="rounded-lg border border-border-default/15 bg-surface-elevated p-5 shadow-sm">
+        <section className="border border-border-default/20 p-5">
           <h2 className="font-display text-lg font-bold text-text-primary">Simpan dan terbitkan</h2>
           <div className="mt-4 space-y-4">
             <Field label="Ringkasan perubahan" hint="Tersimpan di riwayat"><textarea rows={3} className={inputClass} value={changeSummary} onChange={(event) => setChangeSummary(event.target.value)} placeholder="Contoh: memperbarui penjelasan penggunaan AI" /></Field>
-            <button type="button" disabled={isPending} onClick={saveDraft} className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-interactive-primary px-4 text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover disabled:cursor-wait disabled:opacity-60"><Save size={16} /> {isPending ? 'Memproses…' : 'Simpan draf'}</button>
-            {draftId && !dirty && <Link href={`/dashboard/halaman/${props.slug}/pratinjau`} className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-interactive-primary text-sm font-semibold text-interactive-primary hover:bg-signal-info-surface"><Eye size={16} /> Buka pratinjau</Link>}
+            <button type="button" disabled={isPending} onClick={saveDraft} className={blockButtonClass}>{isPending ? 'Memproses…' : 'Simpan draf'}</button>
+            {draftId && !dirty && <Link href={`/dashboard/halaman/${props.slug}/pratinjau`} className={outlineLinkClass}>Buka pratinjau</Link>}
           </div>
 
           <div className="mt-5 border-t border-border-default/15 pt-5">
@@ -388,13 +392,13 @@ export default function SitePageEditor(props: EditorProps) {
               <input type="checkbox" className="mt-1" checked={capabilityConfirmed} onChange={(event) => setCapabilityConfirmed(event.target.checked)} />
               <span>Saya sudah memastikan halaman ini tidak menjanjikan formulir, kontak, penghapusan data, keamanan, atau layanan lain yang belum benar-benar tersedia.</span>
             </label>
-            <button type="button" disabled={isPending || !draftId || dirty || !capabilityConfirmed} onClick={publishDraft} className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-signal-success px-4 text-sm font-semibold text-text-on-inverse hover:bg-signal-success/90 disabled:cursor-not-allowed disabled:opacity-40"><Send size={16} /> Terbitkan draf</button>
-            {dirty && draftId && <p className="mt-2 text-xs leading-5 text-signal-warning">Simpan perubahan terbaru sebelum menerbitkan.</p>}
+            <button type="button" disabled={isPending || !draftId || dirty || !capabilityConfirmed} onClick={publishDraft} className={`${blockButtonClass} mt-4`}>Terbitkan draf</button>
+            {dirty && draftId && <p className="mt-2 text-xs leading-5 text-text-secondary">Simpan perubahan terbaru sebelum menerbitkan.</p>}
             {!draftId && <p className="mt-2 text-xs leading-5 text-text-tertiary">Simpan draf terlebih dahulu. Halaman publik tidak berubah saat Anda mengedit.</p>}
           </div>
         </section>
 
-        <section className="rounded-lg border border-border-default/15 bg-surface-elevated p-5">
+        <section className="border border-border-default/20 p-5">
           <h2 className="font-display text-base font-bold text-text-primary">SEO dan indeks</h2>
           <div className="mt-4 space-y-4">
             <Field label="Judul SEO" hint={`${metaTitle.length}/70`}><input className={inputClass} maxLength={70} value={metaTitle} onChange={(event) => { setMetaTitle(event.target.value); setDirty(true) }} /></Field>
@@ -403,7 +407,7 @@ export default function SitePageEditor(props: EditorProps) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-border-default/15 bg-surface-elevated p-5">
+        <section className="border border-border-default/20 p-5">
           <div className="flex items-center justify-between"><h2 className="font-display text-base font-bold text-text-primary">Riwayat versi</h2><span className="text-xs tabular-nums text-text-tertiary">{props.history.length}</span></div>
           {props.history.length === 0 ? <p className="mt-3 text-xs leading-5 text-text-tertiary">Riwayat muncul setelah draf pertama disimpan.</p> : (
             <ol className="mt-4 divide-y divide-border-default/10">
@@ -412,10 +416,10 @@ export default function SitePageEditor(props: EditorProps) {
                 const draft = revision.id === draftId
                 return (
                   <li key={revision.id} className="py-3 first:pt-0">
-                    <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold text-text-primary">Versi {revision.version}</p><span className="text-[10px] uppercase tracking-wider text-text-tertiary">{published ? 'Terbit' : draft ? 'Draf' : 'Arsip'}</span></div>
-                    <p className="mt-1 text-[11px] leading-4 text-text-secondary">{revision.change_summary || 'Tanpa ringkasan perubahan'}</p>
-                    <p className="mt-1 text-[10px] text-text-tertiary">{new Date(revision.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' })}</p>
-                    {!draft && <button type="button" disabled={isPending} className={`${smallButtonClass} mt-2`} onClick={() => restoreRevision(revision)}><RotateCcw size={13} /> Jadikan draf</button>}
+                    <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold text-text-primary">Versi {revision.version}</p><span className="font-mono text-caption uppercase text-text-tertiary">{published ? 'Terbit' : draft ? 'Draf' : 'Arsip'}</span></div>
+                    <p className="mt-1 text-caption leading-4 text-text-secondary">{revision.change_summary || 'Tanpa ringkasan perubahan'}</p>
+                    <p className="mt-1 font-mono text-caption text-text-tertiary">{new Date(revision.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' })}</p>
+                    {!draft && <button type="button" disabled={isPending} className={`${smallButtonClass} mt-2`} onClick={() => restoreRevision(revision)}>Jadikan draf</button>}
                   </li>
                 )
               })}
@@ -423,7 +427,7 @@ export default function SitePageEditor(props: EditorProps) {
           )}
         </section>
 
-        <Link href={props.publicPath} target="_blank" className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-border-default/20 text-sm font-semibold text-text-secondary hover:bg-surface-sunken/50"><Eye size={16} /> Lihat versi publik</Link>
+        <Link href={props.publicPath} target="_blank" className={outlineLinkClass}>Lihat versi publik</Link>
       </aside>
     </div>
   )
