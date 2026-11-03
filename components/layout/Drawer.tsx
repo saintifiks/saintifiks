@@ -53,8 +53,12 @@ export default function Drawer({ open, onClose }: DrawerProps) {
   const { userId } = useAuth()
   const isLoggedIn = !!userId
   // Pintu akun: "Masuk" bila belum login, "Akun" bila sudah.
-  const navItems = NAV_ITEMS.map((item) =>
-    item.href === '/akun' && !isLoggedIn ? { label: 'Masuk', href: '/masuk' } : item
+  const navItems = NAV_ITEMS.flatMap((item) =>
+    item.href !== '/akun'
+      ? [item]
+      : isLoggedIn
+        ? [{ label: 'Daftar Bacaan', href: '/akun/bacaan' }, item]
+        : [{ label: 'Masuk', href: '/masuk' }]
   )
 
   // Kelola mount/unmount agar animasi keluar sempat diputar.

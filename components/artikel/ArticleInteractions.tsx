@@ -1,12 +1,13 @@
 'use client'
 
-// ArticleInteractions — bilah aksi artikel (suka · komentar · bagikan · koreksi · tampilan baca).
+// ArticleInteractions — bilah aksi artikel (suka · simpan · komentar · bagikan · koreksi · tampilan baca).
 // Satu elemen DOM yang berpindah tempat lewat CSS (agar status tidak terduplikasi):
 //  • ponsel/tablet (<1280px): bilah tetap di dasar layar;
 //  • desktop (≥1280px): rel lengket di sebelah kiri kolom artikel, ikon bertumpuk vertikal.
 // Wajib ditempatkan di dalam pembungkus `relative` selebar kolom artikel.
 
 import LikeButton from './LikeButton'
+import SaveButton from './SaveButton'
 import ShareButton from './ShareButton'
 import CommentsSection from './CommentsSection'
 import CorrectionSection from './CorrectionSection'
@@ -41,6 +42,7 @@ export default function ArticleInteractions({
     >
       <div className="mx-auto flex max-w-[720px] items-center justify-between px-3 sm:px-0 xl:sticky xl:top-32 xl:mx-0 xl:max-w-none xl:flex-col xl:justify-start xl:gap-1 xl:px-0">
         <LikeButton articleId={articleId} />
+        <SaveButton articleId={articleId} />
         <CommentsSection articleId={articleId} />
         <ShareButton
           articleId={articleId}

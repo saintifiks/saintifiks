@@ -17,7 +17,7 @@ export async function signInWithGoogle(next: string): Promise<void> {
 
 const INTENT_KEY = 'saintifiks-pending-intent'
 
-export type PendingIntent = { type: 'like' | 'comment'; articleId: string }
+export type PendingIntent = { type: 'like' | 'comment' | 'save'; articleId: string }
 
 export function saveIntent(intent: PendingIntent): void {
   try {
