@@ -2,10 +2,11 @@
 // Server Component: semua query di server via admin client (bypass RLS)
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireAdmin } from '@/lib/admin-check'
 import Link from 'next/link'
-import { Heart, MessageCircle, Share2, Eye, TrendingUp } from 'lucide-react'
+import PageHeader from '@/components/admin/PageHeader'
+import { EmptyState, StatRow, adminLink, table } from '@/components/admin/ui'
+import { formatTanggalPendek } from '@/lib/format-date'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,29 +23,8 @@ type ArticleStats = {
   avg_scroll: number
 }
 
-function formatTanggal(tanggal: string): string {
-  return new Date(tanggal).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-function StatBadge({ value, icon }: { value: number; icon: React.ReactNode }) {
-  return (
-    <span className="flex items-center gap-1 font-interface text-xs text-warm-gray">
-      {icon}
-      {value}
-    </span>
-  )
-}
-
 export default async function AnalyticsPage() {
-  // Verifikasi admin
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
+  await requireAdmin()
   const admin = createAdminClient()
 
   // Ambil semua artikel
@@ -55,16 +35,14 @@ export default async function AnalyticsPage() {
 
   if (!articles || articles.length === 0) {
     return (
-      <main className="min-h-screen bg-paper">
-        <div className="max-w-5xl mx-auto px-6 py-12">
-          <div className="mb-10">
-            <Link href="/dashboard" className="font-interface text-xs text-warm-gray hover:text-ink transition-colors">
-              ← Dashboard
-            </Link>
-            <h1 className="font-display text-3xl font-bold text-ink mt-3">Analytics</h1>
-          </div>
-          <p className="font-interface text-sm text-warm-gray">Belum ada artikel.</p>
-        </div>
+      <main aria-labelledby="analytics-title">
+        <PageHeader
+          titleId="analytics-title"
+          eyebrow="Wawasan"
+          title="Analitik"
+          breadcrumbs={[{ label: 'Beranda', href: '/dashboard' }, { label: 'Analitik' }]}
+        />
+        <EmptyState title="Belum ada artikel" />
       </main>
     )
   }
@@ -161,125 +139,74 @@ export default async function AnalyticsPage() {
   )
 
   return (
-    <main className="min-h-screen bg-paper">
-      <div className="max-w-5xl mx-auto px-6 py-12">
+    <main aria-labelledby="analytics-title">
+      <PageHeader
+        titleId="analytics-title"
+        eyebrow="Wawasan"
+        title="Analitik"
+        description="Interaksi pembaca per artikel. Diperbarui setiap kali halaman dibuka."
+        breadcrumbs={[{ label: 'Beranda', href: '/dashboard' }, { label: 'Analitik' }]}
+      />
 
-        {/* Header */}
-        <div className="flex items-start justify-between mb-10">
-          <div>
-            <Link href="/dashboard" className="font-interface text-xs text-warm-gray hover:text-ink transition-colors">
-              ← Dashboard
-            </Link>
-            <h1 className="font-display text-3xl font-bold text-ink mt-3">Analytics</h1>
-            <p className="font-interface text-sm text-warm-gray mt-1">
-              Data interaksi per artikel — diperbarui setiap kali halaman dibuka
-            </p>
-          </div>
-        </div>
+      <StatRow
+        items={[
+          { label: 'Tampilan', value: totals.page_views.toLocaleString('id-ID') },
+          { label: 'Suka', value: totals.likes.toLocaleString('id-ID') },
+          { label: 'Komentar', value: totals.comments.toLocaleString('id-ID') },
+          { label: 'Bagikan', value: totals.shares.toLocaleString('id-ID') },
+        ]}
+      />
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-          <div className="border border-ink/10 p-5">
-            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">Total Views</p>
-            <div className="flex items-center gap-2">
-              <Eye size={16} className="text-warm-gray" />
-              <span className="font-display text-2xl font-bold text-ink">{totals.page_views.toLocaleString('id-ID')}</span>
-            </div>
-          </div>
-          <div className="border border-ink/10 p-5">
-            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">Total Likes</p>
-            <div className="flex items-center gap-2">
-              <Heart size={16} className="text-signal-danger/60" />
-              <span className="font-display text-2xl font-bold text-ink">{totals.likes.toLocaleString('id-ID')}</span>
-            </div>
-          </div>
-          <div className="border border-ink/10 p-5">
-            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">Total Komentar</p>
-            <div className="flex items-center gap-2">
-              <MessageCircle size={16} className="text-warm-gray" />
-              <span className="font-display text-2xl font-bold text-ink">{totals.comments.toLocaleString('id-ID')}</span>
-            </div>
-          </div>
-          <div className="border border-ink/10 p-5">
-            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">Total Share</p>
-            <div className="flex items-center gap-2">
-              <Share2 size={16} className="text-warm-gray" />
-              <span className="font-display text-2xl font-bold text-ink">{totals.shares.toLocaleString('id-ID')}</span>
-            </div>
-          </div>
-        </div>
+      <section aria-labelledby="per-artikel-heading" className="mt-12">
+        <h2 id="per-artikel-heading" className="mb-4 font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">
+          Per artikel · {stats.length}
+        </h2>
 
-        {/* Tabel per artikel */}
-        <section>
-          <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-4">
-            Per Artikel ({stats.length})
-          </h2>
-
-          <div className="border border-ink/10">
-            {/* Header tabel */}
-            <div className="hidden sm:grid grid-cols-[1fr_72px_72px_72px_72px_80px] px-5 py-3 border-b border-ink/10 bg-ink/[0.03]">
-              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Judul</span>
-              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Views</span>
-              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Likes</span>
-              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Komentar</span>
-              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Share</span>
-              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Scroll Avg</span>
-            </div>
-
-            {stats.map((artikel) => (
-              <div
-                key={artikel.id}
-                className="px-5 py-4 border-b border-ink/10 last:border-b-0 hover:bg-ink/[0.015] transition-colors"
-              >
-                {/* Desktop layout */}
-                <div className="hidden sm:grid grid-cols-[1fr_72px_72px_72px_72px_80px] items-center gap-2">
-                  <div className="min-w-0 pr-4">
-                    <Link
-                      href={`/artikel/${artikel.slug}`}
-                      target="_blank"
-                      className="font-display text-sm font-bold text-ink hover:text-text-link transition-colors leading-snug line-clamp-2"
-                    >
+        <div className={table.wrap}>
+          <table className={table.root}>
+            <caption className="sr-only">Interaksi per artikel</caption>
+            <thead>
+              <tr className={table.headRow}>
+                <th scope="col" className={table.th}>Judul</th>
+                <th scope="col" className={`${table.th} text-right`}>Tampil</th>
+                <th scope="col" className={`${table.th} text-right`}>Suka</th>
+                <th scope="col" className={`${table.th} text-right`}>Komentar</th>
+                <th scope="col" className={`${table.th} text-right`}>Bagikan</th>
+                <th scope="col" className={`${table.th} text-right`}>Gulir</th>
+              </tr>
+            </thead>
+            <tbody className={table.bodyRows}>
+              {stats.map((artikel) => (
+                <tr key={artikel.id}>
+                  <th scope="row" className={`${table.td} min-w-[16rem] font-normal`}>
+                    <Link href={`/artikel/${artikel.slug}`} target="_blank" rel="noopener noreferrer" className={`font-display text-base leading-snug text-text-primary ${adminLink}`}>
                       {artikel.title}
                     </Link>
-                    <span className={`font-interface text-xs mt-0.5 inline-block ${artikel.is_published ? 'text-warm-gray' : 'text-warm-gray'}`}>
+                    <p className="mt-1 font-mono text-caption text-text-tertiary">
                       {artikel.is_published
-                        ? artikel.published_at ? formatTanggal(artikel.published_at) : 'Diterbitkan'
-                        : 'Draft'}
-                    </span>
-                  </div>
-                  <span className="font-interface text-sm text-warm-gray text-center">{artikel.page_views}</span>
-                  <span className="font-interface text-sm text-warm-gray text-center">{artikel.likes}</span>
-                  <span className="font-interface text-sm text-warm-gray text-center">{artikel.comments}</span>
-                  <span className="font-interface text-sm text-warm-gray text-center">{artikel.shares}</span>
-                  <div className="flex items-center justify-center gap-1">
-                    <TrendingUp size={12} className="text-warm-gray" />
-                    <span className="font-interface text-sm text-warm-gray">{artikel.avg_scroll}%</span>
-                  </div>
-                </div>
-
-                {/* Mobile layout */}
-                <div className="sm:hidden">
-                  <Link
-                    href={`/artikel/${artikel.slug}`}
-                    target="_blank"
-                    className="font-display text-sm font-bold text-ink hover:text-text-link transition-colors leading-snug block mb-2"
-                  >
-                    {artikel.title}
-                  </Link>
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <StatBadge value={artikel.page_views} icon={<Eye size={12} />} />
-                    <StatBadge value={artikel.likes} icon={<Heart size={12} />} />
-                    <StatBadge value={artikel.comments} icon={<MessageCircle size={12} />} />
-                    <StatBadge value={artikel.shares} icon={<Share2 size={12} />} />
-                    <StatBadge value={artikel.avg_scroll} icon={<TrendingUp size={12} />} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-      </div>
+                        ? artikel.published_at
+                          ? formatTanggalPendek(artikel.published_at)
+                          : 'Terbit'
+                        : 'Draf'}
+                    </p>
+                  </th>
+                  {[artikel.page_views, artikel.likes, artikel.comments, artikel.shares].map((n, i) => (
+                    <td key={i} className={`${table.td} text-right font-mono text-caption tabular-nums text-text-secondary`}>
+                      {n.toLocaleString('id-ID')}
+                    </td>
+                  ))}
+                  <td className={`${table.td} text-right font-mono text-caption tabular-nums text-text-secondary`}>
+                    {artikel.avg_scroll}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 font-mono text-caption text-text-tertiary">
+          Gulir = rata-rata kedalaman gulir pembaca (proxy “dibaca tuntas”).
+        </p>
+      </section>
     </main>
   )
 }

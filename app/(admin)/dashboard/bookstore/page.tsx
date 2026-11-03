@@ -1,16 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import PageHeader from '@/components/admin/PageHeader'
+import { EmptyState, StatRow, adminLink, focusRing, table } from '@/components/admin/ui'
+import Badge from '@/components/ui/Badge'
 
 export const dynamic = 'force-dynamic'
 
-// 1. Definisikan tipe varian
 type VariantData = {
   id: string
   format: string
   stock_qty: number
 }
 
-// 2. Definisikan tipe buku secara eksplisit agar TypeScript tidak menebak-nebak (no implicitly 'any')
+// Tipe buku ditulis eksplisit agar TypeScript tidak menebak (no implicit any).
 type BookData = {
   id: string
   title: string
@@ -29,110 +31,99 @@ export default async function BookstoreAdminPage() {
   const { data: books } = await supabase
     .from('books')
     .select(`
-      id, 
-      title, 
-      status, 
-      authors ( name ), 
+      id,
+      title,
+      status,
+      authors ( name ),
       publishers ( name ),
       book_variants ( id, format, stock_qty )
     `)
     .order('created_at', { ascending: false })
 
-  // 3. Paksa TypeScript untuk mengenali daftar ini sebagai sekumpulan BookData, bukan 'any'
   const daftarBuku = (books as unknown as BookData[]) ?? []
 
   return (
-    <main className="min-h-screen bg-paper">
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        
-        <div className="flex items-start justify-between mb-10">
-          <div>
-            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest">Admin Panel</p>
-            <h1 className="font-display text-3xl font-bold text-ink mt-2">Manajemen Bookstore</h1>
-            <p className="font-interface text-sm text-warm-gray mt-1">PIM (Product Information Management) & Inventaris</p>
-          </div>
-          <Link href="/dashboard" className="font-interface text-sm text-warm-gray hover:text-ink transition-colors duration-150 mt-2">
-            ← Kembali ke Dashboard Utama
-          </Link>
-        </div>
+    <main aria-labelledby="bookstore-title">
+      <PageHeader
+        titleId="bookstore-title"
+        eyebrow="Bookstore"
+        title="Katalog buku"
+        description="Informasi produk dan stok. Tambahkan penulis dan penerbit sebelum membuat buku."
+        breadcrumbs={[{ label: 'Beranda', href: '/dashboard' }, { label: 'Bookstore' }]}
+        actions={
+          <>
+            <Link
+              href="/dashboard/bookstore/buku/baru"
+              className={`flex min-h-[44px] items-center bg-interactive-primary px-5 font-interface text-caption-lg font-semibold uppercase tracking-widest text-text-on-inverse transition-colors duration-fast hover:bg-interactive-primary-hover ${focusRing}`}
+            >
+              Tambah buku
+            </Link>
+            <Link href="/dashboard/bookstore/penulis" className={`font-interface text-sm text-text-primary ${adminLink} ${focusRing}`}>
+              Penulis
+            </Link>
+            <Link href="/dashboard/bookstore/penerbit" className={`font-interface text-sm text-text-primary ${adminLink} ${focusRing}`}>
+              Penerbit
+            </Link>
+          </>
+        }
+      />
 
-        <div className="grid grid-cols-3 gap-4 mb-10">
-          <div className="border border-ink/10 bg-white px-5 py-4">
-            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-1">Total Buku</p>
-            <p className="font-display text-3xl font-bold text-ink">{booksCount ?? 0}</p>
-          </div>
-          <div className="border border-ink/10 bg-white px-5 py-4">
-            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-1">Total Penulis</p>
-            <p className="font-display text-3xl font-bold text-ink">{authorsCount ?? 0}</p>
-          </div>
-          <div className="border border-ink/10 bg-white px-5 py-4">
-            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-1">Total Penerbit</p>
-            <p className="font-display text-3xl font-bold text-ink">{publishersCount ?? 0}</p>
-          </div>
-        </div>
+      <div className="mb-12">
+        <StatRow
+          items={[
+            { label: 'Buku', value: booksCount ?? 0 },
+            { label: 'Penulis', value: authorsCount ?? 0 },
+            { label: 'Penerbit', value: publishersCount ?? 0 },
+          ]}
+        />
+      </div>
 
-        <div className="flex items-center gap-4 mb-6">
-          <Link href="/dashboard/bookstore/buku/baru" className="font-interface text-sm bg-ink text-paper px-5 py-2.5 hover:opacity-80 transition-opacity">
-            + Tambah Buku
-          </Link>
-          <Link href="/dashboard/bookstore/penulis" className="font-interface text-sm border border-ink/40 px-5 py-2.5 hover:bg-ink hover:text-paper transition-all">
-            Kelola Penulis
-          </Link>
-          <Link href="/dashboard/bookstore/penerbit" className="font-interface text-sm border border-ink/40 px-5 py-2.5 hover:bg-ink hover:text-paper transition-all">
-            Kelola Penerbit
-          </Link>
-        </div>
-
-        <section>
-          {daftarBuku.length === 0 ? (
-            <div className="border border-ink/10 py-20 text-center bg-white">
-              <p className="font-interface text-sm text-warm-gray mb-4">
-                Katalog kosong. Anda harus menambahkan Penulis dan Penerbit sebelum membuat Buku.
-              </p>
-            </div>
-          ) : (
-            <div className="border border-ink/10 bg-white">
-              <div className="grid grid-cols-[2fr_1fr_1fr_1.5fr_100px] px-5 py-3 border-b border-ink/10 bg-ink/[0.03]">
-                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Buku & Penulis</span>
-                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Status</span>
-                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Varian (SKU)</span>
-                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Stok Total</span>
-                <span></span>
-              </div>
-
-              {/* Looping sekarang mengenali tipe book dengan sempurna */}
+      {daftarBuku.length === 0 ? (
+        <EmptyState title="Katalog masih kosong">
+          Tambahkan penulis dan penerbit lebih dulu, lalu buat buku pertama.
+        </EmptyState>
+      ) : (
+        <div className={table.wrap}>
+          <table className={table.root}>
+            <caption className="sr-only">Daftar buku di katalog</caption>
+            <thead>
+              <tr className={table.headRow}>
+                <th scope="col" className={table.th}>Buku</th>
+                <th scope="col" className={table.th}>Status</th>
+                <th scope="col" className={`${table.th} text-right`}>Varian</th>
+                <th scope="col" className={`${table.th} text-right`}>Stok</th>
+              </tr>
+            </thead>
+            <tbody className={table.bodyRows}>
               {daftarBuku.map((book) => {
                 const rawAuthor = Array.isArray(book.authors) ? book.authors[0] : book.authors
-                const authorName = rawAuthor?.name ?? '-'
                 const variants = book.book_variants || []
                 const totalStock = variants.reduce((sum, v) => sum + v.stock_qty, 0)
 
                 return (
-                  <div key={book.id} className="grid grid-cols-[2fr_1fr_1fr_1.5fr_100px] px-5 py-4 border-b border-ink/10 last:border-b-0 items-center hover:bg-ink/[0.015] transition-colors">
-                    <div>
-                      <p className="font-display text-base font-bold text-ink leading-snug line-clamp-1">{book.title}</p>
-                      <p className="font-interface text-xs text-warm-gray mt-1">{authorName}</p>
-                    </div>
-                    <div>
-                      <span className={`inline-flex font-interface text-[10px] uppercase tracking-widest px-2 py-1 rounded-sm ${
-                        book.status === 'active' ? 'bg-signal-success/10 text-signal-success' : 'bg-ink/10 text-ink'
-                      }`}>
-                        {book.status}
-                      </span>
-                    </div>
-                    <div className="text-center font-interface text-sm text-warm-gray">{variants.length}</div>
-                    <div className="font-interface text-sm text-warm-gray">{totalStock} unit</div>
-                    <div className="text-right">
-                      <Link href={`/dashboard/bookstore/buku/${book.id}`} className="font-interface text-xs text-text-link hover:opacity-60 transition-opacity">Kelola</Link>
-                    </div>
-                  </div>
+                  <tr key={book.id}>
+                    <th scope="row" className={`${table.td} font-normal`}>
+                      <p className="font-display text-base text-text-primary">{book.title}</p>
+                      <p className="mt-1 font-interface text-sm text-text-secondary">{rawAuthor?.name ?? '—'}</p>
+                    </th>
+                    <td className={table.td}>
+                      <Badge variant={book.status === 'active' ? 'success' : 'default'}>
+                        {book.status === 'active' ? 'Aktif' : book.status}
+                      </Badge>
+                    </td>
+                    <td className={`${table.td} text-right font-mono text-caption tabular-nums text-text-secondary`}>
+                      {variants.length}
+                    </td>
+                    <td className={`${table.td} text-right font-mono text-caption tabular-nums text-text-secondary`}>
+                      {totalStock}
+                    </td>
+                  </tr>
                 )
               })}
-            </div>
-          )}
-        </section>
-
-      </div>
+            </tbody>
+          </table>
+        </div>
+      )}
     </main>
   )
 }

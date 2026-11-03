@@ -1,9 +1,14 @@
 'use client'
 
-// Client Component untuk aksi moderasi opinions (hide/restore/mark reviewed)
+// OpinionsModeratorClient — aksi moderasi Argumen: sembunyikan, tayangkan kembali, tandai laporan selesai.
+// Setiap aksi memberi umpan balik lewat notifikasi (keberhasilan dan kegagalan); menyembunyikan tulisan
+// meminta konfirmasi karena langsung menariknya dari pembaca.
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Badge, Button, useToast } from '@/components/ui'
+import { EmptyState, adminLink, sectionTitle, table } from '@/components/admin/ui'
+import { formatTanggalPendek } from '@/lib/format-date'
 
 type Profile = { username: string; display_name: string }
 
@@ -47,216 +52,182 @@ function getProfile(profiles: Profile | Profile[] | null): Profile | null {
   return Array.isArray(profiles) ? profiles[0] ?? null : profiles
 }
 
-function formatTanggal(tanggal: string): string {
-  return new Date(tanggal).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
 export default function OpinionsModeratorClient({ initialReports, initialArticles }: Props) {
+  const toast = useToast()
   const [reports, setReports] = useState(initialReports)
   const [articles, setArticles] = useState(initialArticles)
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
 
-  async function hideArticle(articleId: string) {
-    setActionLoading(articleId)
+  async function setHidden(articleId: string, title: string, hide: boolean) {
+    if (hide && !window.confirm(`Sembunyikan “${title}”? Tulisan langsung hilang dari Argumen.`)) return
+    setBusy(articleId)
     try {
-      const res = await fetch(`/api/admin/opinions/${articleId}/hide`, { method: 'POST' })
-      if (res.ok) {
-        setArticles((prev) =>
-          prev.map((a) => a.id === articleId ? { ...a, status: 'hidden' } : a)
-        )
-      }
+      const res = await fetch(`/api/admin/opinions/${articleId}/hide`, { method: hide ? 'POST' : 'DELETE' })
+      if (!res.ok) throw new Error(String(res.status))
+      const status = hide ? 'hidden' : 'published'
+      setArticles((prev) => prev.map((a) => (a.id === articleId ? { ...a, status } : a)))
+      setReports((prev) =>
+        prev.map((r) => {
+          const a = Array.isArray(r.opinion_articles) ? r.opinion_articles[0] : r.opinion_articles
+          return a?.id === articleId && a ? { ...r, opinion_articles: { ...a, status } } : r
+        })
+      )
+      toast({
+        message: hide ? 'Tulisan disembunyikan dari Argumen.' : 'Tulisan tayang kembali di Argumen.',
+        label: hide ? 'Disembunyikan' : 'Tayang',
+      })
+    } catch {
+      toast({ message: 'Belum berhasil. Coba lagi sebentar lagi.', tone: 'danger' })
     } finally {
-      setActionLoading(null)
-    }
-  }
-
-  async function restoreArticle(articleId: string) {
-    setActionLoading(articleId)
-    try {
-      const res = await fetch(`/api/admin/opinions/${articleId}/hide`, { method: 'DELETE' })
-      if (res.ok) {
-        setArticles((prev) =>
-          prev.map((a) => a.id === articleId ? { ...a, status: 'published' } : a)
-        )
-      }
-    } finally {
-      setActionLoading(null)
+      setBusy(null)
     }
   }
 
   async function markReviewed(reportId: string) {
-    setActionLoading(reportId)
+    setBusy(reportId)
     try {
       const res = await fetch('/api/admin/opinions/reports', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ report_id: reportId }),
       })
-      if (res.ok) {
-        setReports((prev) => prev.filter((r) => r.id !== reportId))
-      }
+      if (!res.ok) throw new Error(String(res.status))
+      setReports((prev) => prev.filter((r) => r.id !== reportId))
+      toast({ message: 'Laporan ditandai selesai ditinjau.', label: 'Selesai' })
+    } catch {
+      toast({ message: 'Belum berhasil. Coba lagi sebentar lagi.', tone: 'danger' })
     } finally {
-      setActionLoading(null)
+      setBusy(null)
     }
   }
 
   return (
-    <div className="space-y-14">
-
-      {/* Laporan masuk */}
-      <section>
-        <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-5">
-          Laporan Masuk ({reports.length})
+    <div className="space-y-16">
+      <section aria-labelledby="laporan-heading">
+        <h2 id="laporan-heading" className={`mb-4 ${sectionTitle}`}>
+          Laporan menunggu · {reports.length}
         </h2>
 
         {reports.length === 0 ? (
-          <div className="border border-ink/10 py-12 text-center">
-            <p className="font-interface text-sm text-warm-gray">
-              Tidak ada laporan pending.
-            </p>
-          </div>
+          <EmptyState title="Tidak ada laporan yang menunggu" />
         ) : (
-          <div className="border border-ink/10 divide-y divide-ink/10">
+          <ul className="divide-y divide-border-default/20 border-y border-border-default/20">
             {reports.map((report) => {
-              const article = Array.isArray(report.opinion_articles)
-                ? report.opinion_articles[0]
-                : report.opinion_articles
+              const article = Array.isArray(report.opinion_articles) ? report.opinion_articles[0] : report.opinion_articles
               const author = article ? getProfile(article.user_profiles) : null
+              const hidden = article?.status === 'hidden'
 
               return (
-                <div key={report.id} className="px-5 py-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <span className="font-interface text-xs text-warm-gray">
-                          {formatTanggal(report.created_at)}
-                        </span>
-                        {author && (
-                          <span className="font-interface text-xs text-warm-gray">
-                            · Artikel: <span className="font-bold text-ink">{article?.title}</span>
-                            {' '}oleh @{author.username}
-                          </span>
-                        )}
-                      </div>
-                      <p className="font-interface text-sm text-warm-gray leading-relaxed mb-3">
-                        &ldquo;{report.reason}&rdquo;
-                      </p>
-
-                      <div className="flex items-center gap-3 flex-wrap">
-                        {article && (
-                          <Link
-                            href={`/argumen/${author?.username}/${article.slug}`}
-                            target="_blank"
-                            className="font-interface text-xs text-text-link hover:opacity-70 transition-opacity duration-150"
-                          >
-                            Buka artikel ↗
-                          </Link>
-                        )}
-                        {article && (
-                          <button
-                            onClick={() => hideArticle(article.id)}
-                            disabled={actionLoading === article.id || article.status === 'hidden'}
-                            className="font-interface text-xs text-signal-danger hover:opacity-70 disabled:opacity-40 transition-opacity duration-150"
-                          >
-                            {article.status === 'hidden' ? 'Sudah disembunyikan' : 'Sembunyikan artikel'}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => markReviewed(report.id)}
-                          disabled={actionLoading === report.id}
-                          className="font-interface text-xs text-warm-gray hover:text-ink disabled:opacity-40 transition-colors duration-150"
-                        >
-                          {actionLoading === report.id ? 'Memproses...' : 'Tandai reviewed'}
-                        </button>
-                      </div>
-                    </div>
+                <li key={report.id} className="py-6">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                    <p className="font-display text-lg text-text-primary">{article?.title ?? 'Tulisan dihapus'}</p>
+                    <p className="font-mono text-caption text-text-tertiary">
+                      {author ? `@${author.username} · ` : ''}dilaporkan {formatTanggalPendek(report.created_at)}
+                    </p>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </section>
+                  <p className="mt-3 max-w-2xl border-l border-border-default pl-4 font-display text-body-sm italic leading-relaxed text-text-secondary">
+                    {report.reason}
+                  </p>
 
-      {/* Semua artikel opinions */}
-      <section>
-        <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-5">
-          Semua Artikel Opinions ({articles.length})
-        </h2>
-
-        {articles.length === 0 ? (
-          <div className="border border-ink/10 py-12 text-center">
-            <p className="font-interface text-sm text-warm-gray">
-              Belum ada artikel opinions yang diterbitkan.
-            </p>
-          </div>
-        ) : (
-          <div className="border border-ink/10">
-            <div className="grid grid-cols-[1fr_120px_130px_100px] px-5 py-3 border-b border-ink/10 bg-ink/[0.03]">
-              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Judul</span>
-              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Penulis</span>
-              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Status</span>
-              <span />
-            </div>
-
-            {articles.map((article) => {
-              const author = getProfile(article.user_profiles)
-              const isHidden = article.status === 'hidden'
-
-              return (
-                <div
-                  key={article.id}
-                  className="grid grid-cols-[1fr_120px_130px_100px] px-5 py-4 border-b border-ink/10 last:border-b-0 items-center hover:bg-ink/[0.015] transition-colors duration-100"
-                >
-                  <span className={`font-display text-sm font-bold leading-snug pr-3 truncate ${isHidden ? 'text-warm-gray line-through' : 'text-ink'}`}>
-                    {article.title}
-                  </span>
-
-                  <span className="font-interface text-xs text-warm-gray truncate">
-                    {author ? `@${author.username}` : '—'}
-                  </span>
-
-                  <span className={`text-center font-interface text-xs px-2 py-1 ${
-                    isHidden
-                      ? 'text-signal-danger bg-signal-danger/10'
-                      : 'text-signal-success bg-signal-success/10'
-                  }`}>
-                    {isHidden ? 'Disembunyikan' : 'Diterbitkan'}
-                  </span>
-
-                  <div className="flex items-center gap-3 justify-end">
-                    {!isHidden && author && (
+                  <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
+                    {article && author && (
                       <Link
                         href={`/argumen/${author.username}/${article.slug}`}
                         target="_blank"
-                        className="font-interface text-xs text-warm-gray hover:text-ink transition-colors duration-150"
+                        rel="noopener noreferrer"
+                        className={`font-interface text-sm text-text-primary ${adminLink}`}
                       >
-                        ↗
+                        Buka tulisan
                       </Link>
                     )}
-                    <button
-                      onClick={() => isHidden ? restoreArticle(article.id) : hideArticle(article.id)}
-                      disabled={actionLoading === article.id}
-                      className={`font-interface text-xs disabled:opacity-40 transition-opacity duration-150 ${
-                        isHidden ? 'text-signal-success hover:opacity-70' : 'text-signal-danger hover:opacity-70'
-                      }`}
-                    >
-                      {actionLoading === article.id
-                        ? '...'
-                        : isHidden ? 'Restore' : 'Sembunyikan'}
-                    </button>
+                    {article &&
+                      (hidden ? (
+                        <span className="font-mono text-caption text-text-tertiary">Sudah disembunyikan</span>
+                      ) : (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => setHidden(article.id, article.title, true)}
+                          disabled={busy === article.id}
+                        >
+                          Sembunyikan tulisan
+                        </Button>
+                      ))}
+                    <Button variant="text" size="sm" onClick={() => markReviewed(report.id)} disabled={busy === report.id}>
+                      Tandai selesai
+                    </Button>
                   </div>
-                </div>
+                </li>
               )
             })}
-          </div>
+          </ul>
         )}
       </section>
 
+      <section aria-labelledby="semua-heading">
+        <h2 id="semua-heading" className={`mb-4 ${sectionTitle}`}>
+          Semua tulisan · {articles.length}
+        </h2>
+
+        {articles.length === 0 ? (
+          <EmptyState title="Belum ada tulisan Argumen yang terbit" />
+        ) : (
+          <div className={table.wrap}>
+            <table className={table.root}>
+              <caption className="sr-only">Semua tulisan Argumen</caption>
+              <thead>
+                <tr className={table.headRow}>
+                  <th scope="col" className={table.th}>Judul</th>
+                  <th scope="col" className={`${table.th} hidden sm:table-cell`}>Penulis</th>
+                  <th scope="col" className={table.th}>Status</th>
+                  <th scope="col" className={table.th}><span className="sr-only">Tindakan</span></th>
+                </tr>
+              </thead>
+              <tbody className={table.bodyRows}>
+                {articles.map((article) => {
+                  const author = getProfile(article.user_profiles)
+                  const hidden = article.status === 'hidden'
+                  return (
+                    <tr key={article.id}>
+                      <th scope="row" className={`${table.td} font-normal`}>
+                        <p className={`font-display text-base ${hidden ? 'text-text-tertiary line-through decoration-1' : 'text-text-primary'}`}>
+                          {article.title}
+                        </p>
+                        {!hidden && author && (
+                          <Link
+                            href={`/argumen/${author.username}/${article.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`mt-1 inline-block font-mono text-caption text-text-tertiary ${adminLink}`}
+                          >
+                            Buka
+                          </Link>
+                        )}
+                      </th>
+                      <td className={`${table.td} hidden font-mono text-caption text-text-secondary sm:table-cell`}>
+                        {author ? `@${author.username}` : '—'}
+                      </td>
+                      <td className={table.td}>
+                        <Badge variant={hidden ? 'danger' : 'success'}>{hidden ? 'Disembunyikan' : 'Tayang'}</Badge>
+                      </td>
+                      <td className={`${table.td} text-right`}>
+                        <Button
+                          variant={hidden ? 'text' : 'danger'}
+                          size="sm"
+                          onClick={() => setHidden(article.id, article.title, !hidden)}
+                          disabled={busy === article.id}
+                        >
+                          {hidden ? 'Tayangkan' : 'Sembunyikan'}
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

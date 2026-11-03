@@ -1,25 +1,19 @@
-// Halaman moderasi opinions untuk admin
-// Menampilkan semua artikel + laporan yang masuk, dengan aksi hide/restore
+// Moderasi Argumen — laporan pembaca yang menunggu dan semua tulisan Argumen yang tayang atau disembunyikan.
 
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { isAdmin } from '@/lib/admin-check'
+import type { Metadata } from 'next'
+import { requireAdmin } from '@/lib/admin-check'
 import { createAdminClient } from '@/lib/supabase/admin'
-import Link from 'next/link'
+import PageHeader from '@/components/admin/PageHeader'
 import OpinionsModeratorClient from '@/components/opinions/OpinionsModeratorClient'
 
+export const metadata: Metadata = { title: 'Argumen — Admin Saintifiks', robots: { index: false, follow: false } }
 export const dynamic = 'force-dynamic'
 
 export default async function OpinionsModerationPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-  if (!(await isAdmin())) redirect('/login')
-
+  await requireAdmin()
   const adminClient = createAdminClient()
 
-  // Ambil semua laporan pending
+  // Laporan yang menunggu keputusan
   const { data: reports } = await adminClient
     .from('article_reports')
     .select(`
@@ -41,7 +35,7 @@ export default async function OpinionsModerationPage() {
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
 
-  // Ambil semua artikel opinions (published + hidden)
+  // Semua tulisan Argumen yang tayang atau disembunyikan
   const { data: articles } = await adminClient
     .from('opinion_articles')
     .select(`
@@ -59,33 +53,16 @@ export default async function OpinionsModerationPage() {
     .limit(100)
 
   return (
-    <main className="min-h-screen bg-paper">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+    <main aria-labelledby="argumen-title">
+      <PageHeader
+        titleId="argumen-title"
+        eyebrow="Konten"
+        title="Argumen"
+        description="Tulisan pembaca terbit tanpa penyuntingan. Di sini Anda meninjau laporan dan menyembunyikan yang melanggar pedoman."
+        breadcrumbs={[{ label: 'Beranda', href: '/dashboard' }, { label: 'Argumen' }]}
+      />
 
-        {/* Header */}
-        <div className="flex items-start justify-between mb-10">
-          <div>
-            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest">
-              Admin Panel
-            </p>
-            <h1 className="font-display text-3xl font-bold text-ink mt-2">
-              Moderasi Opinions
-            </h1>
-          </div>
-          <Link
-            href="/dashboard"
-            className="font-interface text-sm text-warm-gray hover:text-ink transition-colors duration-150 mt-2"
-          >
-            ← Dashboard
-          </Link>
-        </div>
-
-        <OpinionsModeratorClient
-          initialReports={reports ?? []}
-          initialArticles={articles ?? []}
-        />
-
-      </div>
+      <OpinionsModeratorClient initialReports={reports ?? []} initialArticles={articles ?? []} />
     </main>
   )
 }

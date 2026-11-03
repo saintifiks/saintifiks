@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { ArrowRight, Database, Files } from 'lucide-react'
 import PageHeader from '@/components/admin/PageHeader'
+import { Notice, adminLink, focusRing } from '@/components/admin/ui'
 import Badge from '@/components/ui/Badge'
 import { getAdminSitePages } from '@/lib/site-pages/data'
 import { sitePageDefinitions } from '@/lib/site-pages/registry'
@@ -29,49 +29,45 @@ export default async function SitePagesAdminPage() {
       />
 
       {error && (
-        <section role="alert" className="mb-6 rounded-lg border border-signal-warning/35 bg-signal-warning-surface p-5">
-          <div className="flex gap-3">
-            <Database aria-hidden="true" className="mt-0.5 shrink-0 text-signal-warning" size={20} />
-            <div>
-              <h2 className="text-sm font-semibold text-text-primary">Database CMS belum siap</h2>
-              <p className="mt-1 text-sm leading-6 text-text-secondary">
-                Jalankan migrasi <span className="font-mono text-xs">20260806190000_site_pages_cms.sql</span> di Supabase. Halaman publik yang sudah ada tetap aman memakai konten bawaan.
-              </p>
-              <p className="mt-2 font-mono text-[11px] text-text-tertiary">{error}</p>
-            </div>
-          </div>
-        </section>
+        <Notice tone="danger" title="Database CMS belum siap">
+          Jalankan migrasi <span className="font-mono text-caption">20260806190000_site_pages_cms.sql</span> di Supabase.
+          Halaman publik yang sudah ada tetap aman memakai konten bawaan.
+          <span className="mt-2 block font-mono text-caption text-text-tertiary">{error}</span>
+        </Notice>
       )}
 
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <p className="text-sm text-text-secondary"><span className="font-semibold tabular-nums text-text-primary">{sitePageDefinitions.length}</span> halaman terdaftar</p>
-        <p className="text-xs text-text-tertiary">Template visual dikunci oleh kode</p>
-      </div>
+      <p className="mb-3 font-mono text-caption text-text-tertiary">
+        {sitePageDefinitions.length} halaman terdaftar · template visual dikunci oleh kode
+      </p>
 
-      <ul className="grid gap-4 lg:grid-cols-2">
+      <ul className="divide-y divide-border-default/15 border-y border-border-default/20">
         {sitePageDefinitions.map((definition) => {
           const page = pagesBySlug.get(definition.slug)
-          const status = page ? statusFor(page) : { label: 'Setup diperlukan', variant: 'warning' as const }
+          const status = page ? statusFor(page) : { label: 'Perlu setup', variant: 'warning' as const }
           return (
-            <li key={definition.slug} className="rounded-lg border border-border-default/15 bg-surface-elevated p-5 shadow-xs">
-              <div className="flex items-start justify-between gap-4">
+            <li key={definition.slug} className="py-6">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Files aria-hidden="true" className="text-text-tertiary" size={17} />
-                    <h2 className="font-display text-lg font-bold text-text-primary">{definition.name}</h2>
-                  </div>
-                  <p className="mt-1 font-mono text-[11px] text-text-tertiary">{definition.path}</p>
+                  <h2 className="font-display text-lg text-text-primary">{definition.name}</h2>
+                  <p className="mt-1 font-mono text-caption text-text-tertiary">{definition.path}</p>
                 </div>
                 <Badge variant={status.variant}>{status.label}</Badge>
               </div>
-              <p className="mt-4 text-sm leading-6 text-text-secondary">{definition.description}</p>
-              <div className="mt-5 flex items-center justify-between border-t border-border-default/10 pt-4">
-                <span className="text-xs capitalize text-text-tertiary">Template {definition.template}</span>
+              <p className="mt-3 max-w-2xl font-display text-body-sm italic leading-relaxed text-text-secondary">
+                {definition.description}
+              </p>
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <span className="font-mono text-caption capitalize text-text-tertiary">Template {definition.template}</span>
                 {page ? (
-                  <Link href={`/dashboard/halaman/${definition.slug}`} className="inline-flex min-h-[40px] items-center gap-2 rounded px-2 text-sm font-semibold text-text-link hover:bg-signal-info-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary">
-                    Kelola <ArrowRight aria-hidden="true" size={15} />
+                  <Link
+                    href={`/dashboard/halaman/${definition.slug}`}
+                    className={`font-interface text-sm text-text-primary ${adminLink} ${focusRing}`}
+                  >
+                    Kelola
                   </Link>
-                ) : <span className="text-xs font-medium text-text-tertiary">Belum tersedia</span>}
+                ) : (
+                  <span className="font-mono text-caption text-text-tertiary">Belum tersedia</span>
+                )}
               </div>
             </li>
           )
