@@ -54,7 +54,7 @@ export default async function AkunPage() {
   const daftarArtikel = articles ?? []
 
   return (
-    <main className="min-h-screen bg-primary-light">
+    <main className="min-h-screen bg-paper">
       <div className="max-w-4xl mx-auto px-6 py-12">
 
         {/* Header profil */}
@@ -66,22 +66,22 @@ export default async function AkunPage() {
                 alt={profile.display_name}
                 width={56}
                 height={56}
-                className="rounded-full border border-primary-dark/10 object-cover flex-shrink-0"
+                className="rounded-full border border-ink/10 object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-14 h-14 rounded-full bg-primary-dark flex items-center justify-center flex-shrink-0">
-                <span className="font-libre text-xl font-bold text-primary-light">
+              <div className="w-14 h-14 rounded-full bg-ink flex items-center justify-center flex-shrink-0">
+                <span className="font-display text-xl font-bold text-paper">
                   {profile.display_name.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
             <div>
-              <h1 className="font-libre text-2xl font-bold text-primary-dark">
+              <h1 className="font-display text-2xl font-bold text-ink">
                 {profile.display_name}
               </h1>
               <Link
                 href={`/penulis/${profile.username}`}
-                className="font-helvetica text-xs text-primary-dark/40 hover:text-accent-blue transition-colors duration-150"
+                className="font-interface text-xs text-warm-gray hover:text-text-link transition-colors duration-150"
               >
                 @{profile.username} · Lihat profil publik →
               </Link>
@@ -90,7 +90,7 @@ export default async function AkunPage() {
 
           <Link
             href="/akun/tulis"
-            className="font-helvetica text-sm bg-primary-dark text-primary-light px-5 py-2.5 hover:opacity-80 transition-opacity duration-150 flex-shrink-0"
+            className="font-interface text-sm bg-ink text-paper px-5 py-2.5 hover:opacity-80 transition-opacity duration-150 flex-shrink-0"
           >
             + Tulis Artikel
           </Link>
@@ -98,47 +98,47 @@ export default async function AkunPage() {
 
         {/* Daftar artikel */}
         <section className="mb-16">
-          <h2 className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-5">
+          <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-5">
             Artikel Saya ({daftarArtikel.length})
           </h2>
 
           {daftarArtikel.length === 0 ? (
-            <div className="border border-primary-dark/10 py-20 text-center">
-              <p className="font-helvetica text-sm text-primary-dark/40 mb-4">
+            <div className="border border-ink/10 py-20 text-center">
+              <p className="font-interface text-sm text-warm-gray mb-4">
                 Kamu belum punya artikel. Mulai menulis sekarang.
               </p>
               <Link
                 href="/akun/tulis"
-                className="font-helvetica text-sm bg-primary-dark text-primary-light px-6 py-2.5 hover:opacity-80 transition-opacity duration-150"
+                className="font-interface text-sm bg-ink text-paper px-6 py-2.5 hover:opacity-80 transition-opacity duration-150"
               >
                 Tulis Artikel Pertama
               </Link>
             </div>
           ) : (
-            <div className="border border-primary-dark/10">
+            <div className="border border-ink/10">
               {/* Header tabel */}
-              <div className="grid grid-cols-[1fr_110px_160px_80px] px-5 py-3 border-b border-primary-dark/10 bg-primary-dark/[0.03]">
-                <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Judul</span>
-                <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest text-center">Status</span>
-                <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Terakhir diubah</span>
+              <div className="grid grid-cols-[1fr_110px_160px_80px] px-5 py-3 border-b border-ink/10 bg-ink/[0.03]">
+                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Judul</span>
+                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Status</span>
+                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Terakhir diubah</span>
                 <span />
               </div>
 
               {daftarArtikel.map((artikel) => (
                 <div
                   key={artikel.id}
-                  className="grid grid-cols-[1fr_110px_160px_80px] px-5 py-4 border-b border-primary-dark/10 last:border-b-0 items-center hover:bg-primary-dark/[0.015] transition-colors duration-100"
+                  className="grid grid-cols-[1fr_110px_160px_80px] px-5 py-4 border-b border-ink/10 last:border-b-0 items-center hover:bg-ink/[0.015] transition-colors duration-100"
                 >
-                  <span className="font-libre text-base font-bold text-primary-dark leading-snug pr-4 truncate">
+                  <span className="font-display text-base font-bold text-ink leading-snug pr-4 truncate">
                     {artikel.title}
                   </span>
 
-                  <span className={`text-center font-helvetica text-xs px-2.5 py-1 ${
+                  <span className={`text-center font-interface text-xs px-2.5 py-1 ${
                     artikel.status === 'published'
-                      ? 'text-accent-green bg-accent-green/10'
+                      ? 'text-signal-success bg-signal-success/10'
                       : artikel.status === 'hidden'
-                      ? 'text-accent-red bg-accent-red/10'
-                      : 'text-primary-dark/40 bg-primary-dark/5'
+                      ? 'text-signal-danger bg-signal-danger/10'
+                      : 'text-warm-gray bg-ink/5'
                   }`}>
                     {artikel.status === 'published'
                       ? 'Diterbitkan'
@@ -147,21 +147,21 @@ export default async function AkunPage() {
                       : 'Draft'}
                   </span>
 
-                  <span className="font-helvetica text-xs text-primary-dark/40">
+                  <span className="font-interface text-xs text-warm-gray">
                     {formatTanggal(artikel.updated_at)}
                   </span>
 
                   <div className="flex items-center gap-3 justify-end">
                     <Link
                       href={`/akun/artikel/${artikel.id}/edit`}
-                      className="font-helvetica text-xs text-accent-blue hover:opacity-60 transition-opacity duration-150"
+                      className="font-interface text-xs text-text-link hover:opacity-60 transition-opacity duration-150"
                     >
                       Edit
                     </Link>
                     {artikel.status === 'published' && (
                       <Link
                         href={`/opinions/${profile.username}/${artikel.slug}`}
-                        className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150"
+                        className="font-interface text-xs text-warm-gray hover:text-ink transition-colors duration-150"
                         target="_blank"
                       >
                         ↗
@@ -177,7 +177,7 @@ export default async function AkunPage() {
         {/* Analitik */}
         {daftarArtikel.some((a) => a.status === 'published') && (
           <section>
-            <h2 className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-5">
+            <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-5">
               Analitik
             </h2>
             <OpinionAnalyticsDashboard />

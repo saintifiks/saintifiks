@@ -85,7 +85,7 @@ export default function ReportButton({ articleId }: ReportButtonProps) {
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex min-h-[44px] items-center gap-1.5 px-2 font-helvetica text-xs text-ink/40 transition-colors duration-150 hover:text-ink/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
+        className="flex min-h-[44px] items-center gap-1.5 px-2 font-interface text-xs text-ink/40 transition-colors duration-150 hover:text-ink/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
       >
         <Flag size={13} />
         <span>Laporkan</span>
@@ -107,7 +107,7 @@ export default function ReportButton({ articleId }: ReportButtonProps) {
             <div className="flex items-center justify-between mb-5">
               <h3
                 id="opinion-report-dialog-title"
-                className="font-helvetica text-sm font-bold text-ink uppercase tracking-widest"
+                className="font-interface text-sm font-bold text-ink uppercase tracking-widest"
               >
                 Laporkan Artikel
               </h3>
@@ -123,14 +123,14 @@ export default function ReportButton({ articleId }: ReportButtonProps) {
             </div>
 
             {isDone ? (
-              <p role="status" className="font-helvetica text-sm text-signal-success text-center py-4">
+              <p role="status" className="font-interface text-sm text-signal-success text-center py-4">
                 ✓ Laporan berhasil dikirim. Terima kasih.
               </p>
             ) : (
               <form onSubmit={handleSubmit}>
                 <label
                   htmlFor={reasonFieldId}
-                  className="block font-helvetica text-xs text-ink/50 uppercase tracking-widest mb-2"
+                  className="block font-interface text-xs text-ink/50 uppercase tracking-widest mb-2"
                 >
                   Alasan laporan
                 </label>
@@ -143,15 +143,15 @@ export default function ReportButton({ articleId }: ReportButtonProps) {
                   maxLength={500}
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? `${errorId} ${counterId}` : counterId}
-                  className="w-full resize-none border border-ink/15 bg-transparent px-3 py-2.5 font-helvetica text-sm text-ink placeholder:text-ink/30 focus:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
+                  className="w-full resize-none border border-ink/15 bg-transparent px-3 py-2.5 font-interface text-sm text-ink placeholder:text-ink/30 focus:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
                 />
                 <div className="flex justify-between items-center mt-1 mb-4">
                   {error ? (
-                    <p id={errorId} role="alert" className="font-helvetica text-xs text-signal-danger">{error}</p>
+                    <p id={errorId} role="alert" className="font-interface text-xs text-signal-danger">{error}</p>
                   ) : (
                     <span />
                   )}
-                  <span id={counterId} className="font-helvetica text-xs text-ink/30">
+                  <span id={counterId} className="font-interface text-xs text-ink/30">
                     {reason.length}/500
                   </span>
                 </div>
@@ -160,7 +160,7 @@ export default function ReportButton({ articleId }: ReportButtonProps) {
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="min-h-[44px] px-3 font-helvetica text-sm text-ink/50 transition-colors duration-150 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
+                    className="min-h-[44px] px-3 font-interface text-sm text-ink/50 transition-colors duration-150 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
                   >
                     Batal
                   </button>
@@ -168,7 +168,7 @@ export default function ReportButton({ articleId }: ReportButtonProps) {
                     type="submit"
                     disabled={isSubmitting || reason.trim().length < 10}
                     aria-busy={isSubmitting}
-                    className="min-h-[44px] bg-ink px-5 py-2 font-helvetica text-sm text-paper transition-opacity duration-150 hover:opacity-80 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
+                    className="min-h-[44px] bg-ink px-5 py-2 font-interface text-sm text-paper transition-opacity duration-150 hover:opacity-80 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
                   >
                     {isSubmitting ? 'Mengirim...' : 'Kirim Laporan'}
                   </button>

@@ -5,16 +5,12 @@ export type LabelProps = LabelHTMLAttributes<HTMLLabelElement> & {
   required?: boolean
 }
 
-export default function Label({
-  children,
-  required,
-  className = '',
-  ...props
-}: LabelProps) {
+// Label formulir — huruf kapital kecil berjarak, seperti isian di formulir cetak.
+export default function Label({ children, required, className = '', ...props }: LabelProps) {
   return (
     <label
       className={[
-        'block font-interface text-sm font-medium text-text-secondary tracking-wide',
+        'block font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary',
         className,
       ]
         .filter(Boolean)
@@ -23,7 +19,7 @@ export default function Label({
     >
       {children}
       {required && (
-        <span className="text-signal-danger ml-0.5" aria-hidden="true">
+        <span className="ml-1 text-text-primary" aria-hidden="true">
           *
         </span>
       )}

@@ -1,3 +1,7 @@
+> **DIARSIPKAN 2026-11-03 — JANGAN DIJADIKAN RUJUKAN.** Dokumen ini usang dan bertentangan dengan kode: menyebut Next.js 14 (kode memakai 16), font Marcellus (kode memakai Libre Baskerville), dan aturan "hanya visual". Rujukan aktif: `UIUX REVOLUTION/AUDIT_DAN_STRATEGI_UIUX.md` dan `docs/decisions/`.
+
+---
+
 # MASTER HANDOVER — Visual System V2 Migration
 
 **Dibuat untuk**: AI/Developer yang melanjutkan migrasi

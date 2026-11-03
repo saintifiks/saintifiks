@@ -115,7 +115,7 @@ export default function ChartBlock({ identifier, configString }: ChartBlockProps
         className="my-8 flex items-center justify-center rounded border border-signal-warning/25 bg-signal-warning-surface p-6"
         role="status"
       >
-        <p className="font-helvetica text-sm text-ink">
+        <p className="font-interface text-sm text-ink">
           Data grafik untuk bagian ini belum tersedia.
         </p>
       </div>
@@ -165,11 +165,11 @@ export default function ChartBlock({ identifier, configString }: ChartBlockProps
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
       >
-        <figcaption id={titleId} className="font-helvetica text-sm font-semibold text-ink">
+        <figcaption id={titleId} className="font-interface text-sm font-semibold text-ink">
           {chartTitle}
         </figcaption>
 
-        <p id={descriptionId} className="font-helvetica text-sm leading-relaxed text-ink/65">
+        <p id={descriptionId} className="font-interface text-sm leading-relaxed text-ink/65">
           {structuralSummary}
         </p>
 
@@ -181,13 +181,13 @@ export default function ChartBlock({ identifier, configString }: ChartBlockProps
         </div>
 
         <details className="border border-ink/10 bg-paper">
-          <summary className="flex min-h-[44px] cursor-pointer items-center px-4 font-helvetica text-sm font-medium text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary">
+          <summary className="flex min-h-[44px] cursor-pointer items-center px-4 font-interface text-sm font-medium text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary">
             Data grafik
           </summary>
 
           {rows.length > 0 && datasets.length > 0 ? (
             <div className="overflow-x-auto border-t border-ink/10">
-              <table className="min-w-full border-collapse font-helvetica text-sm text-ink">
+              <table className="min-w-full border-collapse font-interface text-sm text-ink">
                 <caption className="sr-only">Data untuk {chartTitle}</caption>
                 <thead>
                   <tr className="bg-ink/5">
@@ -222,7 +222,7 @@ export default function ChartBlock({ identifier, configString }: ChartBlockProps
               </table>
             </div>
           ) : (
-            <p className="border-t border-ink/10 px-4 py-3 font-helvetica text-sm text-ink/65">
+            <p className="border-t border-ink/10 px-4 py-3 font-interface text-sm text-ink/65">
               Data tabular belum tersedia pada konfigurasi grafik ini.
             </p>
           )}
@@ -235,10 +235,10 @@ export default function ChartBlock({ identifier, configString }: ChartBlockProps
         className="my-8 flex flex-col items-center justify-center rounded border border-signal-danger/25 bg-signal-danger-surface p-6 text-center"
         role="status"
       >
-        <p className="mb-2 font-helvetica text-sm font-bold text-signal-danger">
+        <p className="mb-2 font-interface text-sm font-bold text-signal-danger">
           Grafik tidak dapat ditampilkan.
         </p>
-        <p className="font-helvetica text-xs text-ink/70">
+        <p className="font-interface text-xs text-ink/70">
           Data visual untuk bagian ini sedang tidak tersedia. Gunakan penjelasan dalam artikel sebagai konteks utama.
         </p>
       </div>

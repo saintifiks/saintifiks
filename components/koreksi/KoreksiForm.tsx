@@ -196,7 +196,7 @@ export default function KoreksiForm() {
                       </span>
                     )}
                   </div>
-                  <h4 className="font-libre text-sm font-bold text-text-primary line-clamp-1">
+                  <h4 className="font-display text-sm font-bold text-text-primary line-clamp-1">
                     {item.title}
                   </h4>
                   {item.excerpt && (
@@ -232,7 +232,7 @@ export default function KoreksiForm() {
                   </span>
                 )}
               </div>
-              <h3 className="font-libre text-base font-bold text-text-primary line-clamp-2 leading-snug">
+              <h3 className="font-display text-base font-bold text-text-primary line-clamp-2 leading-snug">
                 {selected.title}
               </h3>
               {selected.excerpt && (

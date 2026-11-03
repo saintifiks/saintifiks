@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "test:studio": "tsc -p tsconfig.studio-test.json && node --test .studio-test-dist/scripts/editorial-studio-contract.test.js",
-    "test:security:static": "node --test scripts/security-static-contract.test.mjs"
+    "test:security:static": "node --test scripts/security-static-contract.test.mjs",
+    "test:design": "node --test scripts/design-system-contract.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

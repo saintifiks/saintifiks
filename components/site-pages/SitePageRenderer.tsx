@@ -23,8 +23,8 @@ function SafeLink({ href, children }: { href: string; children: React.ReactNode 
 
 function ContentBlock({ block, compact = false }: { block: SitePageBlock; compact?: boolean }) {
   const proseClass = compact
-    ? 'font-lora text-body-sm leading-reading text-text-secondary md:text-body-base'
-    : 'font-lora text-body-base leading-reading text-text-primary md:text-body-lg'
+    ? 'font-display text-body-sm leading-reading text-text-secondary md:text-body-base'
+    : 'font-display text-body-base leading-reading text-text-primary md:text-body-lg'
 
   switch (block.type) {
     case 'paragraph':
@@ -56,7 +56,7 @@ function ContentBlock({ block, compact = false }: { block: SitePageBlock; compac
             <article key={`${item.title}-${index}`} className="py-7 md:py-8">
               {item.eyebrow && <p className="font-mono text-kicker uppercase tracking-widest text-text-tertiary">{item.eyebrow}</p>}
               <h3 className={`${item.eyebrow ? 'mt-2 ' : ''}font-display text-xl font-bold text-text-primary`}>{item.title}</h3>
-              <p className="mt-2 max-w-[62ch] font-lora text-body-sm leading-reading text-text-secondary">{item.body}</p>
+              <p className="mt-2 max-w-[62ch] font-display text-body-sm leading-reading text-text-secondary">{item.body}</p>
               {item.href && item.linkLabel && <div className="mt-3"><SafeLink href={item.href}>{item.linkLabel}</SafeLink></div>}
             </article>
           ))}
@@ -70,7 +70,7 @@ function ContentBlock({ block, compact = false }: { block: SitePageBlock; compac
               <span className="font-mono text-kicker text-text-tertiary" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
               <div>
                 <h3 className="font-display text-lg font-bold text-text-primary">{item.title}</h3>
-                <p className="mt-2 max-w-[62ch] font-lora text-body-sm leading-reading text-text-secondary">{item.body}</p>
+                <p className="mt-2 max-w-[62ch] font-display text-body-sm leading-reading text-text-secondary">{item.body}</p>
               </div>
             </li>
           ))}
@@ -159,7 +159,7 @@ function EditorialTemplate({ content }: { content: SitePageContent }) {
       <header className="max-w-4xl pb-14 md:pb-20">
         {content.kicker && <p className="font-mono text-kicker uppercase tracking-widest text-text-link">{content.kicker}</p>}
         <h1 className="mt-4 max-w-3xl font-display text-display-base font-bold text-text-primary md:text-display-lg">{content.title}</h1>
-        <p className="mt-6 max-w-2xl font-lora text-body-base leading-reading text-text-secondary md:text-body-lg">{content.introduction}</p>
+        <p className="mt-6 max-w-2xl font-display text-body-base leading-reading text-text-secondary md:text-body-lg">{content.introduction}</p>
       </header>
 
       {content.facts?.length ? (
@@ -203,7 +203,7 @@ function PolicyTemplate({ content }: { content: SitePageContent }) {
       <header className="max-w-3xl">
         {content.kicker && <span className="inline-flex rounded-full bg-signal-info-surface px-3 py-1 font-interface text-kicker font-semibold uppercase tracking-widest text-text-link">{content.kicker}</span>}
         <h1 className="mt-4 font-display text-display-sm font-bold leading-tight text-text-primary md:text-display-base">{content.title}</h1>
-        <p className="mt-5 max-w-[65ch] font-lora text-body-base leading-reading text-text-secondary md:text-body-lg">{content.introduction}</p>
+        <p className="mt-5 max-w-[65ch] font-display text-body-base leading-reading text-text-secondary md:text-body-lg">{content.introduction}</p>
         {content.documentMeta && <p className="mt-5 font-interface text-sm text-text-tertiary">{content.documentMeta}</p>}
       </header>
 
@@ -216,7 +216,7 @@ function PolicyTemplate({ content }: { content: SitePageContent }) {
               <div key={`${highlight.title}-${index}`}>
                 {highlight.label && <p className="font-interface text-kicker font-semibold uppercase tracking-widest text-text-link">{highlight.label}</p>}
                 <h2 className="mt-2 font-display text-xl font-bold text-text-primary">{highlight.title}</h2>
-                <p className="mt-3 font-lora text-base leading-relaxed text-text-secondary">{highlight.body}</p>
+                <p className="mt-3 font-display text-base leading-relaxed text-text-secondary">{highlight.body}</p>
               </div>
             ))}
           </div>
@@ -252,7 +252,7 @@ function PolicyTemplate({ content }: { content: SitePageContent }) {
               <header className="mb-5">
                 {section.eyebrow && <p className="font-interface text-kicker font-semibold uppercase tracking-widest text-text-link">{section.eyebrow}</p>}
                 <h2 className="mt-2 font-display text-2xl font-bold leading-tight text-text-primary md:text-3xl">{section.title}</h2>
-                {section.description && <p className="mt-3 font-lora text-body-base leading-reading text-text-secondary md:text-body-lg">{section.description}</p>}
+                {section.description && <p className="mt-3 font-display text-body-base leading-reading text-text-secondary md:text-body-lg">{section.description}</p>}
               </header>
               <SectionBlocks section={section} />
             </section>
@@ -275,7 +275,7 @@ function StandardTemplate({ content }: { content: SitePageContent }) {
       <header className="max-w-3xl border-b border-border-default/30 pb-10 md:pb-14">
         {content.kicker && <p className="font-mono text-kicker uppercase tracking-widest text-text-link">{content.kicker}</p>}
         <h1 className="mt-4 font-display text-display-sm font-bold text-text-primary md:text-display-base">{content.title}</h1>
-        <p className="mt-5 max-w-[65ch] font-lora text-body-base leading-reading text-text-secondary md:text-body-lg">{content.introduction}</p>
+        <p className="mt-5 max-w-[65ch] font-display text-body-base leading-reading text-text-secondary md:text-body-lg">{content.introduction}</p>
         {content.documentMeta && <p className="mt-5 font-interface text-sm text-text-tertiary">{content.documentMeta}</p>}
       </header>
       {content.notice && <div className="mt-8"><ContentBlock block={{ type: 'callout', ...content.notice }} /></div>}
@@ -284,7 +284,7 @@ function StandardTemplate({ content }: { content: SitePageContent }) {
           <section id={section.id} key={section.id} className={`scroll-mt-24 py-12 ${index < content.sections.length - 1 ? 'border-b border-border-default/20' : ''}`}>
             {section.eyebrow && <p className="font-mono text-kicker uppercase tracking-widest text-text-tertiary">{section.eyebrow}</p>}
             <h2 className="mt-2 font-display text-2xl font-bold text-text-primary">{section.title}</h2>
-            {section.description && <p className="mt-3 font-lora text-body-base leading-reading text-text-secondary">{section.description}</p>}
+            {section.description && <p className="mt-3 font-display text-body-base leading-reading text-text-secondary">{section.description}</p>}
             <div className="mt-6"><SectionBlocks section={section} /></div>
           </section>
         ))}

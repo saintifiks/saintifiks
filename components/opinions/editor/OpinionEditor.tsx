@@ -192,31 +192,31 @@ export default function OpinionEditor({
   const isBusy = isSaving || isPublishing
 
   return (
-    <div className="min-h-screen bg-primary-light flex flex-col">
+    <div className="min-h-screen bg-paper flex flex-col">
 
       {/* Header editor */}
-      <div className="sticky top-0 z-30 bg-primary-light border-b border-primary-dark/10">
+      <div className="sticky top-0 z-30 bg-paper border-b border-ink/10">
         <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
 
           {/* Kiri: back + status */}
           <div className="flex items-center gap-4 min-w-0">
             <button
               onClick={() => router.push('/akun')}
-              className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 flex-shrink-0"
+              className="font-interface text-xs text-warm-gray hover:text-ink transition-colors duration-150 flex-shrink-0"
             >
               ← Kembali
             </button>
-            <span className={`font-helvetica text-xs px-2.5 py-1 flex-shrink-0 ${
+            <span className={`font-interface text-xs px-2.5 py-1 flex-shrink-0 ${
               status === 'published'
-                ? 'bg-accent-green/10 text-accent-green'
+                ? 'bg-signal-success/10 text-signal-success'
                 : status === 'hidden'
-                ? 'bg-accent-red/10 text-accent-red'
-                : 'bg-primary-dark/5 text-primary-dark/40'
+                ? 'bg-signal-danger/10 text-signal-danger'
+                : 'bg-ink/5 text-warm-gray'
             }`}>
               {status === 'published' ? 'Diterbitkan' : status === 'hidden' ? 'Disembunyikan' : 'Draft'}
             </span>
             {slugLocked && (
-              <span className="font-helvetica text-xs text-primary-dark/30 hidden sm:inline">
+              <span className="font-interface text-xs text-warm-gray hidden sm:inline">
                 (slug terkunci)
               </span>
             )}
@@ -225,12 +225,12 @@ export default function OpinionEditor({
           {/* Kanan: tombol aksi */}
           <div className="flex items-center gap-3 flex-shrink-0">
             {saveMessage && (
-              <span className="font-helvetica text-xs text-accent-green hidden sm:inline">
+              <span className="font-interface text-xs text-signal-success hidden sm:inline">
                 {saveMessage}
               </span>
             )}
             {error && (
-              <span className="font-helvetica text-xs text-accent-red hidden sm:inline max-w-[200px] truncate">
+              <span className="font-interface text-xs text-signal-danger hidden sm:inline max-w-[200px] truncate">
                 {error}
               </span>
             )}
@@ -238,7 +238,7 @@ export default function OpinionEditor({
             <button
               onClick={handleSave}
               disabled={isBusy}
-              className="font-helvetica text-sm border border-primary-dark/20 px-4 py-1.5 hover:bg-primary-dark hover:text-primary-light transition-all duration-150 disabled:opacity-40"
+              className="font-interface text-sm border border-ink/20 px-4 py-1.5 hover:bg-ink hover:text-paper transition-all duration-150 disabled:opacity-40"
             >
               {isSaving ? 'Menyimpan...' : 'Simpan Draft'}
             </button>
@@ -248,7 +248,7 @@ export default function OpinionEditor({
                 <button
                   onClick={handleUnpublish}
                   disabled={isBusy}
-                  className="font-helvetica text-sm border border-accent-red/30 text-accent-red px-4 py-1.5 hover:bg-accent-red hover:text-white transition-all duration-150 disabled:opacity-40"
+                  className="font-interface text-sm border border-signal-danger/30 text-signal-danger px-4 py-1.5 hover:bg-signal-danger hover:text-white transition-all duration-150 disabled:opacity-40"
                 >
                   Tarik ke Draft
                 </button>
@@ -256,7 +256,7 @@ export default function OpinionEditor({
                 <button
                   onClick={handlePublish}
                   disabled={isBusy || !title.trim() || content.trim().length < 100}
-                  className="font-helvetica text-sm bg-primary-dark text-primary-light px-4 py-1.5 hover:opacity-80 transition-opacity duration-150 disabled:opacity-40"
+                  className="font-interface text-sm bg-ink text-paper px-4 py-1.5 hover:opacity-80 transition-opacity duration-150 disabled:opacity-40"
                   title={content.trim().length < 100 ? 'Konten minimal 100 karakter' : ''}
                 >
                   {isPublishing ? 'Mempublish...' : 'Terbitkan'}
@@ -270,8 +270,8 @@ export default function OpinionEditor({
 
       {/* Error mobile */}
       {error && (
-        <div className="sm:hidden bg-accent-red/5 border-b border-accent-red/20 px-4 py-2">
-          <p className="font-helvetica text-xs text-accent-red">{error}</p>
+        <div className="sm:hidden bg-signal-danger/5 border-b border-signal-danger/20 px-4 py-2">
+          <p className="font-interface text-xs text-signal-danger">{error}</p>
         </div>
       )}
 
@@ -282,7 +282,7 @@ export default function OpinionEditor({
         <div className="flex-1 flex flex-col">
 
           {/* Metadata artikel */}
-          <div className="px-6 pt-6 pb-4 border-b border-primary-dark/10 space-y-4">
+          <div className="px-6 pt-6 pb-4 border-b border-ink/10 space-y-4">
             {/* Cover Image Upload */}
             <CoverImageUpload
               currentUrl={coverImageUrl}
@@ -296,7 +296,7 @@ export default function OpinionEditor({
               placeholder="Judul artikel..."
               rows={2}
               maxLength={200}
-              className="w-full font-libre text-2xl font-bold text-primary-dark bg-transparent focus:outline-none resize-none leading-snug placeholder:text-primary-dark/20"
+              className="w-full font-display text-2xl font-bold text-ink bg-transparent focus:outline-none resize-none leading-snug placeholder:text-warm-gray"
             />
 
             {/* Subjudul / Excerpt */}
@@ -306,7 +306,7 @@ export default function OpinionEditor({
               placeholder="Subjudul atau ringkasan singkat..."
               rows={2}
               maxLength={300}
-              className="w-full font-libre text-lg text-text-secondary bg-transparent focus:outline-none resize-none leading-relaxed placeholder:text-text-secondary/30"
+              className="w-full font-display text-lg text-text-secondary bg-transparent focus:outline-none resize-none leading-relaxed placeholder:text-text-secondary/30"
             />
           </div>
 
@@ -321,8 +321,8 @@ export default function OpinionEditor({
           />
 
           {/* Karakter counter */}
-          <div className="px-6 py-2 border-t border-primary-dark/10">
-            <span className={`font-helvetica text-xs ${content.length > 49000 ? 'text-accent-red' : 'text-primary-dark/30'}`}>
+          <div className="px-6 py-2 border-t border-ink/10">
+            <span className={`font-interface text-xs ${content.length > 49000 ? 'text-signal-danger' : 'text-warm-gray'}`}>
               {content.length.toLocaleString('id-ID')} / 50.000 karakter
             </span>
           </div>

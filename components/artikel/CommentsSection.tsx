@@ -129,7 +129,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
         {!isLoadingComments && comments.length > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -top-1 -right-1 w-4 h-4 bg-ink text-paper font-helvetica text-[10px] rounded-full flex items-center justify-center leading-none"
+            className="absolute -top-1 -right-1 w-4 h-4 bg-ink text-paper font-interface text-[10px] rounded-full flex items-center justify-center leading-none"
           >
             {comments.length}
           </span>
@@ -165,11 +165,11 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
 <div className="flex items-center gap-2">
                  <h3
                    id="article-comments-dialog-title"
-                   className="font-libre text-lg font-bold text-ink"
+                   className="font-display text-lg font-bold text-ink"
                  >
                    Komentar
                  </h3>
-                 <span className="font-helvetica text-xs text-ink/50 bg-ink/5 px-2 py-0.5">
+                 <span className="font-interface text-xs text-ink/50 bg-ink/5 px-2 py-0.5">
                    {comments.length}
                  </span>
               </div>
@@ -202,7 +202,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
                ) : comments.length === 0 ? (
 <div className="text-center py-10">
                    <MessageCircle size={28} className="mx-auto mb-3 text-ink/20" />
-                   <p className="font-helvetica text-sm text-ink/40">
+                   <p className="font-interface text-sm text-ink/40">
                      Belum ada komentar. Jadilah yang pertama!
                    </p>
                  </div>
@@ -226,14 +226,14 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
                       </div>
                       <div className="flex-1">
 <div className="flex items-center gap-2 mb-1">
-                           <span className="font-helvetica font-medium text-sm text-ink">
+                           <span className="font-interface font-medium text-sm text-ink">
                              {comment.user_name}
                            </span>
-                           <span className="font-helvetica text-xs text-ink/40">
+                           <span className="font-interface text-xs text-ink/40">
                              {formatDate(comment.created_at)}
                            </span>
                          </div>
-<p className="font-helvetica text-sm text-ink/80 leading-relaxed">
+<p className="font-interface text-sm text-ink/80 leading-relaxed">
                            {comment.content}
                          </p>
                       </div>
@@ -258,7 +258,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
                      aria-describedby={!userId ? commentHintId : undefined}
                      disabled={isSubmitting}
                      rows={2}
-                     className="bg-transparent flex-1 font-helvetica text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
+                     className="bg-transparent flex-1 font-interface text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
                    />
 <button
                      type={userId ? 'submit' : 'button'}
@@ -285,7 +285,7 @@ export default function CommentsSection({ articleId }: CommentsSectionProps) {
                   </button>
                 </div>
                 {!userId && (
-                  <p id={commentHintId} className="font-helvetica text-xs text-ink/40 mt-2">
+                  <p id={commentHintId} className="font-interface text-xs text-ink/40 mt-2">
                     Login dengan Google untuk berkomentar
                   </p>
                 )}

@@ -111,25 +111,25 @@ export default function ArticleRenderer({
         ]}
         components={{
           h1: ({ children }) => (
-            <h1 className="font-body text-display-sm font-bold text-ink mt-12 mb-6 leading-heading">
+            <h1 className="font-display text-display-sm font-bold text-ink mt-12 mb-6 leading-heading">
               {children}
             </h1>
           ),
 
           h2: ({ children }) => (
-            <h2 className="font-body text-2xl font-bold text-ink mt-10 mb-4 leading-heading">
+            <h2 className="font-display text-2xl font-bold text-ink mt-10 mb-4 leading-heading">
               {children}
             </h2>
           ),
 
           h3: ({ children }) => (
-            <h3 className="font-body text-xl font-bold text-ink mt-8 mb-3 leading-heading">
+            <h3 className="font-display text-xl font-bold text-ink mt-8 mb-3 leading-heading">
               {children}
             </h3>
           ),
 
           p: ({ children }) => (
-            <p className="font-body text-body-base leading-reading mb-6">
+            <p className="font-display text-body-base leading-reading mb-6">
               {children}
             </p>
           ),
@@ -147,13 +147,13 @@ export default function ArticleRenderer({
           ),
 
           ul: ({ children }) => (
-            <ul className="font-body text-body-base mb-6 ml-6 list-disc space-y-2">
+            <ul className="font-display text-body-base mb-6 ml-6 list-disc space-y-2">
               {children}
             </ul>
           ),
 
           ol: ({ children }) => (
-            <ol className="font-body text-body-base mb-6 ml-6 list-decimal space-y-2">
+            <ol className="font-display text-body-base mb-6 ml-6 list-decimal space-y-2">
               {children}
             </ol>
           ),
@@ -223,7 +223,7 @@ export default function ArticleRenderer({
                     {config.label}
                   </p>
 
-                  <div className="font-lora text-body-sm text-text-primary [&>p]:mb-0 [&>p]:leading-reading">
+                  <div className="font-display text-body-sm text-text-primary [&>p]:mb-0 [&>p]:leading-reading">
                     {children}
                   </div>
                 </div>

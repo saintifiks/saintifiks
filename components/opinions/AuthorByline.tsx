@@ -30,11 +30,11 @@ export default function AuthorByline({ username, displayName, avatarUrl, publish
             alt={displayName}
             width={40}
             height={40}
-            className="rounded-full border border-primary-dark/10 object-cover"
+            className="rounded-full border border-ink/10 object-cover"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-primary-dark flex items-center justify-center flex-shrink-0">
-            <span className="font-libre text-base font-bold text-primary-light">
+          <div className="w-10 h-10 rounded-full bg-ink flex items-center justify-center flex-shrink-0">
+            <span className="font-display text-base font-bold text-paper">
               {displayName.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -45,11 +45,11 @@ export default function AuthorByline({ username, displayName, avatarUrl, publish
       <div>
         <Link
           href={`/penulis/${username}`}
-          className="font-helvetica text-sm font-bold text-primary-dark hover:text-accent-blue transition-colors duration-150"
+          className="font-interface text-sm font-bold text-ink hover:text-text-link transition-colors duration-150"
         >
           {displayName}
         </Link>
-        <p className="font-helvetica text-xs text-primary-dark/50 mt-0.5">
+        <p className="font-interface text-xs text-warm-gray mt-0.5">
           di Opinions Saintifiks
           {publishedAt && (
             <span> · {formatTanggal(publishedAt)}</span>

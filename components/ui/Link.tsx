@@ -9,11 +9,13 @@ export type LinkProps = ComponentProps<typeof NextLink> & {
   external?: boolean
 }
 
+// Tautan: garis bawah tipis yang melemah saat diam dan menjadi penuh saat hover — tanpa gerak lain.
+// 'nav' (menu) tanpa garis diam; garis muncul saat hover.
+const line = 'underline decoration-1 underline-offset-4 transition-[text-decoration-color] duration-fast'
 const variantClasses: Record<LinkVariant, string> = {
-  default:
-    'text-text-link hover:text-interactive-primary-hover underline-offset-2 hover:underline',
-  nav: 'text-text-primary hover:text-text-link font-interface text-sm font-medium no-underline',
-  muted: 'text-text-secondary hover:text-text-primary no-underline',
+  default: `${line} text-text-primary decoration-text-primary/40 hover:decoration-text-primary`,
+  nav: `${line} font-interface text-sm font-medium text-text-primary decoration-transparent hover:decoration-text-primary`,
+  muted: `${line} text-text-secondary decoration-text-secondary/40 hover:decoration-text-primary hover:text-text-primary`,
 }
 
 export default function Link({
@@ -25,7 +27,6 @@ export default function Link({
   ...props
 }: LinkProps) {
   const classes = [
-    'transition-colors duration-fast focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary',
     variantClasses[variant],
     className,
   ]

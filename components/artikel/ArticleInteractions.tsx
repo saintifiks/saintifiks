@@ -56,7 +56,7 @@ export default function ArticleInteractions({
   return (
     <>
       {/* Toolbar interaksi utama */}
-      <div className="mt-12 pt-8 border-t border-primary-dark/10">
+      <div className="mt-12 pt-8 border-t border-ink/10">
 
         {/* Satu baris: koreksi rata kiri, like+komentar+share rata kanan */}
         <div className="flex items-center justify-between">

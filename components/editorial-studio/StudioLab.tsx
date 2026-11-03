@@ -567,7 +567,7 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
             <header className="mx-auto mb-10 max-w-content border-b border-border-default/20 pb-8">
               <p className="font-mono text-kicker uppercase tracking-[0.14em] text-text-tertiary">{document.article?.kicker || document.article?.category || 'Pratinjau naskah'}</p>
               <h1 className="mt-3 font-display text-display-sm font-semibold leading-heading sm:text-display-base">{title || 'Naskah tanpa judul'}</h1>
-              {deck && <p className="mt-4 font-body text-body-sm leading-deck text-text-secondary">{deck}</p>}
+              {deck && <p className="mt-4 font-display text-body-sm leading-deck text-text-secondary">{deck}</p>}
               {document.article?.slug && <p className="mt-4 font-mono text-[10px] text-text-tertiary">/artikel/{document.article.slug}</p>}
             </header>
             {document.article?.coverImageUrl && (
