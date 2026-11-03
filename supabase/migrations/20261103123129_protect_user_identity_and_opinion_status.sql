@@ -9,6 +9,8 @@
 --    membuka kembali artikel yang disembunyikan moderator. Aturan "hidden tidak bisa diubah penulis" hanya
 --    ada di kode aplikasi. Trigger berikut memindahkannya ke database.
 --
+-- STATUS: sudah diterapkan ke produksi 2026-11-03 (versi 20261103123129), setelah kode ter-deploy.
+--
 -- URUTAN DEPLOY: kode aplikasi (membaca lewat admin client) harus sudah live SEBELUM migrasi ini dijalankan,
 -- jika tidak komentar dan jumlah share akan tampak kosong di situs.
 --
