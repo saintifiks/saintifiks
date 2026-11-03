@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateSlug } from '@/lib/slug'
 import { createClient } from '@/lib/supabase/server'
+import { prepareOpinionDocument } from '@/lib/opinions/studio-document'
 
 export const dynamic = 'force-dynamic'
 
@@ -93,7 +94,14 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const title = typeof body.title === 'string' ? body.title.trim() : ''
-    const content = typeof body.content === 'string' ? body.content : ''
+    let content = typeof body.content === 'string' ? body.content : ''
+    let studioDocument: unknown = null
+    if (body.studio_document !== undefined && body.studio_document !== null) {
+      const prepared = prepareOpinionDocument(body.studio_document)
+      if (!prepared.ok) return NextResponse.json({ error: prepared.error }, { status: 400 })
+      studioDocument = prepared.document
+      content = prepared.markdown
+    }
     const excerpt = typeof body.excerpt === 'string' ? body.excerpt.trim() : null
     const coverImageUrl = typeof body.cover_image_url === 'string' ? body.cover_image_url.trim() : null
 
@@ -138,6 +146,7 @@ export async function POST(request: NextRequest) {
         title,
         slug: finalSlug,
         content,
+        studio_document: studioDocument,
         excerpt,
         cover_image_url: coverImageUrl,
         status: 'draft',

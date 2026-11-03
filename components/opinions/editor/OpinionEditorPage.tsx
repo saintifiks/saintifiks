@@ -6,18 +6,19 @@
 import { useState } from 'react'
 import UsernameSetup from './UsernameSetup'
 import OpinionEditor from './OpinionEditor'
+import type { StudioDocumentV2 } from '@/lib/editorial-studio/document'
 
 type OpinionEditorPageProps = {
   hasProfile: boolean
   authorUsername?: string
   mode: 'create' | 'edit'
   articleId?: string
+  authorUserId?: string
+  initialDocument: StudioDocumentV2
   initialTitle?: string
-  initialContent?: string
   initialExcerpt?: string
   initialCoverImageUrl?: string
   initialStatus?: 'draft' | 'published' | 'hidden'
-  initialCharts?: { chart_id: string; config: object }[]
   slugLocked?: boolean
 }
 

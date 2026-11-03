@@ -1,27 +1,25 @@
 'use client'
 
-// OpinionEditor — editor tulisan Argumen. Alurnya satu garis: tulis → simpan draf → terbitkan → (opsional) tarik ke draf.
+// OpinionEditor — editor tulisan Argumen. Alat tulisnya persis editor Studio yang dipakai redaksi (StudioEditor):
+// menu "/", toolbar mengambang, tabel, gambar berketerangan, kutipan, catatan kaki, persamaan, dan daftar sumber.
+// Alurnya satu garis: tulis → simpan draf → terbitkan → (opsional) tarik ke draf.
 //  • Status selalu terlihat di bilah atas (Draf / Terbit / Disembunyikan) beserta keadaan simpan.
 //  • Terbit langsung tampil di Argumen tanpa penyuntingan redaksi, jadi tombol Terbitkan meminta konfirmasi
 //    yang menjelaskan akibatnya.
 //  • Tulisan yang disembunyikan moderator dijelaskan di atas kolom tulis, bukan hanya ditandai.
 //  • Perubahan yang belum disimpan dijaga: peringatan saat menutup tab atau kembali ke Akun.
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import NextLink from 'next/link'
 import { Badge, Button, Sheet, useToast } from '@/components/ui'
 import UiLink from '@/components/ui/Link'
-import TipTapEditor, { type TipTapEditorHandle } from './TipTapEditor'
-import TableWizard from './TableWizard'
-import ImageModal from './ImageModal'
-import ChartWizard from './ChartWizard'
+import StudioEditor from '@/components/editorial-studio/StudioEditor'
+import StudioSourceRegistry from '@/components/editorial-studio/StudioSourceRegistry'
+import type { StudioDocumentV2, StudioJsonNode, StudioSourceEvidence } from '@/lib/editorial-studio/document'
+import { studioDocumentToMarkdown } from '@/lib/editorial-studio/markdown-adapter'
+import { OPINION_MAX_MARKDOWN } from '@/lib/opinions/studio-document'
 import CoverImageUpload from './CoverImageUpload'
-
-type ChartConfig = {
-  chart_id: string
-  config: object
-}
 
 type Status = 'draft' | 'published' | 'hidden'
 
@@ -29,12 +27,13 @@ type OpinionEditorProps = {
   mode: 'create' | 'edit'
   articleId?: string
   authorUsername?: string
+  // Pemilik tulisan: gambar yang diunggah disimpan di folder miliknya (kebijakan bucket opinions-gambar).
+  authorUserId?: string
+  initialDocument: StudioDocumentV2
   initialTitle?: string
-  initialContent?: string
   initialExcerpt?: string
   initialCoverImageUrl?: string
   initialStatus?: Status
-  initialCharts?: ChartConfig[]
   slugLocked?: boolean
 }
 
@@ -42,55 +41,44 @@ const statusBadge = { draft: 'default', published: 'success', hidden: 'danger' }
 const statusLabel = { draft: 'Draf', published: 'Terbit', hidden: 'Disembunyikan' } as const
 
 const MIN_CONTENT = 100
-const MAX_CONTENT = 50000
+
+function countWords(node: StudioJsonNode): number {
+  if (node.type === 'text') return (node.text ?? '').trim().split(/\s+/).filter(Boolean).length
+  return (node.content ?? []).reduce((sum, child) => sum + countWords(child), 0)
+}
 
 export default function OpinionEditor({
   mode,
   articleId,
   authorUsername,
+  authorUserId,
+  initialDocument,
   initialTitle = '',
-  initialContent = '',
   initialExcerpt = '',
   initialCoverImageUrl = '',
   initialStatus = 'draft',
-  initialCharts = [],
   slugLocked = false,
 }: OpinionEditorProps) {
   const router = useRouter()
   const toast = useToast()
 
+  const [document, setDocument] = useState(initialDocument)
   const [title, setTitle] = useState(initialTitle)
-  const [content, setContent] = useState(initialContent)
   const [excerpt, setExcerpt] = useState(initialExcerpt)
   const [coverImageUrl, setCoverImageUrl] = useState(initialCoverImageUrl)
-  const [charts, setCharts] = useState<ChartConfig[]>(initialCharts)
   const [status, setStatus] = useState<Status>(initialStatus)
 
-  // Isi terakhir yang sudah tersimpan di server; selisihnya = "belum disimpan".
-  const [saved, setSaved] = useState({
-    title: initialTitle,
-    content: initialContent,
-    excerpt: initialExcerpt,
-    cover: initialCoverImageUrl,
-    charts: initialCharts.length,
-  })
+  // Isi terakhir yang sudah tersimpan di server; selisihnya = "belum disimpan". Isi tulisan dilacak lewat
+  // penanda (bukan membandingkan seluruh dokumen setiap ketikan).
+  const [documentEdited, setDocumentEdited] = useState(false)
+  const [saved, setSaved] = useState({ title: initialTitle, excerpt: initialExcerpt, cover: initialCoverImageUrl })
 
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const [showTableWizard, setShowTableWizard] = useState(false)
-  const [showImageModal, setShowImageModal] = useState(false)
-  const [showChartWizard, setShowChartWizard] = useState(false)
-
-  const editorRef = useRef<TipTapEditorHandle>(null)
-
   const dirty =
-    title !== saved.title ||
-    content !== saved.content ||
-    excerpt !== saved.excerpt ||
-    coverImageUrl !== saved.cover ||
-    charts.length !== saved.charts
+    documentEdited || title !== saved.title || excerpt !== saved.excerpt || coverImageUrl !== saved.cover
 
   useEffect(() => {
     if (!dirty) return
@@ -101,19 +89,18 @@ export default function OpinionEditor({
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
 
-  // Saat ChartWizard selesai — simpan config chart ke state lokal.
-  // Insert placeholder ke TipTap dilakukan lewat window event 'tiptap:insert-chart' di ChartWizard.
-  function handleChartInsert(chartId: string, config: object) {
-    setCharts((prev) => [...prev, { chart_id: chartId, config }])
+  const wordCount = useMemo(() => countWords(document.root), [document.root])
+  // Panjang Markdown turunan = ukuran yang dinilai server saat menyimpan dan menerbitkan.
+  const contentLength = useMemo(() => studioDocumentToMarkdown(document).length, [document])
+
+  function handleDocumentChange(next: StudioDocumentV2) {
+    setDocumentEdited(true)
+    setDocument(next)
   }
 
-  // Teks Markdown dari TableWizard/ImageModal dikirim langsung ke TipTap lewat ref.
-  function handleToolbarInsert(text: string) {
-    if (editorRef.current) {
-      editorRef.current.insertMarkdown(text)
-    } else {
-      setContent((prev) => prev + text)
-    }
+  function handleSourcesChange(sources: StudioSourceEvidence[]) {
+    setDocumentEdited(true)
+    setDocument((current) => ({ ...current, evidence: { ...current.evidence, sources } }))
   }
 
   function fail(message: string) {
@@ -132,7 +119,7 @@ export default function OpinionEditor({
       const res = await fetch(creating ? '/api/opinions' : `/api/opinions/${articleId}`, {
         method: creating ? 'POST' : 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content, excerpt, cover_image_url: coverImageUrl }),
+        body: JSON.stringify({ title, studio_document: document, excerpt, cover_image_url: coverImageUrl }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -140,19 +127,9 @@ export default function OpinionEditor({
         return null
       }
 
-      const id = data.article.id as string
-
-      // Sinkronkan konfigurasi grafik ke DB. Galat duplikat diabaikan: grafik itu sudah ada.
-      for (const chart of charts) {
-        await fetch('/api/opinion-charts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ opinion_article_id: id, chart_id: chart.chart_id, config: chart.config }),
-        })
-      }
-
-      setSaved({ title, content, excerpt, cover: coverImageUrl, charts: charts.length })
-      return { id, slug: (data.article.slug as string | undefined) ?? null }
+      setSaved({ title, excerpt, cover: coverImageUrl })
+      setDocumentEdited(false)
+      return { id: data.article.id as string, slug: (data.article.slug as string | undefined) ?? null }
     } catch {
       fail('Terjadi gangguan saat menyimpan. Coba lagi.')
       return null
@@ -229,14 +206,15 @@ export default function OpinionEditor({
   }
 
   const isBusy = isSaving || isPublishing
-  const tooShort = content.trim().length < MIN_CONTENT
-  const canPublish = !isBusy && !!title.trim() && !tooShort
+  const tooShort = contentLength < MIN_CONTENT
+  const tooLong = contentLength > OPINION_MAX_MARKDOWN
+  const canPublish = !isBusy && !!title.trim() && !tooShort && !tooLong
 
   return (
     <div className="flex min-h-screen flex-col bg-paper">
-      {/* Bilah atas: tinggi tetap 56px karena toolbar TipTap menempel tepat di bawahnya (top-14). */}
+      {/* Bilah atas: tinggi tetap 56px karena toolbar editor menempel tepat di bawahnya (top-14). */}
       <div className="sticky top-0 z-30 h-14 border-b border-border-default/20 bg-paper">
-        <div className="mx-auto flex h-full max-w-[760px] items-center justify-between gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex h-full max-w-[900px] items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-4">
             <NextLink
               href="/akun"
@@ -268,9 +246,9 @@ export default function OpinionEditor({
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-[760px] flex-1 flex-col">
+      <div className="mx-auto flex w-full max-w-[900px] flex-1 flex-col gap-4 px-0 pb-16 pt-4 sm:px-6">
         {status === 'hidden' && (
-          <div role="status" className="mx-4 mt-6 border-l border-signal-danger pl-4 sm:mx-6">
+          <div role="status" className="mx-4 mt-2 border-l border-signal-danger pl-4 sm:mx-0">
             <p className="font-interface text-sm font-semibold text-text-primary">Tulisan ini disembunyikan moderator.</p>
             <p className="mt-1 font-display text-body-sm leading-relaxed text-text-secondary">
               Tulisan tidak tampil di Argumen setelah ditinjau karena laporan. Anda masih bisa menyimpan perubahan, tetapi
@@ -283,53 +261,32 @@ export default function OpinionEditor({
           </div>
         )}
 
-        {/* Metadata tulisan */}
-        <div className="space-y-5 border-b border-border-default/20 px-4 pb-6 pt-8 sm:px-6">
+        <div className="px-4 sm:px-0">
           <CoverImageUpload currentUrl={coverImageUrl} onChange={setCoverImageUrl} />
-
-          <label className="block">
-            <span className="sr-only">Judul</span>
-            <textarea
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Judul tulisan"
-              rows={1}
-              maxLength={200}
-              className="w-full resize-none bg-transparent [field-sizing:content] pb-1.5 font-display text-display-sm leading-[1.15] text-text-primary placeholder:text-text-tertiary focus:outline-none"
-            />
-          </label>
-
-          <label className="block">
-            <span className="sr-only">Ringkasan</span>
-            <textarea
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              placeholder="Ringkasan satu-dua kalimat (tampil di daftar Argumen)"
-              rows={1}
-              maxLength={300}
-              className="w-full resize-none bg-transparent [field-sizing:content] font-display text-body-base italic leading-relaxed text-text-secondary placeholder:text-text-tertiary focus:outline-none"
-            />
-          </label>
-
           {slugLocked && (
-            <p className="font-mono text-caption text-text-tertiary">
+            <p className="mt-3 font-mono text-caption text-text-tertiary">
               Alamat tulisan sudah terkunci; mengubah judul tidak mengubah alamat.
             </p>
           )}
         </div>
 
-        <TipTapEditor
-          ref={editorRef}
-          initialContent={content}
-          onChange={setContent}
-          onOpenTableWizard={() => setShowTableWizard(true)}
-          onOpenImageModal={() => setShowImageModal(true)}
-          onOpenChartWizard={() => setShowChartWizard(true)}
+        <StudioSourceRegistry document={document} onChange={handleSourcesChange} />
+        <StudioEditor
+          document={document}
+          title={title}
+          deck={excerpt}
+          wordCount={wordCount}
+          sources={document.evidence.sources}
+          onChange={handleDocumentChange}
+          onTitleChange={setTitle}
+          onDeckChange={setExcerpt}
+          imageStorage={authorUserId ? { bucket: 'opinions-gambar', folder: authorUserId } : undefined}
+          toolbarStickyClass="top-14"
         />
 
-        <div className="flex items-center justify-between gap-4 border-t border-border-default/20 px-4 py-3 font-mono text-caption sm:px-6">
-          <span className={content.length > MAX_CONTENT - 1000 ? 'text-signal-danger' : 'text-text-tertiary'}>
-            {content.length.toLocaleString('id-ID')} / {MAX_CONTENT.toLocaleString('id-ID')} karakter
+        <div className="flex items-center justify-between gap-4 px-4 font-mono text-caption sm:px-0">
+          <span className={tooLong || contentLength > OPINION_MAX_MARKDOWN - 1000 ? 'text-signal-danger' : 'text-text-tertiary'}>
+            {contentLength.toLocaleString('id-ID')} / {OPINION_MAX_MARKDOWN.toLocaleString('id-ID')} karakter
           </span>
           {status === 'draft' && tooShort && (
             <span className="text-text-tertiary">Minimal {MIN_CONTENT} karakter untuk terbit</span>
@@ -353,17 +310,6 @@ export default function OpinionEditor({
           </Button>
         </div>
       </Sheet>
-
-      {/* Modals & wizards */}
-      {showTableWizard && <TableWizard onInsert={handleToolbarInsert} onClose={() => setShowTableWizard(false)} />}
-      {showImageModal && <ImageModal onInsert={handleToolbarInsert} onClose={() => setShowImageModal(false)} />}
-      {showChartWizard && (
-        <ChartWizard
-          articleId={articleId ?? ''}
-          onInsert={handleChartInsert}
-          onClose={() => setShowChartWizard(false)}
-        />
-      )}
     </div>
   )
 }

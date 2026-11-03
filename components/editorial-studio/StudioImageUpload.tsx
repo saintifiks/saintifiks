@@ -10,6 +10,8 @@ type StudioImageUploadProps = {
   onChange: (url: string | null) => void
   description?: string
   previewAlt?: string
+  // Tempat simpan gambar. Bawaan: bucket artikel redaksi. Argumen memakai bucket pembaca dengan folder milik penulis.
+  storage?: { bucket: string; folder?: string }
 }
 
 const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary'
@@ -22,6 +24,7 @@ export default function StudioImageUpload({
   onChange,
   description = 'JPG, PNG, WebP, atau GIF. Maksimal 5 MB.',
   previewAlt = '',
+  storage = { bucket: 'artikel-gambar' },
 }: StudioImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const objectUrlRef = useRef<string | null>(null)
@@ -61,14 +64,14 @@ export default function StudioImageUpload({
 
     try {
       const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
-      const objectName = `${crypto.randomUUID()}.${extension}`
+      const objectName = `${storage.folder ? `${storage.folder}/` : ''}${crypto.randomUUID()}.${extension}`
       const supabase = createClient()
       const { error: uploadError } = await supabase.storage
-        .from('artikel-gambar')
+        .from(storage.bucket)
         .upload(objectName, file, { cacheControl: '31536000', upsert: false })
       if (uploadError) throw uploadError
 
-      const { data } = supabase.storage.from('artikel-gambar').getPublicUrl(objectName)
+      const { data } = supabase.storage.from(storage.bucket).getPublicUrl(objectName)
       clearObjectUrl()
       setPreviewUrl(data.publicUrl)
       onChange(data.publicUrl)

@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import OpinionContentRenderer from '@/components/opinions/OpinionContentRenderer'
+import StudioRenderer from '@/components/editorial-studio/StudioRenderer'
+import { publishedOpinionDocument } from '@/lib/opinions/studio-document'
 import ArgumenView from '@/components/opinions/ArgumenView'
 import OpinionAnalyticsTracker from '@/components/opinions/OpinionAnalyticsTracker'
 
@@ -63,7 +65,7 @@ export default async function OpinionArticlePage(props: PageProps) {
   // Ambil artikel berdasarkan author_id + slug
   const { data: article } = await supabase
     .from('opinion_articles')
-    .select('id, title, content, excerpt, cover_image_url, published_at, status')
+    .select('id, title, content, studio_document, excerpt, cover_image_url, published_at, status')
     .eq('author_id', profile.user_id)
     .eq('slug', params.slug)
     .maybeSingle()
@@ -86,11 +88,17 @@ export default async function OpinionArticlePage(props: PageProps) {
     .eq('status', 'approved')
     .order('created_at', { ascending: true })
 
+  // Tulisan yang ditulis dengan editor Studio dirender seperti artikel redaksi; tulisan lama (Markdown) tetap
+  // lewat penampil lama.
+  const studioDocument = publishedOpinionDocument(article.studio_document)
+
   return (
     <>
       <OpinionAnalyticsTracker articleId={article.id} />
       <ArgumenView article={{ ...article, slug: params.slug }} author={profile} corrections={corrections ?? []}>
-        <OpinionContentRenderer content={article.content} charts={charts ?? []} />
+        {studioDocument
+          ? <StudioRenderer document={studioDocument} />
+          : <OpinionContentRenderer content={article.content} charts={charts ?? []} />}
       </ArgumenView>
     </>
   )

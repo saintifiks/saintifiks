@@ -69,6 +69,10 @@ type StudioEditorProps = {
   onChange: (document: StudioDocumentV2) => void
   onTitleChange: (title: string) => void
   onDeckChange: (deck: string) => void
+  // Tempat simpan gambar yang diunggah di dialog gambar (bawaan: bucket artikel redaksi).
+  imageStorage?: { bucket: string; folder?: string }
+  // Kelas penempel toolbar (bawaan top-0). Pakai 'top-14' bila ada bilah atas tetap setinggi 56px di atasnya.
+  toolbarStickyClass?: 'top-0' | 'top-14'
 }
 
 type ConfigurableNodeType = 'figure' | 'footnote' | 'equation'
@@ -322,6 +326,8 @@ export default function StudioEditor({
   onTitleChange,
   onDeckChange,
   sources,
+  imageStorage,
+  toolbarStickyClass = 'top-0',
 }: StudioEditorProps) {
   const [, rerenderToolbar] = useReducer((value) => value + 1, 0)
   const [slashState, setSlashState] = useState<SlashState | null>(null)
@@ -948,7 +954,7 @@ export default function StudioEditor({
 
   return (
     <section aria-label="Ruang tulis artikel" className="relative overflow-visible border border-border-default/15 bg-surface-elevated">
-      <div className="sticky top-0 z-raised border-b border-border-default/15 bg-surface-elevated/95 px-2 py-2 backdrop-blur sm:px-4">
+      <div className={`sticky ${toolbarStickyClass} z-raised border-b border-border-default/15 bg-surface-elevated/95 px-2 py-2 backdrop-blur sm:px-4`}>
         <div
           role="toolbar"
           aria-label="Pemformatan artikel"
@@ -1339,6 +1345,7 @@ export default function StudioEditor({
                   label="Berkas gambar"
                   value={semanticDialog.values.src || null}
                   previewAlt={semanticDialog.values.alt}
+                  storage={imageStorage}
                   onChange={(url) => updateSemanticValue('src', url ?? '')}
                 />
                 <label className="block">
