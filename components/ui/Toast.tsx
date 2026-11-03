@@ -97,7 +97,7 @@ export function ToastView({
   const tone = item.tone ?? 'neutral'
   const duration = item.duration ?? 4000
   const actionClass =
-    'rise inline-flex min-h-[36px] shrink-0 items-center gap-2 px-3 font-interface text-caption font-semibold uppercase tracking-widest [--rise-fill:var(--color-paper)] [--rise-text:var(--color-ink)] text-paper'
+    'inline-flex min-h-[36px] shrink-0 items-center px-2 font-interface text-caption font-semibold uppercase tracking-widest text-paper underline decoration-paper/40 decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-fast hover:decoration-paper'
 
   return (
     <div
@@ -121,7 +121,6 @@ export function ToastView({
           (item.action.href ? (
             <Link href={item.action.href} onClick={onDismiss} className={actionClass}>
               {item.action.label}
-              <Icon name="arrow-right" size="sm" />
             </Link>
           ) : (
             <button
@@ -133,7 +132,6 @@ export function ToastView({
               className={actionClass}
             >
               {item.action.label}
-              <Icon name="arrow-right" size="sm" />
             </button>
           ))}
         <button

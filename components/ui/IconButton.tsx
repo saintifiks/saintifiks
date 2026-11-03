@@ -1,8 +1,8 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import Icon, { type IconName, type IconSize } from './Icon'
 
-// Tombol ikon — kotak tajam 44px. Diam: hanya ikon. Hover/fokus: tinta naik dari bawah memenuhi kotak
-// dan ikon berbalik warna (gerak yang sama dengan tombol teks). Toggle aktif: ikon terisi.
+// Tombol ikon — kotak tajam 44px, hanya ikon. Diam: abu hangat. Hover: tinta. Toggle aktif: ikon terisi.
+// Tidak ada latar, kapsul, atau gerak tambahan.
 
 type IconButtonVariant = 'plain' | 'solid'
 
@@ -18,8 +18,8 @@ export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'chi
 }
 
 const variantClasses: Record<IconButtonVariant, string> = {
-  plain: 'text-text-primary before:bg-ink hover:text-paper focus-visible:text-paper',
-  solid: 'bg-ink text-paper before:bg-night hover:text-paper focus-visible:text-paper',
+  plain: 'text-text-secondary hover:text-text-primary',
+  solid: 'bg-interactive-primary text-text-on-inverse hover:bg-interactive-primary-hover',
 }
 
 const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
@@ -36,11 +36,9 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconB
       aria-busy={busy || undefined}
       disabled={props.disabled || busy}
       className={[
-        'relative isolate inline-flex min-h-[44px] min-w-[44px] items-center justify-center overflow-hidden rounded-none',
-        "before:absolute before:inset-0 before:-z-10 before:origin-bottom before:scale-y-0 before:transition-transform before:duration-moderate before:ease-rise before:content-['']",
-        'hover:before:scale-y-100 focus-visible:before:scale-y-100',
-        'transition-colors duration-moderate ease-rise',
-        'active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:before:scale-y-0',
+        'inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-none',
+        'transition-colors duration-fast disabled:cursor-not-allowed disabled:opacity-40',
+        pressed ? 'text-text-primary' : '',
         variantClasses[variant],
         className,
       ]

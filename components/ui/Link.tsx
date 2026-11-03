@@ -9,12 +9,13 @@ export type LinkProps = ComponentProps<typeof NextLink> & {
   external?: boolean
 }
 
-// Semua tautan memakai gerak "tinta naik" (lihat globals.css): garis tipis di dasar, saat hover tinta
-// naik memenuhi kata dan huruf berbalik warna. 'nav' tanpa garis diam; 'muted' untuk tautan sekunder.
+// Tautan: garis bawah tipis yang melemah saat diam dan menjadi penuh saat hover — tanpa gerak lain.
+// 'nav' (menu) tanpa garis diam; garis muncul saat hover.
+const line = 'underline decoration-1 underline-offset-4 transition-[text-decoration-color] duration-fast'
 const variantClasses: Record<LinkVariant, string> = {
-  default: 'rise text-text-primary',
-  nav: 'rise text-text-primary font-interface text-sm font-medium [background-size:100%_0,100%_0]',
-  muted: 'rise text-text-secondary',
+  default: `${line} text-text-primary decoration-text-primary/40 hover:decoration-text-primary`,
+  nav: `${line} font-interface text-sm font-medium text-text-primary decoration-transparent hover:decoration-text-primary`,
+  muted: `${line} text-text-secondary decoration-text-secondary/40 hover:decoration-text-primary hover:text-text-primary`,
 }
 
 export default function Link({

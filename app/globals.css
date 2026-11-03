@@ -93,7 +93,7 @@
   --ease-out:    cubic-bezier(0, 0, 0.2, 1);
   --ease-in:     cubic-bezier(0.4, 0, 1, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-rise:   cubic-bezier(0.22, 1, 0.36, 1); /* gerak "tinta naik" */
+  --ease-rise:   cubic-bezier(0.22, 1, 0.36, 1); /* easing lembut untuk transisi garis isian */
   --transition-fast: var(--duration-fast) var(--ease-out);
   --transition-base: var(--duration-standard) var(--ease-in-out);
   --transition-slow: var(--duration-slow) var(--ease-in-out);
@@ -134,8 +134,8 @@
   --color-border-accent: var(--color-ink);
   --color-border-subtle: var(--color-ink); /* pakai /10 di komponen */
   --color-interactive-primary: var(--color-ink);
-  --color-interactive-primary-hover: var(--color-night);
-  --color-interactive-primary-active: var(--color-night);
+  --color-interactive-primary-hover: var(--color-warm-gray);
+  --color-interactive-primary-active: var(--color-warm-gray);
   --color-signal-success: var(--color-ink);
   --color-signal-success-surface: var(--color-paper);
   --color-signal-warning: var(--color-ink);
@@ -157,8 +157,6 @@
     --color-warm-gray: 160 157 149; /* #A09D95 */
     --color-surface-sunken: 34 33 32;
     --color-text-tertiary: 148 145 138;
-    --color-interactive-primary-hover:  255 252 245;
-    --color-interactive-primary-active: 255 252 245;
     --color-interactive-primary-disabled: 80 78 74;
     --color-signal-danger: 240 112 100; /* #F07064 */
     color-scheme: dark;
@@ -171,8 +169,6 @@
   --color-warm-gray: 160 157 149;
   --color-surface-sunken: 34 33 32;
   --color-text-tertiary: 148 145 138;
-  --color-interactive-primary-hover:  255 252 245;
-  --color-interactive-primary-active: 255 252 245;
   --color-interactive-primary-disabled: 80 78 74;
   --color-signal-danger: 240 112 100;
   color-scheme: dark;
@@ -184,8 +180,6 @@
   --color-warm-gray:  90 87 80;
   --color-surface-sunken: 241 239 233;
   --color-text-tertiary: 112 109 102;
-  --color-interactive-primary-hover:  15 22 32;
-  --color-interactive-primary-active: 15 22 32;
   --color-interactive-primary-disabled: 213 212 210;
   --color-signal-danger: 184 28 24;
   color-scheme: light;
@@ -803,42 +797,6 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   animation: toast-in var(--duration-deliberate) var(--ease-out) both;
 }
 
-/* ============================================================
-   GERAK "TINTA NAIK" — satu-satunya bahasa hover untuk tautan dan tombol teks.
-   Diam: garis tipis di dasar. Hover/fokus: tinta naik dari bawah memenuhi
-   teks, huruf berbalik warna. Dipakai: .rise (tautan, tombol teks), .rise-danger.
-   ============================================================ */
-@layer components {
-  .rise {
-    --rise-fill: var(--color-ink);
-    --rise-text: var(--color-paper);
-    background-image:
-      linear-gradient(rgb(var(--rise-fill)), rgb(var(--rise-fill))),
-      linear-gradient(rgb(var(--rise-fill) / 0.35), rgb(var(--rise-fill) / 0.35));
-    background-repeat: no-repeat;
-    background-position: 0 100%, 0 100%;
-    background-size: 100% 0, 100% 1px;
-    -webkit-box-decoration-break: clone;
-    box-decoration-break: clone;
-    /* huruf berbalik sesaat setelah tinta menutupinya, supaya tak pernah ada momen tinta-di-atas-tinta */
-    transition: background-size 320ms var(--ease-rise), color 120ms linear 50ms;
-  }
-  .rise:hover,
-  .rise:focus-visible {
-    background-size: 100% 100%, 100% 1px;
-    color: rgb(var(--rise-text));
-  }
-  .rise:disabled,
-  .rise[aria-disabled="true"] {
-    background-size: 100% 0, 100% 1px;
-    color: inherit;
-    cursor: not-allowed;
-  }
-  .rise-danger {
-    --rise-fill: var(--color-signal-danger);
-  }
-}
-
 /* Penanda status — berlian logo sebagai bahasa status (terisi / kosong / separuh / dicoret) */
 .marker-diamond {
   display: inline-block;
@@ -875,8 +833,6 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   --color-warm-gray: 160 157 149;
   --color-text-tertiary: 148 145 138;
   --color-signal-danger: 240 112 100;
-  --color-interactive-primary-hover: 255 252 245;
-  --color-interactive-primary-active: 255 252 245;
   --color-interactive-primary-disabled: 58 62 70;
   background-color: rgb(var(--color-paper));
   color: rgb(var(--color-ink));

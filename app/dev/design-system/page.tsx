@@ -73,21 +73,6 @@ function Caption({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Panels({ children }: { children: (surface: 'paper' | 'night') => React.ReactNode }) {
-  return (
-    <div className="grid gap-px bg-border-default/20 sm:grid-cols-2">
-      <div className="bg-paper p-6 sm:p-8">
-        <Caption>Di atas kertas</Caption>
-        {children('paper')}
-      </div>
-      <div className="surface-night p-6 sm:p-8">
-        <Caption>Di atas malam</Caption>
-        {children('night')}
-      </div>
-    </div>
-  )
-}
-
 export default function DesignSystemPage() {
   if (process.env.VERCEL_ENV === 'production') notFound()
 
@@ -269,48 +254,53 @@ export default function DesignSystemPage() {
               title="Tombol"
               lead={
                 <>
-                  <p>Sudut tajam. Tidak ada tombol berkotak kontur: yang penting berupa balok tinta, yang lain hanya teks bergaris tipis.</p>
-                  <p>Semua hover memakai satu gerak — <strong className="font-bold">tinta naik</strong>: tinta merambat dari bawah memenuhi tombol dan huruf berbalik warna. Arahkan kursor untuk mencobanya.</p>
+                  <p>Sudut tajam, tanpa kotak kontur, tanpa ikon di dalam tombol. Yang pokok berupa balok tinta; yang kedua hanya teks bergaris bawah, rata kiri dengan teks di sekitarnya.</p>
+                  <p>Hover hanya mengubah satu hal: balok tinta melunak menjadi abu hangat, garis bawah menjadi penuh.</p>
                 </>
               }
             >
-              <Panels>
-                {() => (
-                  <div className="space-y-8">
-                    <div>
-                      <p className="mb-3 font-interface text-caption text-text-secondary">Utama — aksi pokok halaman</p>
-                      <div className="flex flex-wrap items-center gap-4">
-                        <Button arrow>Mulai membaca</Button>
-                        <Button disabled>Nonaktif</Button>
-                      </div>
+              <div className="grid grid-cols-2 border-t border-border-default/20 sm:grid-cols-[7rem_1fr_1fr]">
+                <span className="hidden sm:block" />
+                <span className="px-0 py-3 font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary sm:px-5">
+                  Kertas
+                </span>
+                <span className="surface-night px-5 py-3 font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">
+                  Malam
+                </span>
+
+                {(
+                  [
+                    ['Utama', 'Aksi pokok halaman', (disabled: boolean) => <Button disabled={disabled}>Baca artikel</Button>],
+                    ['Utama, nonaktif', 'Belum bisa dipakai', () => <Button disabled>Baca artikel</Button>],
+                    ['Teks', 'Aksi kedua', () => <Button variant="text">Lihat semua</Button>],
+                    ['Teks, nonaktif', 'Belum bisa dipakai', () => <Button variant="text" disabled>Lihat semua</Button>],
+                    ['Hapus', 'Tak bisa dibatalkan', () => <Button variant="danger">Hapus artikel</Button>],
+                  ] as const
+                ).map(([name, note, render]) => (
+                  <div key={name} className="contents">
+                    <div className="col-span-2 border-t border-border-default/15 pb-1 pt-5 sm:col-span-1 sm:py-6">
+                      <p className="font-interface text-sm font-semibold text-text-primary">{name}</p>
+                      <p className="mt-0.5 font-interface text-caption text-text-secondary">{note}</p>
                     </div>
-                    <div>
-                      <p className="mb-3 font-interface text-caption text-text-secondary">Teks — aksi kedua</p>
-                      <div className="flex flex-wrap items-center gap-4">
-                        <Button variant="text" arrow>
-                          Lihat semua
-                        </Button>
-                        <Button variant="text" disabled>
-                          Nonaktif
-                        </Button>
-                      </div>
+                    <div className="flex items-center border-t border-border-default/15 py-5 sm:px-5 sm:py-6">
+                      {render(false)}
                     </div>
-                    <div>
-                      <p className="mb-3 font-interface text-caption text-text-secondary">Hapus — tak bisa dibatalkan</p>
-                      <Button variant="danger">Hapus artikel</Button>
-                    </div>
-                    <div>
-                      <p className="mb-3 font-interface text-caption text-text-secondary">Ukuran</p>
-                      <div className="flex flex-wrap items-center gap-4">
-                        <Button size="sm">Kecil</Button>
-                        <Button size="md">Sedang</Button>
-                        <Button size="lg">Besar</Button>
-                      </div>
+                    <div className="surface-night flex items-center border-t border-border-default/15 px-5 py-5 sm:py-6">
+                      {render(false)}
                     </div>
                   </div>
-                )}
-              </Panels>
-              <p className="mt-4 max-w-xl font-display text-sm italic leading-relaxed text-text-secondary">
+                ))}
+              </div>
+
+              <div className="mt-8 border-t border-border-default/15 pt-6">
+                <p className="mb-4 font-interface text-sm font-semibold text-text-primary">Ukuran</p>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+                  <Button size="sm">Kecil</Button>
+                  <Button size="md">Sedang</Button>
+                  <Button size="lg">Besar</Button>
+                </div>
+              </div>
+              <p className="mt-8 max-w-xl font-display text-sm italic leading-relaxed text-text-secondary">
                 Tombol hapus tidak langsung menghapus: klik pertama mengubah label menjadi “Yakin hapus? Ya · Batal”, baru klik kedua yang menjalankan. (Polanya dibangun saat tombol ini dipakai di halaman.)
               </p>
             </Section>
@@ -320,7 +310,7 @@ export default function DesignSystemPage() {
               id="tautan"
               n="04"
               title="Tautan"
-              lead={<p>Diam: garis tipis di dasar kata. Hover: tinta naik memenuhi kata. Sama dengan tombol teks, sehingga pembaca belajar satu gerak saja.</p>}
+              lead={<p>Garis bawah tipis yang melemah saat diam dan menjadi penuh saat hover. Tidak ada gerak lain, supaya tautan di dalam kalimat tidak mengganggu bacaan.</p>}
             >
               <p className="max-w-xl font-display text-body-base leading-relaxed text-text-primary">
                 Defisit tahun ini disebut turun, tetapi{' '}
@@ -356,7 +346,7 @@ export default function DesignSystemPage() {
                   <Input defaultValue="Nama Saya!" />
                 </Field>
                 <div>
-                  <Button arrow>Masuk</Button>
+                  <Button>Masuk</Button>
                 </div>
               </div>
             </Section>
@@ -497,7 +487,7 @@ export default function DesignSystemPage() {
                 <IconButton icon="more" label="Menu lainnya" />
               </div>
               <p className="mt-3 font-interface text-caption text-text-secondary">
-                Hover pada ikon: tinta naik dari bawah. Suka sedang aktif (terisi).
+                Diam: abu hangat. Hover: tinta. Suka sedang aktif (terisi).
               </p>
             </Section>
           </div>

@@ -10,7 +10,7 @@ Tidak ada fitur baru. Diizinkan: perbaikan bug, perbaikan keamanan, konten, dan 
 | # | Keputusan | Nilai sementara |
 |---|---|---|
 | D1 | Warna aksen | **Diubah 2026-11-03 atas arahan owner:** tanpa aksen. Palet = tinta, kertas, malam + satu merah (hanya galat/tindakan tak bisa dibatalkan). Warna sinyal sukses/peringatan/info dihapus; status dibedakan oleh bentuk penanda (berlian). `--color-sea-deep` kini alias ke ink. |
-| D8a | Bahasa tombol & hover | **Ditetapkan 2026-11-03:** tombol utama = balok tinta bersudut tajam; tombol kedua & tautan = teks bergaris tipis; tanpa tombol kontur; satu gerak hover "tinta naik". Fokus formulir = garis menebal, bukan warna. |
+| D8a | Bahasa tombol & hover | **Ditetapkan 2026-11-03:** tombol utama = balok tinta bersudut tajam; tombol kedua = teks bergaris bawah tipis rata kiri; tanpa tombol kontur dan **tanpa ikon di dalam tombol**. Hover sederhana: balok tinta melunak jadi abu hangat, garis bawah menjadi penuh, ikon abu jadi tinta. Tanpa gerak isian/"tinta naik" (ditolak owner: performatif, mengganggu di dalam teks). Fokus formulir = garis menebal, bukan warna. |
 | D2 | Font isi artikel | Libre Baskerville (Lora dibuang di Fase 1) |
 | D3 | Nama fitur opini pembaca | "Argumen" (alamat `/argumen`, alihan dari `/opinions`) |
 | D4 | Metode masuk | Google + tautan email |
