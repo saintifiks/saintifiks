@@ -10,6 +10,7 @@ import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { CartProvider } from "@/components/bookstore/CartProvider";
 import { ToastProvider } from "@/components/ui";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 // Load Libre Baskerville (display/headline font) dari Google Fonts
 // Libre Baskerville hanya tersedia weight 400 & 700 (tidak ada 600/SemiBold)
@@ -99,6 +100,7 @@ export default function RootLayout({
             (Client Component) — pola resmi Next.js App Router untuk kasus ini. */}
         <LocationProvider>
           <ToastProvider>
+          <AuthProvider>
           <CartProvider>
             <ConditionalIndexStrip strip={<IndexStrip />} />
 
@@ -107,6 +109,7 @@ export default function RootLayout({
               {children}
             </div>
           </CartProvider>
+          </AuthProvider>
           </ToastProvider>
         </LocationProvider>
         <Footer />

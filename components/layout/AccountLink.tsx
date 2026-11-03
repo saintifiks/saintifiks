@@ -4,34 +4,17 @@
 // Tujuan tetap /akun (halaman itu menampilkan gerbang masuk bila belum login). Pintu masuk khusus
 // dirancang di Fase 3.
 
-import { useEffect, useMemo, useState } from 'react'
 import Link from '@/components/ui/Link'
-import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/auth/AuthProvider'
 
 export default function AccountLink({ className = '' }: { className?: string }) {
-  const supabase = useMemo(() => createClient(), [])
-  // null = belum diketahui; ruang dipesan agar header tidak bergeser saat status terbaca.
-  const [loggedIn, setLoggedIn] = useState<boolean | null>(null)
-
-  useEffect(() => {
-    let active = true
-    supabase.auth.getSession().then(({ data }) => {
-      if (active) setLoggedIn(!!data.session)
-    })
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => setLoggedIn(!!session))
-    return () => {
-      active = false
-      subscription.unsubscribe()
-    }
-  }, [supabase])
+  const { userId, ready } = useAuth()
 
   return (
     <span className={['inline-block min-w-[3.5rem] text-right', className].filter(Boolean).join(' ')}>
-      {loggedIn !== null && (
+      {ready && (
         <Link href="/akun" variant="nav">
-          {loggedIn ? 'Akun' : 'Masuk'}
+          {userId ? 'Akun' : 'Masuk'}
         </Link>
       )}
     </span>

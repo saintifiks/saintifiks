@@ -1,11 +1,15 @@
 'use client'
 
-// [PERUBAHAN SESI #32] — Refactor ke icon-only + bottom sheet
+// CorrectionSection — Koreksi & klarifikasi. Koreksi adalah pembeda kepercayaan Saintifiks, jadi diberi ikon
+// merek (berlian bercentang) dan jumlahnya terlihat. Panel menampilkan koreksi yang sudah disetujui dan
+// formulir usulan koreksi dari pembaca.
 
 import { useId, useState } from 'react'
-import { AlertCircle, Loader2, X } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import { submitCorrection } from '@/app/(admin)/dashboard/koreksi/actions'
-import { useModalDialog } from '@/lib/use-modal-dialog'
+import { Button, Field, IconButton, Sheet, Textarea, useToast } from '@/components/ui'
+import { useAuth } from '@/components/auth/AuthProvider'
+import { signInWithGoogle } from '@/lib/auth-client'
 
 type Correction = {
   id: string
@@ -21,230 +25,126 @@ type CorrectionSectionProps = {
 }
 
 export default function CorrectionSection({ articleId, corrections }: CorrectionSectionProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [originalText, setOriginalText] = useState('')
-  const [correctedText, setCorrectedText] = useState('')
+  const { userId } = useAuth()
+  const toast = useToast()
+  const pathname = usePathname()
+  const formId = useId()
+  const [open, setOpen] = useState(false)
+  const [original, setOriginal] = useState('')
+  const [corrected, setCorrected] = useState('')
   const [explanation, setExplanation] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const fieldId = useId()
-  const { dialogRef, triggerRef, initialFocusRef } = useModalDialog({
-    isOpen,
-    onClose: () => setIsOpen(false),
-  })
+  const [sending, setSending] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  const count = corrections.length
+
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!originalText.trim() || !correctedText.trim()) return
+    if (!original.trim() || !corrected.trim() || sending) return
 
-    setIsSubmitting(true)
-    setMessage(null)
-
-    const result = await submitCorrection({
-      article_id: articleId,
-      original_text: originalText,
-      corrected_text: correctedText,
-      explanation: explanation
-    })
-
-    if ('error' in result && result.error) {
-      setMessage({ type: 'error', text: result.error })
-    } else {
-      setMessage({ type: 'success', text: 'Koreksi berhasil dikirim. Terima kasih!' })
-      setOriginalText('')
-      setCorrectedText('')
-      setExplanation('')
+    if (!userId) {
+      toast({
+        message: 'Masuk dengan Google untuk mengusulkan koreksi.',
+        label: 'Perlu masuk',
+        duration: 9000,
+        action: { label: 'Masuk', onClick: () => void signInWithGoogle(pathname) },
+      })
+      return
     }
 
-    setIsSubmitting(false)
-  }
+    setSending(true)
+    const result = await submitCorrection({
+      article_id: articleId,
+      original_text: original,
+      corrected_text: corrected,
+      explanation,
+    })
+    setSending(false)
 
-  const correctionCount = corrections.length
+    if ('error' in result && result.error) {
+      toast({ message: result.error, tone: 'danger' })
+      return
+    }
+    setOriginal('')
+    setCorrected('')
+    setExplanation('')
+    setOpen(false)
+    toast({ message: 'Usulan koreksi Anda akan ditinjau redaksi. Terima kasih.', tone: 'success', label: 'Terkirim' })
+  }
 
   return (
     <>
-      {/* Icon trigger — rata kiri, warna accent-blue untuk membedakan */}
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-accent/40 text-text-link transition-colors duration-150 hover:border-border-accent hover:bg-interactive-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
-        aria-label={`Koreksi & Klarifikasi${correctionCount > 0 ? `, ${correctionCount} koreksi` : ''}`}
-        title="Koreksi & Klarifikasi"
-      >
-        <AlertCircle size={18} />
-        {correctionCount > 0 && (
-          <span
-            aria-hidden="true"
-            className="absolute -top-1 -right-1 w-4 h-4 bg-interactive-primary text-paper font-interface text-[10px] rounded-full flex items-center justify-center leading-none"
-          >
-            {correctionCount}
+      <div className="flex items-center xl:flex-col">
+        <IconButton
+          icon="brand-koreksi"
+          label={count > 0 ? `Koreksi dan klarifikasi, ${count} koreksi` : 'Koreksi dan klarifikasi'}
+          onClick={() => setOpen(true)}
+        />
+        {count > 0 && (
+          <span aria-hidden="true" className="-ml-1 font-mono text-caption text-text-secondary xl:ml-0 xl:-mt-1">
+            {count}
           </span>
         )}
-      </button>
+      </div>
 
-      {/* Bottom Sheet */}
-      {isOpen && (
-        <div
-          ref={dialogRef}
-          className="fixed inset-0 z-50 flex flex-col justify-end"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="article-correction-dialog-title"
-          tabIndex={-1}
-        >
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-ink/40"
-            onClick={() => setIsOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Sheet */}
-          <div className="relative bg-paper w-full max-h-[85vh] flex flex-col rounded-t-2xl shadow-2xl">
-            {/* Handle bar */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-ink/20 rounded-full" />
-            </div>
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-ink/10">
-              <div className="flex items-center gap-2">
-                <AlertCircle size={18} className="text-text-link" />
-                <h3
-                  id="article-correction-dialog-title"
-                  className="font-display text-lg font-bold text-ink"
-                >
-                  Koreksi & Klarifikasi
-                </h3>
-                {correctionCount > 0 && (
-                  <span className="font-interface text-xs text-text-link bg-interactive-primary/10 px-2 py-0.5">
-                    {correctionCount}
-                  </span>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Koreksi & klarifikasi" meta={count || undefined}>
+        {count > 0 ? (
+          <ul className="space-y-8">
+            {corrections.map((c) => (
+              <li key={c.id} className="border-l border-border-default pl-5">
+                <p className="font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">
+                  Koreksi
+                </p>
+                <p className="mt-3 font-display text-base leading-relaxed text-text-secondary line-through decoration-1">
+                  {c.original_text}
+                </p>
+                <p className="mt-2 font-display text-base leading-relaxed text-text-primary">{c.corrected_text}</p>
+                {c.explanation && (
+                  <p className="mt-3 font-display text-sm italic leading-relaxed text-text-secondary">{c.explanation}</p>
                 )}
-              </div>
-              <button
-                ref={initialFocusRef}
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full transition-colors hover:bg-ink/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
-                aria-label="Tutup Koreksi & Klarifikasi"
-              >
-                <X size={18} />
-              </button>
-            </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="font-display text-base italic leading-relaxed text-text-secondary">
+            Belum ada koreksi untuk artikel ini.
+          </p>
+        )}
 
-            {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-
-              {/* Daftar koreksi yang sudah disetujui */}
-              {corrections.length > 0 ? (
-                <div className="space-y-6 mb-6">
-                  {corrections.map((corr) => (
-                    <div key={corr.id} className="border-l-4 border-border-accent pl-4 py-1">
-                      <p className="font-interface text-xs text-ink/40 mb-2 uppercase tracking-widest">Koreksi</p>
-                      <div className="mb-3">
-                        <p className="text-ink/60 line-through text-sm">{corr.original_text}</p>
-                        <p className="text-ink font-medium text-sm mt-1">{corr.corrected_text}</p>
-                      </div>
-                      {corr.explanation && (
-                        <p className="font-interface text-sm text-ink/70 italic border-l-2 border-ink/20 pl-3">
-                          {corr.explanation}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="font-interface text-sm text-ink/40 mb-6">
-                  Belum ada koreksi untuk artikel ini.
-                </p>
-              )}
-
-              {/* Form usulan koreksi */}
-              <div className="border-t border-ink/10 pt-5">
-                <p className="font-interface text-xs text-ink/40 uppercase tracking-widest mb-4">
-                  Usulkan Koreksi
-                </p>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor={`${fieldId}-original-text`}
-                      className="block font-interface text-xs text-ink/50 mb-1.5"
-                    >
-                      Teks asli yang ingin dikoreksi
-                    </label>
-                    <textarea
-                      id={`${fieldId}-original-text`}
-                      value={originalText}
-                      onChange={(e) => setOriginalText(e.target.value)}
-                      className="bg-transparent w-full h-16 font-interface text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
-                      placeholder="Salin teks asli dari artikel..."
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor={`${fieldId}-corrected-text`}
-                      className="block font-interface text-xs text-ink/50 mb-1.5"
-                    >
-                      Teks yang diusulkan
-                    </label>
-                    <textarea
-                      id={`${fieldId}-corrected-text`}
-                      value={correctedText}
-                      onChange={(e) => setCorrectedText(e.target.value)}
-                      className="bg-transparent w-full h-16 font-interface text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
-                      placeholder="Tulis versi yang benar..."
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor={`${fieldId}-explanation`}
-                      className="block font-interface text-xs text-ink/50 mb-1.5"
-                    >
-                      Penjelasan (opsional)
-                    </label>
-                    <textarea
-                      id={`${fieldId}-explanation`}
-                      value={explanation}
-                      onChange={(e) => setExplanation(e.target.value)}
-                      className="bg-transparent w-full h-16 font-interface text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
-                      placeholder="Mengapa ini perlu dikoreksi?"
-                    />
-                  </div>
-
-                  {message && (
-                    <div
-                      role={message.type === 'error' ? 'alert' : 'status'}
-                      className={`p-3 border text-sm font-interface ${message.type === 'success' ? 'border-ink/20 bg-ink/5 text-ink' : 'border-signal-danger/30 bg-signal-danger/5 text-signal-danger'}`}
-                    >
-                      {message.text}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    aria-busy={isSubmitting}
-                    className="w-full min-h-[44px] bg-ink text-paper py-3 font-interface text-sm hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" />
-                        Mengirim...
-                      </>
-                    ) : (
-                      'Kirim untuk Ditinjau'
-                    )}
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        <form onSubmit={submit} className="mt-10 space-y-7 border-t border-border-default/20 pt-8">
+          <p className="font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">
+            Usulkan koreksi
+          </p>
+          <Field label="Teks asli di artikel" required>
+            <Textarea
+              id={`${formId}-asli`}
+              value={original}
+              onChange={(e) => setOriginal(e.target.value)}
+              placeholder="Salin kalimat yang ingin dikoreksi"
+              required
+            />
+          </Field>
+          <Field label="Usulan perbaikan" required>
+            <Textarea
+              id={`${formId}-usulan`}
+              value={corrected}
+              onChange={(e) => setCorrected(e.target.value)}
+              placeholder="Tulis versi yang benar"
+              required
+            />
+          </Field>
+          <Field label="Dasar atau sumber" hint="Opsional, tetapi membantu redaksi memeriksa.">
+            <Textarea
+              id={`${formId}-dasar`}
+              value={explanation}
+              onChange={(e) => setExplanation(e.target.value)}
+              placeholder="Tautan atau penjelasan singkat"
+            />
+          </Field>
+          <Button type="submit" size="sm" disabled={!original.trim() || !corrected.trim() || sending} aria-busy={sending}>
+            {sending ? 'Mengirim' : 'Kirim usulan'}
+          </Button>
+        </form>
+      </Sheet>
     </>
   )
 }

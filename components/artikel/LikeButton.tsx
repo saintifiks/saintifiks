@@ -1,128 +1,106 @@
 'use client'
 
-// Komponen LikeButton — tombol suka artikel, icon only
-// [PERUBAHAN SESI #32] — Hapus tampilan count, pertahankan pencatatan likes di DB
+// LikeButton — suka artikel. Terisi bila disukai. Umpan balik: ikon berubah seketika (optimistis);
+// bila gagal, kembali dan muncul notifikasi. Belum login: tidak langsung melempar ke Google —
+// notifikasi menjelaskan dan menawarkan masuk; setelah kembali, suka dilanjutkan otomatis.
 
-import { useState, useEffect, useMemo } from 'react'
-import { Heart, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { useCallback, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { IconButton, useToast } from '@/components/ui'
+import { useAuth } from '@/components/auth/AuthProvider'
+import { saveIntent, signInWithGoogle, takeIntent } from '@/lib/auth-client'
 
 type LikeButtonProps = {
   articleId: string
 }
 
 export default function LikeButton({ articleId }: LikeButtonProps) {
-  const [isLiked, setIsLiked] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoggingIn, setIsLoggingIn] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  
+  const { userId, ready } = useAuth()
+  const toast = useToast()
   const pathname = usePathname()
-  const supabase = useMemo(() => createClient(), [])
+  const [liked, setLiked] = useState(false)
+  const [busy, setBusy] = useState(false)
 
-  useEffect(() => {
-    async function checkInitialState() {
-      try {
-        // Fetch status like user (apakah sudah like atau belum)
-        const statusRes = await fetch(`/api/likes?articleId=${articleId}`, { cache: 'no-store', credentials: 'include' })
-        if (statusRes.ok) {
-          const data = await statusRes.json()
-          setIsLiked(data.isLiked || false)
-        }
-      } catch (err) {
-        console.error('Error fetching like state:', err)
+
+  const send = useCallback(
+    async (next: boolean) => {
+      setLiked(next)
+      setBusy(true)
+      if (next) {
+        fetch('/api/analytics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event_type: 'klik_like',
+            path: pathname,
+            session_id: 'interaction',
+            metadata: { article_id: articleId },
+          }),
+          keepalive: true,
+        }).catch(() => {})
       }
+      try {
+        const res = await fetch('/api/likes', {
+          method: next ? 'POST' : 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ articleId }),
+          cache: 'no-store',
+          credentials: 'include',
+        })
+        if (!res.ok) throw new Error(String(res.status))
+      } catch {
+        setLiked(!next)
+        toast({ message: 'Suka belum tersimpan. Coba lagi sebentar lagi.', tone: 'danger' })
+      } finally {
+        setBusy(false)
+      }
+    },
+    [articleId, pathname, toast]
+  )
 
-      // Cek apakah user sudah login (hanya untuk tombol login)
-      const { data: { session } } = await supabase.auth.getSession()
-      setIsLoggedIn(!!session?.user)
-
-      setIsLoading(false)
-    }
-    
-    checkInitialState()
-  }, [articleId])
-
-  async function handleLikeClick() {
-    if (!isLoggedIn) {
-      setIsLoggingIn(true)
-      
-      const origin = window.location.origin
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          // Memaksa Google menampilkan pemilihan akun (account chooser)
-          queryParams: {
-            prompt: 'select_account'
-          },
-          redirectTo: `${origin}/auth/callback?next=${pathname}`,
-        },
+  // Status suka hanya ditanyakan bila sudah login — pembaca anonim tidak memicu permintaan.
+  // Suka yang tertunda sebelum dialihkan ke Google dilanjutkan di sini, setelah status diketahui.
+  useEffect(() => {
+    if (!ready || !userId) return
+    let active = true
+    fetch(`/api/likes?articleId=${articleId}`, { cache: 'no-store', credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active) return
+        const already = !!data?.isLiked
+        if (data) setLiked(already)
+        if (takeIntent('like', articleId) && !already) {
+          void send(true)
+          toast({ message: 'Anda masuk. Artikel ini sudah Anda sukai.', tone: 'success', label: 'Disukai' })
+        }
       })
-      
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [ready, userId, articleId, send, toast])
+
+  function handleClick() {
+    if (!userId) {
+      saveIntent({ type: 'like', articleId })
+      toast({
+        message: 'Masuk dengan Google untuk menyukai artikel ini. Suka Anda akan tersimpan otomatis.',
+        label: 'Perlu masuk',
+        duration: 9000,
+        action: { label: 'Masuk', onClick: () => void signInWithGoogle(pathname) },
+      })
       return
     }
-
-    // Optimistic update untuk isLiked (UX responsif)
-    const previousState = isLiked
-    setIsLiked(!previousState)
-
-    if (!previousState) {
-      fetch('/api/analytics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_type: 'klik_like',
-          path: pathname,
-          session_id: 'interaction',
-          metadata: { article_id: articleId }
-        }),
-        keepalive: true
-      }).catch(() => {})
-    }
-
-    try {
-      const res = await fetch('/api/likes', {
-        method: previousState ? 'DELETE' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ articleId }),
-        cache: 'no-store',
-        credentials: 'include',
-      })
-
-      if (!res.ok) {
-        // Rollback jika gagal
-        setIsLiked(previousState)
-      }
-    } catch (err) {
-      console.error('Error toggling like:', err)
-      setIsLiked(previousState)
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="h-10 w-10 border border-ink/10 bg-ink/5 animate-pulse rounded-full" />
-    )
+    void send(!liked)
   }
 
   return (
-    <button
-      onClick={handleLikeClick}
-      disabled={isLoggingIn}
-      className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-150 ${
-        isLiked 
-          ? 'bg-signal-danger text-paper' 
-          : 'bg-transparent border border-ink/30 text-ink hover:border-signal-danger hover:text-signal-danger'
-      } disabled:opacity-50`}
-      aria-label={isLiked ? 'Batalkan suka' : 'Sukai artikel'}
-      title={isLiked ? 'Telah disukai' : 'Sukai artikel'}
-    >
-      {isLoggingIn ? (
-        <Loader2 size={18} className="animate-spin" />
-      ) : (
-        <Heart size={18} className={isLiked ? 'fill-current' : ''} />
-      )}
-    </button>
+    <IconButton
+      icon="heart"
+      label={liked ? 'Batalkan suka' : 'Sukai artikel'}
+      pressed={liked}
+      disabled={busy}
+      onClick={handleClick}
+    />
   )
 }

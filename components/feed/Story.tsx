@@ -50,7 +50,7 @@ export function StoryLead({ story }: { story: StoryData }) {
     <article className="group">
       <NextLink href={`/artikel/${story.slug}`} className="block">
         {hasCover && (
-          <div className="aspect-[16/9] overflow-hidden bg-surface-sunken">
+          <div className="aspect-[16/9] overflow-hidden bg-surface-sunken md:aspect-[2/1] lg:aspect-[16/9]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={story.coverImageUrl!}
@@ -91,7 +91,7 @@ export function StorySide({ story }: { story: StoryData }) {
         href={`/artikel/${story.slug}`}
         className={[
           'grid gap-x-5 py-6',
-          story.coverImageUrl ? 'grid-cols-[1fr_6rem] sm:grid-cols-[1fr_7rem]' : '',
+          story.coverImageUrl ? 'grid-cols-[1fr_6rem] sm:grid-cols-[1fr_7rem] lg:grid-cols-[1fr_5rem] xl:grid-cols-[1fr_7rem]' : '',
         ].join(' ')}
       >
         <div className="min-w-0">
