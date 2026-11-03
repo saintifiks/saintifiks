@@ -73,7 +73,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         role="region"
         aria-label="Notifikasi"
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-toast flex flex-col items-stretch gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-start sm:px-8 sm:pb-8"
+        className="toast-region pointer-events-none fixed inset-x-0 bottom-0 z-toast flex flex-col items-stretch gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-start sm:px-8 sm:pb-8"
       >
         {items.map((item) => (
           <ToastView key={item.id} item={item} onDismiss={() => dismiss(item.id)} />

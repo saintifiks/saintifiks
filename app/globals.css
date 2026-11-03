@@ -600,6 +600,16 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
    AKSESIBILITAS
    ============================================================ */
 
+/* === NOTIFIKASI SAAT PANEL MODAL TERBUKA ===
+   Notifikasi biasanya di dasar layar; bila panel modal terbuka, tombol aksinya ada di dasar juga dan akan tertutup.
+   Selama panel terbuka, notifikasi pindah ke atas layar. */
+body:has([role='dialog'][aria-modal='true']) .toast-region {
+  top: 0;
+  bottom: auto;
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: 0;
+}
+
 /* === SKIP LINK (WCAG 2.4.1) — lompat langsung ke konten utama === */
 .skip-link {
   position: absolute;
