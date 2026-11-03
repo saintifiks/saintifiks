@@ -38,7 +38,9 @@ jobs:
           size=$(stat -c%s database-backup.dump)
           echo "Ukuran backup: ${size} byte"
           test "$size" -gt 10000
-          /usr/lib/postgresql/17/bin/pg_restore --list database-backup.dump | grep -q 'TABLE DATA public articles'
+          # Simpan daftar isi ke berkas dulu: grep -q yang menutup pipa lebih awal membuat pg_restore gagal (SIGPIPE).
+          /usr/lib/postgresql/17/bin/pg_restore --list database-backup.dump > backup-contents.txt
+          grep -q 'TABLE DATA public articles' backup-contents.txt
           echo "Backup terbaca dan memuat tabel articles."
 
       - name: Simpan File ke GitHub Artifacts
