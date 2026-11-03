@@ -1,8 +1,11 @@
 'use client'
 
-// Toast — umpan balik singkat setelah sebuah aksi (disimpan, tautan disalin, gagal).
-// Dipasang sekali di layout lewat <ToastProvider>; dipanggil di mana saja lewat useToast().
-// Aturan pakai: satu kalimat pendek, tanpa tanda seru; gagal = tone "danger" + cara mencoba lagi.
+// Toast — "keping" tinta yang muncul dari tepi bawah setelah sebuah aksi.
+// Susunan: label kecil (apa yang terjadi) · kalimat pendek dalam serif · tindakan lanjutan · tutup.
+// Sisa waktu terlihat sebagai garis tipis yang menyusut di tepi bawah; kursor di atasnya menjeda.
+// Gagal = garis merah di tepi kiri (bukan latar merah). Satu kalimat, tanpa tanda seru.
+//
+// Pasang sekali di layout lewat <ToastProvider>; panggil di mana saja lewat useToast().
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
@@ -13,15 +16,18 @@ type ToastTone = 'neutral' | 'success' | 'danger'
 export type ToastInput = {
   message: string
   tone?: ToastTone
+  // Label kecil di atas kalimat. Default mengikuti tone: Info / Tersimpan / Gagal.
+  label?: string
   // Tautan tindak lanjut, mis. { label: 'Lihat Daftar Bacaan', href: '/akun/bacaan' }
   action?: { label: string; href?: string; onClick?: () => void }
-  // Milidetik; 0 = tetap sampai ditutup. Default 4000 (6000 untuk danger).
+  // Milidetik; 0 = tetap sampai ditutup. Default 4000 (7000 untuk danger).
   duration?: number
 }
 
 type ToastItem = ToastInput & { id: number }
 
 const MAX_VISIBLE = 3
+const defaultLabel: Record<ToastTone, string> = { neutral: 'Info', success: 'Tersimpan', danger: 'Gagal' }
 
 const ToastContext = createContext<((toast: ToastInput) => void) | null>(null)
 
@@ -46,8 +52,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback(
     (toast: ToastInput) => {
       const id = nextId.current++
-      setItems((current) => [...current, { ...toast, id }].slice(-MAX_VISIBLE))
-      const duration = toast.duration ?? (toast.tone === 'danger' ? 6000 : 4000)
+      const duration = toast.duration ?? (toast.tone === 'danger' ? 7000 : 4000)
+      setItems((current) => [...current, { ...toast, duration, id }].slice(-MAX_VISIBLE))
       if (duration > 0) timers.current.set(id, setTimeout(() => dismiss(id), duration))
     },
     [dismiss]
@@ -67,55 +73,85 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         role="region"
         aria-label="Notifikasi"
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-toast flex flex-col items-center gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-toast flex flex-col items-stretch gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-start sm:px-8 sm:pb-8"
       >
         {items.map((item) => (
-          <ToastCard key={item.id} item={item} onDismiss={() => dismiss(item.id)} />
+          <ToastView key={item.id} item={item} onDismiss={() => dismiss(item.id)} />
         ))}
       </div>
     </ToastContext.Provider>
   )
 }
 
-function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: () => void }) {
+// Tampilan murni (tanpa timer) — dipakai Provider dan halaman sistem desain.
+export function ToastView({
+  item,
+  onDismiss,
+  live = true,
+}: {
+  item: ToastInput & { id?: number }
+  onDismiss?: () => void
+  // false = tanpa animasi masuk/garis waktu (untuk contoh statis)
+  live?: boolean
+}) {
   const tone = item.tone ?? 'neutral'
+  const duration = item.duration ?? 4000
   const actionClass =
-    'font-interface text-sm font-semibold underline underline-offset-4 decoration-paper/40 hover:decoration-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-paper'
+    'rise inline-flex min-h-[36px] shrink-0 items-center gap-2 px-3 font-interface text-caption font-semibold uppercase tracking-widest [--rise-fill:var(--color-paper)] [--rise-text:var(--color-ink)] text-paper'
 
   return (
     <div
       role={tone === 'danger' ? 'alert' : 'status'}
-      className="toast-card pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-sm bg-ink px-4 py-3 text-paper shadow-lg"
+      className={[
+        'pointer-events-auto relative flex w-full max-w-lg items-stretch overflow-hidden rounded-none bg-night text-paper shadow-lg',
+        live ? 'toast-card' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
-      {tone !== 'neutral' && (
-        <Icon name={tone === 'success' ? 'circle-check' : 'warning'} size="md" className="shrink-0" />
+      {tone === 'danger' && <span aria-hidden="true" className="w-1 shrink-0 bg-signal-danger" />}
+      <div className="flex min-w-0 flex-1 items-center gap-4 py-3 pl-4 pr-2">
+        <div className="min-w-0 flex-1">
+          <p className="font-interface text-kicker font-semibold uppercase tracking-widest text-paper/60">
+            {item.label ?? defaultLabel[tone]}
+          </p>
+          <p className="mt-1 font-display text-sm leading-snug">{item.message}</p>
+        </div>
+        {item.action &&
+          (item.action.href ? (
+            <Link href={item.action.href} onClick={onDismiss} className={actionClass}>
+              {item.action.label}
+              <Icon name="arrow-right" size="sm" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                item.action?.onClick?.()
+                onDismiss?.()
+              }}
+              className={actionClass}
+            >
+              {item.action.label}
+              <Icon name="arrow-right" size="sm" />
+            </button>
+          ))}
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Tutup notifikasi"
+          className="flex h-9 w-9 shrink-0 items-center justify-center text-paper/60 transition-colors duration-moderate hover:text-paper"
+        >
+          <Icon name="close" size="sm" />
+        </button>
+      </div>
+      {live && duration > 0 && (
+        <span
+          aria-hidden="true"
+          style={{ ['--toast-duration' as string]: `${duration}ms` }}
+          className="toast-bar absolute inset-x-0 bottom-0 h-px bg-paper/70"
+        />
       )}
-      <p className="min-w-0 flex-1 font-interface text-sm leading-snug">{item.message}</p>
-      {item.action &&
-        (item.action.href ? (
-          <Link href={item.action.href} onClick={onDismiss} className={actionClass}>
-            {item.action.label}
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              item.action?.onClick?.()
-              onDismiss()
-            }}
-            className={actionClass}
-          >
-            {item.action.label}
-          </button>
-        ))}
-      <button
-        type="button"
-        onClick={onDismiss}
-        aria-label="Tutup notifikasi"
-        className="-mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-paper/70 hover:text-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-paper"
-      >
-        <Icon name="close" size="sm" />
-      </button>
     </div>
   )
 }

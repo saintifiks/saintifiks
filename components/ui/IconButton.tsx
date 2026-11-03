@@ -1,7 +1,10 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import Icon, { type IconName, type IconSize } from './Icon'
 
-type IconButtonVariant = 'plain' | 'outline' | 'solid'
+// Tombol ikon — kotak tajam 44px. Diam: hanya ikon. Hover/fokus: tinta naik dari bawah memenuhi kotak
+// dan ikon berbalik warna (gerak yang sama dengan tombol teks). Toggle aktif: ikon terisi.
+
+type IconButtonVariant = 'plain' | 'solid'
 
 export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
   icon: IconName
@@ -15,9 +18,8 @@ export type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'chi
 }
 
 const variantClasses: Record<IconButtonVariant, string> = {
-  plain: 'text-text-secondary hover:text-text-primary hover:bg-surface-sunken/60',
-  outline: 'text-text-secondary border border-border-default/20 hover:text-text-primary hover:border-border-default/50',
-  solid: 'bg-interactive-primary text-text-on-inverse hover:bg-interactive-primary-hover',
+  plain: 'text-text-primary before:bg-ink hover:text-paper focus-visible:text-paper',
+  solid: 'bg-ink text-paper before:bg-night hover:text-paper focus-visible:text-paper',
 }
 
 const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
@@ -34,11 +36,11 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconB
       aria-busy={busy || undefined}
       disabled={props.disabled || busy}
       className={[
-        'inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full',
-        'transition-[background-color,color,border-color,transform] duration-fast ease-out',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary',
-        'active:scale-[0.94] disabled:cursor-not-allowed disabled:opacity-50',
-        pressed ? 'text-text-primary' : '',
+        'relative isolate inline-flex min-h-[44px] min-w-[44px] items-center justify-center overflow-hidden rounded-none',
+        "before:absolute before:inset-0 before:-z-10 before:origin-bottom before:scale-y-0 before:transition-transform before:duration-moderate before:ease-rise before:content-['']",
+        'hover:before:scale-y-100 focus-visible:before:scale-y-100',
+        'transition-colors duration-moderate ease-rise',
+        'active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:before:scale-y-0',
         variantClasses[variant],
         className,
       ]

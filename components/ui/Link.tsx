@@ -9,11 +9,12 @@ export type LinkProps = ComponentProps<typeof NextLink> & {
   external?: boolean
 }
 
+// Semua tautan memakai gerak "tinta naik" (lihat globals.css): garis tipis di dasar, saat hover tinta
+// naik memenuhi kata dan huruf berbalik warna. 'nav' tanpa garis diam; 'muted' untuk tautan sekunder.
 const variantClasses: Record<LinkVariant, string> = {
-  default:
-    'text-text-link hover:text-interactive-primary-hover underline-offset-2 hover:underline',
-  nav: 'text-text-primary hover:text-text-link font-interface text-sm font-medium no-underline',
-  muted: 'text-text-secondary hover:text-text-primary no-underline',
+  default: 'rise text-text-primary',
+  nav: 'rise text-text-primary font-interface text-sm font-medium [background-size:100%_0,100%_0]',
+  muted: 'rise text-text-secondary',
 }
 
 export default function Link({
@@ -25,7 +26,6 @@ export default function Link({
   ...props
 }: LinkProps) {
   const classes = [
-    'transition-colors duration-fast focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary',
     variantClasses[variant],
     className,
   ]

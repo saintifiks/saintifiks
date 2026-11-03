@@ -44,6 +44,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { brandIcons, type BrandIconName } from './brand-icons'
+import { CoreIcon, coreIconNames, isCoreIcon, type CoreIconName } from './core-icons'
 
 const libraryIcons = {
   'arrow-left': ArrowLeft,
@@ -87,10 +88,11 @@ const libraryIcons = {
 } satisfies Record<string, LucideIcon>
 
 export type LibraryIconName = keyof typeof libraryIcons
-export type IconName = LibraryIconName | BrandIconName
+export type IconName = LibraryIconName | BrandIconName | CoreIconName
 
 export const iconNames = [
-  ...(Object.keys(libraryIcons) as LibraryIconName[]),
+  ...coreIconNames,
+  ...(Object.keys(libraryIcons).filter((n) => !isCoreIcon(n)) as LibraryIconName[]),
   ...(Object.keys(brandIcons) as BrandIconName[]),
 ] as IconName[]
 
@@ -114,6 +116,10 @@ export default function Icon({ name, size = 'md', filled = false, className = ''
     ? ({ role: 'img', 'aria-label': title } as const)
     : ({ 'aria-hidden': true } as const)
 
+  if (isCoreIcon(name)) {
+    return <CoreIcon name={name} size={px} filled={filled} className={className} {...a11y} />
+  }
+
   if (name in brandIcons) {
     const Brand = brandIcons[name as BrandIconName]
     return <Brand size={px} className={className} {...a11y} />
@@ -124,6 +130,8 @@ export default function Icon({ name, size = 'md', filled = false, className = ''
     <Lib
       size={px}
       strokeWidth={1.5}
+      strokeLinecap="square"
+      strokeLinejoin="miter"
       className={className}
       fill={filled ? 'currentColor' : 'none'}
       {...a11y}

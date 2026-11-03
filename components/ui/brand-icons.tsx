@@ -15,8 +15,8 @@ function Base({ size = 20, children, ...rest }: BrandSvgProps) {
       fill="none"
       stroke="currentColor"
       strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
       {...rest}
     >
       {children}

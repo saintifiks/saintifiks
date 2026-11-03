@@ -87,6 +87,9 @@ const config: Config = {
         '18': '4.5rem',
         '22': '5.5rem',
       },
+      transitionTimingFunction: {
+        rise: 'var(--ease-rise)',
+      },
       transitionDuration: {
         swift: 'var(--duration-swift)',
         moderate: 'var(--duration-moderate)',

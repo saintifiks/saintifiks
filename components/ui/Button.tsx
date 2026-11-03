@@ -1,58 +1,74 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import Icon from './Icon'
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link'
+// Tiga bentuk tombol, tanpa kotak kontur:
+//  • primary — balok tinta penuh, sudut tajam. Hover: garis tulis di bawah label tergambar, panah bergeser.
+//  • text    — hanya label dan garis tipis di dasar. Hover: tinta naik memenuhi tombol (gerak "tinta naik").
+//  • danger  — sama dengan text tetapi merah; tintanya merah. Untuk tindakan yang tak bisa dibatalkan.
+//  • link    — tautan sebaris dalam kalimat; gerak sama.
+// 'secondary' dan 'ghost' dipertahankan sebagai nama lama dari 'text'.
+
+type ButtonVariant = 'primary' | 'text' | 'danger' | 'link' | 'secondary' | 'ghost'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant
   size?: ButtonSize
+  // Panah penunjuk arah di ujung label (bergeser saat hover). Untuk aksi yang "melanjutkan".
+  arrow?: boolean
   children: ReactNode
 }
 
-const variantClasses: Record<ButtonVariant, string> = {
-  primary:
-    'bg-interactive-primary text-text-on-inverse hover:bg-interactive-primary-hover active:bg-interactive-primary-active disabled:bg-interactive-primary-disabled disabled:text-text-tertiary',
-  secondary:
-    'bg-transparent text-interactive-primary border border-interactive-primary hover:bg-signal-info-surface active:bg-surface-sunken',
-  ghost:
-    'bg-transparent text-text-primary border border-border-default/30 hover:bg-surface-sunken/50 hover:border-border-strong',
-  danger:
-    'bg-signal-danger text-text-on-inverse hover:bg-signal-danger/90 active:bg-signal-danger/80',
-  link:
-    'bg-transparent text-text-link underline-offset-2 hover:underline p-0 min-h-0',
+const sizeClasses: Record<ButtonSize, string> = {
+  sm: 'min-h-[36px] px-4 text-caption',
+  md: 'min-h-[44px] px-6 text-caption-lg',
+  lg: 'min-h-[52px] px-8 text-sm',
 }
 
-const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'min-h-[36px] px-3.5 py-2 text-[13px]',
-  md: 'min-h-[44px] px-5 py-3 text-sm',
-  lg: 'min-h-[52px] px-7 py-3.5 text-base',
-}
+const base =
+  'group inline-flex items-center justify-center gap-3 rounded-none font-interface font-semibold uppercase tracking-widest'
+
+const variantClasses = {
+  primary:
+    'bg-interactive-primary text-text-on-inverse active:translate-y-px disabled:cursor-not-allowed disabled:bg-interactive-primary-disabled disabled:text-text-tertiary disabled:active:translate-y-0',
+  text: 'rise text-text-primary',
+  danger: 'rise rise-danger text-signal-danger',
+  link: 'rise text-text-primary normal-case tracking-normal font-medium',
+} as const
+
+const aliases = { secondary: 'text', ghost: 'text' } as const
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', className = '', children, type = 'button', ...props },
+  { variant = 'primary', size = 'md', arrow = false, className = '', children, type = 'button', ...props },
   ref
 ) {
-  const isLink = variant === 'link'
+  const resolved = (variant in aliases ? aliases[variant as keyof typeof aliases] : variant) as keyof typeof variantClasses
+  const isLink = resolved === 'link'
+  const isPrimary = resolved === 'primary'
 
   return (
     <button
       ref={ref}
       type={type}
-      className={[
-        'inline-flex items-center justify-center gap-2 rounded font-interface font-semibold tracking-wide',
-        'transition-[background-color,border-color,color,transform] duration-fast ease-out',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary',
-        'disabled:cursor-not-allowed disabled:opacity-100',
-        'active:scale-[0.98]',
-        !isLink && sizeClasses[size],
-        variantClasses[variant],
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className={[base, !isLink && sizeClasses[size], variantClasses[resolved], className].filter(Boolean).join(' ')}
       {...props}
     >
-      {children}
+      <span className="relative">
+        {children}
+        {isPrimary && (
+          <span
+            aria-hidden="true"
+            className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-paper transition-transform duration-moderate ease-rise group-hover:scale-x-100 group-focus-visible:scale-x-100 group-disabled:hidden"
+          />
+        )}
+      </span>
+      {arrow && (
+        <Icon
+          name="arrow-right"
+          size="sm"
+          className="transition-transform duration-moderate ease-rise group-hover:translate-x-1 group-disabled:translate-x-0"
+        />
+      )}
     </button>
   )
 })

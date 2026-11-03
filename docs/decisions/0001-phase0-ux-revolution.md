@@ -9,14 +9,15 @@ Tidak ada fitur baru. Diizinkan: perbaikan bug, perbaikan keamanan, konten, dan 
 ## Keputusan (default ★ — ubah dengan menyunting baris ini)
 | # | Keputusan | Nilai sementara |
 |---|---|---|
-| D1 | Warna aksen | teal `sea-deep` dipertahankan |
+| D1 | Warna aksen | **Diubah 2026-11-03 atas arahan owner:** tanpa aksen. Palet = tinta, kertas, malam + satu merah (hanya galat/tindakan tak bisa dibatalkan). Warna sinyal sukses/peringatan/info dihapus; status dibedakan oleh bentuk penanda (berlian). `--color-sea-deep` kini alias ke ink. |
+| D8a | Bahasa tombol & hover | **Ditetapkan 2026-11-03:** tombol utama = balok tinta bersudut tajam; tombol kedua & tautan = teks bergaris tipis; tanpa tombol kontur; satu gerak hover "tinta naik". Fokus formulir = garis menebal, bukan warna. |
 | D2 | Font isi artikel | Libre Baskerville (Lora dibuang di Fase 1) |
 | D3 | Nama fitur opini pembaca | "Argumen" (alamat `/argumen`, alihan dari `/opinions`) |
 | D4 | Metode masuk | Google + tautan email |
 | D5 | Bookstore | keluar dari alur utama sampai produk jelas; `CartProvider` dipindah ke layout toko |
 | D6 | Komentar | tetap anonim "Pembaca" |
 | D7 | Gambar khas dithered/halftone | ya (login + ilustrasi) |
-| D8 | Bahasa sudut | tajam editorial 0–2px; pil hanya tombol/chip |
+| D8 | Bahasa sudut | tajam (0). Bulat hanya avatar |
 | D9 | Basis data Argumen vs artikel | UI bersama dulu; database belakangan |
 | D10 | Daftar Bacaan / buletin | Daftar Bacaan sekarang; buletin nanti |
 
