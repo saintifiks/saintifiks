@@ -45,4 +45,12 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: "https://placeholder-project.supabase.co"
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder"
-        run: npm run build
+        # next/font/google mengunduh font saat build; gangguan jaringan sesaat ke Google Fonts pernah menggagalkan
+        # build tanpa kesalahan kode. Coba ulang hingga 3 kali; kegagalan sungguhan tetap gagal di percobaan terakhir.
+        run: |
+          for attempt in 1 2 3; do
+            if npm run build; then exit 0; fi
+            echo "Build gagal (percobaan $attempt dari 3)"
+            sleep 15
+          done
+          exit 1
