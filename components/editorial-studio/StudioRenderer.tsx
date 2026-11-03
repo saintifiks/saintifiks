@@ -397,7 +397,7 @@ function renderNode(node: StudioJsonNode, context: RenderContext, key: string): 
         <pre
           key={key}
           data-block-id={stableId}
-          className="my-6 overflow-x-auto bg-surface-inverse p-5 font-mono text-sm text-text-on-inverse"
+          className="my-6 overflow-x-auto surface-night bg-paper p-5 font-mono text-sm text-ink"
         >
           <code>{node.content?.map((child) => child.text ?? '').join('')}</code>
         </pre>

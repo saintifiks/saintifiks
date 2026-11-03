@@ -450,7 +450,7 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
                 aria-label={isPublished ? 'Terbitkan pembaruan' : 'Terbitkan artikel'}
                 disabled={publishing}
                 onClick={() => { setPublishError(null); setPublishOpen(true) }}
-                className={`inline-flex min-h-[44px] items-center gap-2 bg-surface-inverse px-3 font-interface text-sm font-semibold text-text-on-inverse hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-35 sm:px-4 ${focusRing}`}
+                className={`inline-flex min-h-[44px] items-center gap-2 bg-interactive-primary px-3 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:bg-interactive-primary-disabled disabled:text-text-tertiary sm:px-4 ${focusRing}`}
               >
                 <Send aria-hidden="true" size={16} />
                 <span className="hidden md:inline">{isPublished ? 'Terbitkan pembaruan' : 'Terbitkan'}</span>
@@ -738,7 +738,7 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
 
               <details className="mt-7 border-t border-border-default/15 pt-5">
                 <summary className={`flex min-h-[44px] cursor-pointer list-none items-center font-interface text-sm font-medium text-text-secondary hover:text-text-primary ${focusRing}`}>Lihat canonical JSON</summary>
-                <pre className="mt-2 max-h-[360px] overflow-auto bg-surface-inverse p-4 font-mono text-kicker leading-relaxed text-text-on-inverse">{JSON.stringify(document, null, 2)}</pre>
+                <pre className="mt-2 max-h-[360px] overflow-auto surface-night bg-paper p-4 font-mono text-kicker leading-relaxed text-ink">{JSON.stringify(document, null, 2)}</pre>
               </details>
 
               <section aria-labelledby="studio-reset-title" className="mt-7 border-t border-border-default/15 pt-6">
@@ -823,7 +823,7 @@ export default function StudioLab({ initialDraft, production = false }: StudioLa
                 type="button"
                 disabled={publishing || persistence.state !== 'saved' || serverSync.state !== 'synced' || !serverSync.serverRevision || !preflight.ok}
                 onClick={() => void publishArticle()}
-                className={`inline-flex min-h-[44px] items-center gap-2 bg-surface-inverse px-4 font-interface text-sm font-semibold text-text-on-inverse hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-35 ${focusRing}`}
+                className={`inline-flex min-h-[44px] items-center gap-2 bg-interactive-primary px-4 font-interface text-sm font-semibold text-text-on-inverse hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:bg-interactive-primary-disabled disabled:text-text-tertiary ${focusRing}`}
               >
                 <Send aria-hidden="true" size={16} /> {publishing ? 'Menerbitkan...' : isPublished ? 'Terbitkan pembaruan' : 'Terbitkan sekarang'}
               </button>

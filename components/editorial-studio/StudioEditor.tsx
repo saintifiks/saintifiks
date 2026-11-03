@@ -1133,7 +1133,7 @@ export default function StudioEditor({
               '[&_.ProseMirror_li]:my-1.5',
               '[&_.ProseMirror_a]:text-interactive-primary [&_.ProseMirror_a]:underline [&_.ProseMirror_a]:decoration-border-accent [&_.ProseMirror_a]:underline-offset-4',
                '[&_.ProseMirror_code:not(pre_code)]:bg-surface-sunken [&_.ProseMirror_code:not(pre_code)]:px-1.5 [&_.ProseMirror_code:not(pre_code)]:py-0.5 [&_.ProseMirror_code:not(pre_code)]:font-mono [&_.ProseMirror_code:not(pre_code)]:text-[0.88em]',
-              '[&_.ProseMirror_pre]:my-6 [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_pre]:bg-surface-inverse [&_.ProseMirror_pre]:p-5 [&_.ProseMirror_pre]:font-mono [&_.ProseMirror_pre]:text-sm [&_.ProseMirror_pre]:text-text-on-inverse',
+              '[&_.ProseMirror_pre]:my-6 [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_pre]:bg-night [&_.ProseMirror_pre]:p-5 [&_.ProseMirror_pre]:font-mono [&_.ProseMirror_pre]:text-sm [&_.ProseMirror_pre]:text-[rgb(232_228_220)]',
               '[&_.ProseMirror_hr]:my-10 [&_.ProseMirror_hr]:border-0 [&_.ProseMirror_hr]:border-t [&_.ProseMirror_hr]:border-border-default/25',
               '[&_.ProseMirror_table]:my-8 [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:font-interface [&_.ProseMirror_table]:text-sm',
               '[&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-border-default/25 [&_.ProseMirror_th]:bg-surface-sunken [&_.ProseMirror_th]:p-3 [&_.ProseMirror_th]:text-left [&_.ProseMirror_th]:font-semibold',
@@ -1163,7 +1163,7 @@ export default function StudioEditor({
           role="toolbar"
           aria-label="Format teks terpilih"
           style={{ top: selectionMenu.top, left: selectionMenu.left } as CSSProperties}
-          className="fixed z-modal flex items-center gap-0.5 border border-border-default/20 bg-surface-inverse p-1.5 text-text-on-inverse"
+          className="fixed z-modal flex items-center gap-0.5 border border-border-default/20 surface-night bg-paper p-1.5 text-ink"
         >
           <ToolbarButton compact label="Tebal" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
             <Bold aria-hidden="true" size={17} />
@@ -1392,7 +1392,7 @@ export default function StudioEditor({
                     maxLength={2_000}
                     placeholder="E = mc^2"
                     spellCheck={false}
-                    className={`mt-2 w-full border border-border-default/25 bg-surface-inverse px-3 py-3 font-mono text-sm text-text-on-inverse placeholder:text-text-tertiary ${focusRing}`}
+                    className={`mt-2 w-full border border-border-default/25 surface-night bg-paper px-3 py-3 font-mono text-sm text-ink placeholder:text-text-tertiary ${focusRing}`}
                   />
                 </label>
                 <label className="block">
