@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { MetadataRoute } from 'next'
 import { getPublishedSitePage } from '@/lib/site-pages/data'
 import { sitePageDefinitions } from '@/lib/site-pages/registry'
@@ -45,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
 
   // Fetch published articles
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data: articles, error } = await supabase
     .from('articles')
     .select('slug, updated_at')
