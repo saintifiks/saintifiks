@@ -8,10 +8,27 @@ on:
 
 permissions:
   contents: read
+  # Hanya untuk membuka Issue pemberitahuan saat backup gagal
+  issues: write
 
 jobs:
   backup:
     runs-on: ubuntu-latest
+
+    # Database sementara untuk uji pemulihan. Hidup hanya selama job ini; terpisah dari produksi.
+    services:
+      restore-target:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: restore-test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Install PostgreSQL 17 Client
         run: |
@@ -51,3 +68,48 @@ jobs:
             database-backup.dump
             database-backup.dump.sha256
           retention-days: 30
+
+      # Backup yang belum pernah dipulihkan belum bisa dipercaya. Skema `public` dipulihkan ke
+      # database sementara, lalu jumlah baris tiap tabel inti dibandingkan dengan produksi.
+      - name: Uji Pemulihan ke Database Sementara
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          export PATH=/usr/lib/postgresql/17/bin:$PATH
+          RESTORE="postgresql://postgres:restore-test@localhost:5432/postgres"
+
+          # Pengganti minimal untuk objek bawaan Supabase yang dirujuk skema public.
+          psql "$RESTORE" -v ON_ERROR_STOP=1 -q -c "create role anon nologin; create role authenticated nologin; create role service_role nologin; create schema auth; create table auth.users (id uuid primary key);"
+
+          # Kesalahan yang diharapkan (objek Supabase yang tak ada di Postgres polos) dicatat, bukan fatal;
+          # bukti pemulihan adalah perbandingan jumlah baris di bawah.
+          pg_restore --no-owner --no-acl -n public -d "$RESTORE" database-backup.dump 2> restore.log || true
+          echo "Pesan dari pg_restore (15 baris pertama):"
+          head -n 15 restore.log || true
+
+          tables="articles article_charts article_corrections comments likes shares user_profiles opinion_articles opinion_comments opinion_likes site_pages editorial_studio_documents editorial_studio_revisions admin_memberships"
+          status=0
+          for t in $tables; do
+            live=$(psql "$SUPABASE_DB_URL" -Atc "select count(*) from public.$t")
+            restored=$(psql "$RESTORE" -Atc "select count(*) from public.$t")
+            if [ "$live" = "$restored" ]; then mark="cocok"; else mark="BEDA"; status=1; fi
+            echo "$t: produksi=$live pulih=$restored $mark"
+          done
+          exit $status
+
+      - name: Beritahu Lewat Issue Jika Gagal
+        if: failure() && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh label create backup-gagal --color B81C18 --description "Backup database mingguan gagal" --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label backup-gagal --state open --json number --jq '.[0].number // empty')
+          body="Backup database mingguan gagal pada $(date -u +%Y-%m-%d). Log: $RUN_URL. Selama masalah ini terbuka, anggap database TIDAK punya backup baru. Penyebab yang pernah terjadi: kata sandi di secret SUPABASE_DB_URL kedaluwarsa, atau perubahan pada runner GitHub."
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --label backup-gagal --title "Backup database mingguan gagal" --body "$body"
+          fi
