@@ -9,12 +9,11 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
       disallow: [
-        '/(admin)/',      // Area admin
+        '/dashboard',     // Ruang kerja admin (alamat sebenarnya; "(admin)" hanya nama folder internal)
         '/api/',          // API routes (bukan untuk indexing)
         '/login',         // Halaman login lama (diarahkan ke /masuk)
         '/masuk',         // Halaman masuk
-        '/akun/tulis',    // Halaman tulis opini
-        '/akun/artikel/', // Halaman edit artikel individual
+        '/akun',          // Akun pembaca, Daftar Bacaan, menulis, dan edit tulisan (semua pribadi)
       ],
     },
     sitemap: `${baseUrl}/sitemap.xml`,
