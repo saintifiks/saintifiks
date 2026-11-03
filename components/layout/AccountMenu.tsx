@@ -38,6 +38,7 @@ export default function AccountMenu({ className = '' }: { className?: string }) 
             </>
           }
           items={[
+            { label: 'Daftar bacaan', href: '/akun/bacaan' },
             { label: 'Akun saya', href: '/akun' },
             { label: 'Tulis artikel', href: '/akun/tulis' },
             { label: 'Keluar', onSelect: signOut },

@@ -83,6 +83,17 @@ export default async function AkunPage() {
         </header>
 
         <div className="mt-10">
+          <Section title="Daftar Bacaan">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <p className="font-display text-body-sm text-text-secondary">
+                Artikel yang Anda simpan untuk dibaca nanti.
+              </p>
+              <UiLink href="/akun/bacaan" variant="muted">
+                Buka Daftar Bacaan
+              </UiLink>
+            </div>
+          </Section>
+
           <Section title="Menulis">
             {!profile ? (
               <div className="max-w-xl">

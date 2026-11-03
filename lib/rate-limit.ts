@@ -53,6 +53,9 @@ export const RATE_LIMITS = {
   // Likes — boleh lebih sering karena user bisa like/unlike banyak artikel
   likes: { limit: 20, windowMs: 60_000 }, // 20 per menit
 
+  // Daftar Bacaan — simpan/hapus simpanan, sama longgarnya dengan like
+  bookmarks: { limit: 20, windowMs: 60_000 }, // 20 per menit
+
   // Shares — jangan terlalu sering
   shares: { limit: 5, windowMs: 60_000 }, // 5 per menit
 
