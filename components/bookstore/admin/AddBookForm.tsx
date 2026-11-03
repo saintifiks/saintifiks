@@ -1,28 +1,30 @@
 'use client'
 
+// AddBookForm — buku baru di katalog (admin): data buku, varian awal (format, harga, stok), dan sampul.
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button, Field, Input, Select, Textarea, useToast } from '@/components/ui'
 import ImageUpload from '@/components/artikel/ImageUpload'
 import { tambahBuku } from '@/app/(admin)/dashboard/bookstore/actions'
 
 type Props = {
-  authors: { id: string, name: string }[]
-  publishers: { id: string, name: string }[]
+  authors: { id: string; name: string }[]
+  publishers: { id: string; name: string }[]
 }
 
 export default function AddBookForm({ authors, publishers }: Props) {
   const router = useRouter()
+  const toast = useToast()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
-    setError('')
 
     const formData = new FormData(e.currentTarget)
-    const data = {
+    const res = await tambahBuku({
       title: formData.get('title') as string,
       author_id: formData.get('author_id') as string,
       publisher_id: formData.get('publisher_id') as string,
@@ -32,88 +34,87 @@ export default function AddBookForm({ authors, publishers }: Props) {
       format: formData.get('format') as string,
       price_amount: Number(formData.get('price_amount')),
       stock_qty: Number(formData.get('stock_qty')),
-    }
+    })
 
-    const res = await tambahBuku(data)
     if ('error' in res) {
-      setError(res.error)
+      toast({ message: res.error, tone: 'danger' })
       setLoading(false)
-    } else {
-      router.push('/dashboard/bookstore')
+      return
     }
+    toast({ message: 'Buku ditambahkan ke katalog.', tone: 'success', label: 'Tersimpan' })
+    router.push('/dashboard/bookstore')
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-ink/10 p-6 space-y-6">
-      {error && <div className="p-3 bg-signal-danger/10 text-signal-danger text-sm">{error}</div>}
-      
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Judul Buku</label>
-            <input type="text" name="title" required className="w-full border px-3 py-2 text-sm" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Penulis</label>
-              <select name="author_id" required className="w-full border px-3 py-2 text-sm bg-white">
-                <option value="">-- Pilih Penulis --</option>
-                {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Penerbit</label>
-              <select name="publisher_id" required className="w-full border px-3 py-2 text-sm bg-white">
-                <option value="">-- Pilih Penerbit --</option>
-                {publishers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Deskripsi</label>
-            <textarea name="description" rows={4} className="w-full border px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Sudut Pandang Redaksi (Editorial Take)</label>
-            <textarea name="editorial_take" rows={3} className="w-full border px-3 py-2 text-sm" placeholder="Mengapa buku ini penting dibaca..." />
-          </div>
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-9">
+      <Field label="Judul buku" required>
+        <Input name="title" required maxLength={250} />
+      </Field>
 
-        <div className="space-y-4">
-          <div className="bg-surface-sunken p-4 border border-border-default/30">
-            <h3 className="font-bold text-sm mb-3">Varian & Harga Awal</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Format</label>
-                <select name="format" className="w-full border px-3 py-2 text-sm bg-white">
-                  <option value="paperback">Paperback (Buku Fisik)</option>
-                  <option value="hardcover">Hardcover</option>
-                  <option value="ebook">E-Book</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Harga (Rp)</label>
-                  <input type="number" name="price_amount" required min="0" className="w-full border px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Stok Awal</label>
-                  <input type="number" name="stock_qty" required min="0" defaultValue="0" className="w-full border px-3 py-2 text-sm" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <ImageUpload currentImageUrl={coverUrl} onUpload={setCoverUrl} />
-          </div>
-        </div>
+      <div className="grid gap-9 sm:grid-cols-2">
+        <Field label="Penulis" required>
+          <Select name="author_id" required defaultValue="">
+            <option value="" disabled>
+              Pilih penulis
+            </option>
+            {authors.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Penerbit" required>
+          <Select name="publisher_id" required defaultValue="">
+            <option value="" disabled>
+              Pilih penerbit
+            </option>
+            {publishers.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
       </div>
 
-      <div className="pt-4 border-t border-ink/10 text-right">
-        <button type="submit" disabled={loading} className="bg-ink text-paper px-8 py-3 text-sm hover:opacity-80 disabled:opacity-50">
-          {loading ? 'Menyimpan...' : 'Simpan Buku ke Katalog'}
-        </button>
+      <Field label="Deskripsi">
+        <Textarea name="description" maxLength={10000} />
+      </Field>
+
+      <Field label="Sudut pandang redaksi" hint="Mengapa buku ini penting dibaca. Opsional.">
+        <Textarea name="editorial_take" maxLength={5000} />
+      </Field>
+
+      <fieldset className="m-0 min-w-0 border-0 border-t border-solid border-border-default/20 p-0 pt-8">
+        <legend className="float-left w-full font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">
+          Varian dan harga awal
+        </legend>
+        <div className="clear-both grid gap-9 pt-7 sm:grid-cols-3">
+          <Field label="Format">
+            <Select name="format" defaultValue="paperback">
+              <option value="paperback">Paperback</option>
+              <option value="hardcover">Hardcover</option>
+              <option value="ebook">E-book</option>
+            </Select>
+          </Field>
+          <Field label="Harga (Rp)" required>
+            <Input type="number" name="price_amount" required min="0" inputMode="numeric" />
+          </Field>
+          <Field label="Stok awal" required>
+            <Input type="number" name="stock_qty" required min="0" defaultValue="0" inputMode="numeric" />
+          </Field>
+        </div>
+      </fieldset>
+
+      <div className="border-t border-border-default/20 pt-8">
+        <ImageUpload currentImageUrl={coverUrl} onUpload={setCoverUrl} />
+      </div>
+
+      <div className="flex items-center gap-6 border-t border-border-default/20 pt-8">
+        <Button type="submit" disabled={loading} aria-busy={loading}>
+          {loading ? 'Menyimpan' : 'Simpan ke katalog'}
+        </Button>
       </div>
     </form>
   )

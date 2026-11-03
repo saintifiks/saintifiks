@@ -807,6 +807,14 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   border: 1px solid currentColor;
 }
 .marker-diamond[data-fill="full"] { background: currentColor; }
+
+/* Panah pilihan (Select): sudut garis tipis abu-abu menengah, terlihat di tema terang dan gelap. */
+.select-arrow {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='none' stroke='%23888' stroke-width='1.2'><path d='M1 1l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  background-size: 10px 6px;
+}
 .marker-diamond[data-fill="half"] {
   background: linear-gradient(135deg, currentColor 50%, transparent 50%);
 }
