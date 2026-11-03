@@ -5,6 +5,7 @@
 import type { Metadata } from 'next'
 import { createPublicClient } from '@/lib/supabase/public'
 import HomeFeed, { type FeedArticle } from '@/components/layout/HomeFeed'
+import IndexStrip from '@/components/widgets/IndexStrip'
 import { formatTanggalPanjang } from '@/lib/format-date'
 
 // ISR: Next.js meng-cache halaman ini dan memperbarui otomatis setiap 5 menit
@@ -62,5 +63,10 @@ export default async function BerandaPage() {
     publishedAt: a.published_at ?? null,
   }))
 
-  return <HomeFeed articles={daftarArtikel} dateLabel={formatTanggalPanjang()} />
+  return (
+    <>
+      <IndexStrip />
+      <HomeFeed articles={daftarArtikel} dateLabel={formatTanggalPanjang()} />
+    </>
+  )
 }
