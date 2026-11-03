@@ -52,7 +52,7 @@ export default function TableWizard({ onInsert, onClose }: TableWizardProps) {
                 max={10}
                 value={cols}
                 onChange={(e) => setCols(parseInt(e.target.value) || 1)}
-                className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
+                className="w-full border border-ink/15 bg-transparent px-3 py-2 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
               />
               <p className="font-interface text-xs text-warm-gray mt-1">Maks. 10</p>
             </div>
@@ -66,7 +66,7 @@ export default function TableWizard({ onInsert, onClose }: TableWizardProps) {
                 max={20}
                 value={rows}
                 onChange={(e) => setRows(parseInt(e.target.value) || 1)}
-                className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
+                className="w-full border border-ink/15 bg-transparent px-3 py-2 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
               />
               <p className="font-interface text-xs text-warm-gray mt-1">Maks. 20</p>
             </div>
