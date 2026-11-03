@@ -44,25 +44,25 @@ export default function AddBookForm({ authors, publishers }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-primary-dark/10 p-6 space-y-6">
+    <form onSubmit={handleSubmit} className="bg-white border border-ink/10 p-6 space-y-6">
       {error && <div className="p-3 bg-signal-danger/10 text-signal-danger text-sm">{error}</div>}
       
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Judul Buku</label>
+            <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Judul Buku</label>
             <input type="text" name="title" required className="w-full border px-3 py-2 text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Penulis</label>
+              <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Penulis</label>
               <select name="author_id" required className="w-full border px-3 py-2 text-sm bg-white">
                 <option value="">-- Pilih Penulis --</option>
                 {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Penerbit</label>
+              <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Penerbit</label>
               <select name="publisher_id" required className="w-full border px-3 py-2 text-sm bg-white">
                 <option value="">-- Pilih Penerbit --</option>
                 {publishers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -70,11 +70,11 @@ export default function AddBookForm({ authors, publishers }: Props) {
             </div>
           </div>
           <div>
-            <label className="block text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Deskripsi</label>
+            <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Deskripsi</label>
             <textarea name="description" rows={4} className="w-full border px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Sudut Pandang Redaksi (Editorial Take)</label>
+            <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Sudut Pandang Redaksi (Editorial Take)</label>
             <textarea name="editorial_take" rows={3} className="w-full border px-3 py-2 text-sm" placeholder="Mengapa buku ini penting dibaca..." />
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function AddBookForm({ authors, publishers }: Props) {
             <h3 className="font-bold text-sm mb-3">Varian & Harga Awal</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Format</label>
+                <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Format</label>
                 <select name="format" className="w-full border px-3 py-2 text-sm bg-white">
                   <option value="paperback">Paperback (Buku Fisik)</option>
                   <option value="hardcover">Hardcover</option>
@@ -93,11 +93,11 @@ export default function AddBookForm({ authors, publishers }: Props) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Harga (Rp)</label>
+                  <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Harga (Rp)</label>
                   <input type="number" name="price_amount" required min="0" className="w-full border px-3 py-2 text-sm" />
                 </div>
                 <div>
-                  <label className="block text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Stok Awal</label>
+                  <label className="block text-xs text-warm-gray uppercase tracking-widest mb-1">Stok Awal</label>
                   <input type="number" name="stock_qty" required min="0" defaultValue="0" className="w-full border px-3 py-2 text-sm" />
                 </div>
               </div>
@@ -110,8 +110,8 @@ export default function AddBookForm({ authors, publishers }: Props) {
         </div>
       </div>
 
-      <div className="pt-4 border-t border-primary-dark/10 text-right">
-        <button type="submit" disabled={loading} className="bg-primary-dark text-primary-light px-8 py-3 text-sm hover:opacity-80 disabled:opacity-50">
+      <div className="pt-4 border-t border-ink/10 text-right">
+        <button type="submit" disabled={loading} className="bg-ink text-paper px-8 py-3 text-sm hover:opacity-80 disabled:opacity-50">
           {loading ? 'Menyimpan...' : 'Simpan Buku ke Katalog'}
         </button>
       </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Libre_Baskerville, Lora, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Libre_Baskerville, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import LocationProvider from "@/components/layout/LocationProvider";
@@ -9,6 +9,7 @@ import IndexStrip from "@/components/widgets/IndexStrip";
 import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { CartProvider } from "@/components/bookstore/CartProvider";
+import { ToastProvider } from "@/components/ui";
 
 // Load Libre Baskerville (display/headline font) dari Google Fonts
 // Libre Baskerville hanya tersedia weight 400 & 700 (tidak ada 600/SemiBold)
@@ -35,16 +36,6 @@ const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-mono',
-  display: 'swap',
-})
-
-// Load Lora (body text artikel) dari Google Fonts
-// Weight 400 = regular, 500 = medium, 600 = semi-bold
-const lora = Lora({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  style: ['normal', 'italic'],
-  variable: '--font-lora',
   display: 'swap',
 })
 
@@ -78,8 +69,8 @@ export default function RootLayout({
 }>) {
   return (
     // lang="id" karena seluruh konten dalam Bahasa Indonesia
-    // variable font Libre Baskerville, IBM Plex Sans, IBM Plex Mono, Lora ditaruh di <html> agar bisa diakses seluruh halaman
-    <html lang="id" className={`${libreBaskerville.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} ${lora.variable}`}>
+    // variable font Libre Baskerville, IBM Plex Sans, IBM Plex Mono ditaruh di <html> agar bisa diakses seluruh halaman
+    <html lang="id" suppressHydrationWarning className={`${libreBaskerville.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable}`}>
       <head>
         {/* Anti-FOUC dark mode: set data-theme SEBELUM render agar tidak ada kedipan tema.
             Prioritas: localStorage ('saintifiks-theme') > preferensi OS. */}
@@ -107,6 +98,7 @@ export default function RootLayout({
             IndexStrip (Server Component) dilempar sebagai prop ke ConditionalIndexStrip
             (Client Component) — pola resmi Next.js App Router untuk kasus ini. */}
         <LocationProvider>
+          <ToastProvider>
           <CartProvider>
             <ConditionalIndexStrip strip={<IndexStrip />} />
 
@@ -115,6 +107,7 @@ export default function RootLayout({
               {children}
             </div>
           </CartProvider>
+          </ToastProvider>
         </LocationProvider>
         <Footer />
       </body>

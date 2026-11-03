@@ -76,7 +76,7 @@ export default function OpinionLikeButton({ articleId }: OpinionLikeButtonProps)
 
   if (isLoading) {
     return (
-      <div className="w-10 h-10 rounded-full bg-primary-dark/5 animate-pulse" />
+      <div className="w-10 h-10 rounded-full bg-ink/5 animate-pulse" />
     )
   }
 
@@ -85,15 +85,15 @@ export default function OpinionLikeButton({ articleId }: OpinionLikeButtonProps)
       onClick={handleToggleLike}
       disabled={isProcessing}
       aria-label={isLiked ? 'Hapus like' : 'Like artikel ini'}
-      className={`flex items-center gap-2 px-4 py-2 border transition-all duration-150 font-helvetica text-sm disabled:opacity-50 ${
+      className={`flex items-center gap-2 px-4 py-2 border transition-all duration-150 font-interface text-sm disabled:opacity-50 ${
         isLiked
-          ? 'border-accent-red/30 bg-accent-red/5 text-accent-red'
-          : 'border-primary-dark/15 text-primary-dark/50 hover:border-primary-dark/30 hover:text-primary-dark'
+          ? 'border-signal-danger/30 bg-signal-danger/5 text-signal-danger'
+          : 'border-ink/15 text-warm-gray hover:border-ink/30 hover:text-ink'
       }`}
     >
       <Heart
         size={16}
-        className={isLiked ? 'fill-accent-red stroke-accent-red' : ''}
+        className={isLiked ? 'fill-signal-danger stroke-signal-danger' : ''}
       />
       <span>{isLiked ? 'Disukai' : 'Suka'}</span>
     </button>

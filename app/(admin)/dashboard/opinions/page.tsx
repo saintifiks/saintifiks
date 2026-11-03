@@ -59,22 +59,22 @@ export default async function OpinionsModerationPage() {
     .limit(100)
 
   return (
-    <main className="min-h-screen bg-primary-light">
+    <main className="min-h-screen bg-paper">
       <div className="max-w-4xl mx-auto px-6 py-12">
 
         {/* Header */}
         <div className="flex items-start justify-between mb-10">
           <div>
-            <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">
+            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest">
               Admin Panel
             </p>
-            <h1 className="font-libre text-3xl font-bold text-primary-dark mt-2">
+            <h1 className="font-display text-3xl font-bold text-ink mt-2">
               Moderasi Opinions
             </h1>
           </div>
           <Link
             href="/dashboard"
-            className="font-helvetica text-sm text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 mt-2"
+            className="font-interface text-sm text-warm-gray hover:text-ink transition-colors duration-150 mt-2"
           >
             ← Dashboard
           </Link>

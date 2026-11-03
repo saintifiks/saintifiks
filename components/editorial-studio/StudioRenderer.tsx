@@ -707,7 +707,7 @@ export default function StudioRenderer({ document }: StudioRendererProps) {
   }
 
   return (
-    <div className="mx-auto max-w-content font-body text-body-base leading-reading text-text-primary">
+    <div className="mx-auto max-w-content font-display text-body-base leading-reading text-text-primary">
       {renderNode(document.root, context, 'document-root')}
       {footnotes.length > 0 && (
         <section aria-labelledby="studio-footnotes-title" className="mt-14 border-t border-border-default/25 pt-7">

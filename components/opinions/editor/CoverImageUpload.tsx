@@ -90,7 +90,7 @@ export default function CoverImageUpload({ currentUrl, onChange }: CoverImageUpl
 
   return (
     <div className="w-full">
-      <label className="block font-helvetica text-xs text-text-secondary uppercase tracking-widest mb-1.5">
+      <label className="block font-interface text-xs text-text-secondary uppercase tracking-widest mb-1.5">
         Gambar Cover
       </label>
       {currentUrl ? (
@@ -106,7 +106,7 @@ export default function CoverImageUpload({ currentUrl, onChange }: CoverImageUpl
             <button
               type="button"
               onClick={handleRemove}
-              className="flex items-center gap-2 px-4 py-2 bg-accent-red text-white font-helvetica text-xs uppercase tracking-widest hover:opacity-80 transition-colors duration-150 min-h-[44px] min-w-[44px] rounded-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-signal-danger text-white font-interface text-xs uppercase tracking-widest hover:opacity-80 transition-colors duration-150 min-h-[44px] min-w-[44px] rounded-sm"
               aria-label="Hapus gambar cover"
             >
               <X size={16} />
@@ -131,10 +131,10 @@ export default function CoverImageUpload({ currentUrl, onChange }: CoverImageUpl
           className="w-full aspect-[21/9] sm:aspect-[3/1] border-2 border-dashed border-border-default/15 hover:border-border-accent/40 bg-surface-sunken/30 rounded-sm flex flex-col items-center justify-center text-center cursor-pointer p-4 transition-colors duration-150 min-h-[120px]"
         >
           <Upload size={24} className="text-text-secondary/40 mb-2" />
-          <p className="font-helvetica text-sm text-text-secondary">
+          <p className="font-interface text-sm text-text-secondary">
             {isUploading ? 'Mengupload...' : 'Klik atau drag & drop untuk upload cover image'}
           </p>
-          <p className="font-helvetica text-xs text-text-tertiary mt-1">
+          <p className="font-interface text-xs text-text-tertiary mt-1">
             JPEG, PNG, WebP, GIF · Maks 5MB
           </p>
           <input
@@ -147,7 +147,7 @@ export default function CoverImageUpload({ currentUrl, onChange }: CoverImageUpl
         </div>
       )}
       {error && (
-        <p className="font-helvetica text-xs text-accent-red mt-2">{error}</p>
+        <p className="font-interface text-xs text-signal-danger mt-2">{error}</p>
       )}
     </div>
   )

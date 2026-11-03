@@ -32,7 +32,7 @@ function formatTanggal(tanggal: string): string {
 
 function StatBadge({ value, icon }: { value: number; icon: React.ReactNode }) {
   return (
-    <span className="flex items-center gap-1 font-helvetica text-xs text-primary-dark/60">
+    <span className="flex items-center gap-1 font-interface text-xs text-warm-gray">
       {icon}
       {value}
     </span>
@@ -55,15 +55,15 @@ export default async function AnalyticsPage() {
 
   if (!articles || articles.length === 0) {
     return (
-      <main className="min-h-screen bg-primary-light">
+      <main className="min-h-screen bg-paper">
         <div className="max-w-5xl mx-auto px-6 py-12">
           <div className="mb-10">
-            <Link href="/dashboard" className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors">
+            <Link href="/dashboard" className="font-interface text-xs text-warm-gray hover:text-ink transition-colors">
               ← Dashboard
             </Link>
-            <h1 className="font-libre text-3xl font-bold text-primary-dark mt-3">Analytics</h1>
+            <h1 className="font-display text-3xl font-bold text-ink mt-3">Analytics</h1>
           </div>
-          <p className="font-helvetica text-sm text-primary-dark/40">Belum ada artikel.</p>
+          <p className="font-interface text-sm text-warm-gray">Belum ada artikel.</p>
         </div>
       </main>
     )
@@ -161,17 +161,17 @@ export default async function AnalyticsPage() {
   )
 
   return (
-    <main className="min-h-screen bg-primary-light">
+    <main className="min-h-screen bg-paper">
       <div className="max-w-5xl mx-auto px-6 py-12">
 
         {/* Header */}
         <div className="flex items-start justify-between mb-10">
           <div>
-            <Link href="/dashboard" className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors">
+            <Link href="/dashboard" className="font-interface text-xs text-warm-gray hover:text-ink transition-colors">
               ← Dashboard
             </Link>
-            <h1 className="font-libre text-3xl font-bold text-primary-dark mt-3">Analytics</h1>
-            <p className="font-helvetica text-sm text-primary-dark/40 mt-1">
+            <h1 className="font-display text-3xl font-bold text-ink mt-3">Analytics</h1>
+            <p className="font-interface text-sm text-warm-gray mt-1">
               Data interaksi per artikel — diperbarui setiap kali halaman dibuka
             </p>
           </div>
@@ -179,57 +179,57 @@ export default async function AnalyticsPage() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-          <div className="border border-primary-dark/10 p-5">
-            <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">Total Views</p>
+          <div className="border border-ink/10 p-5">
+            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">Total Views</p>
             <div className="flex items-center gap-2">
-              <Eye size={16} className="text-primary-dark/40" />
-              <span className="font-libre text-2xl font-bold text-primary-dark">{totals.page_views.toLocaleString('id-ID')}</span>
+              <Eye size={16} className="text-warm-gray" />
+              <span className="font-display text-2xl font-bold text-ink">{totals.page_views.toLocaleString('id-ID')}</span>
             </div>
           </div>
-          <div className="border border-primary-dark/10 p-5">
-            <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">Total Likes</p>
+          <div className="border border-ink/10 p-5">
+            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">Total Likes</p>
             <div className="flex items-center gap-2">
-              <Heart size={16} className="text-accent-red/60" />
-              <span className="font-libre text-2xl font-bold text-primary-dark">{totals.likes.toLocaleString('id-ID')}</span>
+              <Heart size={16} className="text-signal-danger/60" />
+              <span className="font-display text-2xl font-bold text-ink">{totals.likes.toLocaleString('id-ID')}</span>
             </div>
           </div>
-          <div className="border border-primary-dark/10 p-5">
-            <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">Total Komentar</p>
+          <div className="border border-ink/10 p-5">
+            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">Total Komentar</p>
             <div className="flex items-center gap-2">
-              <MessageCircle size={16} className="text-primary-dark/40" />
-              <span className="font-libre text-2xl font-bold text-primary-dark">{totals.comments.toLocaleString('id-ID')}</span>
+              <MessageCircle size={16} className="text-warm-gray" />
+              <span className="font-display text-2xl font-bold text-ink">{totals.comments.toLocaleString('id-ID')}</span>
             </div>
           </div>
-          <div className="border border-primary-dark/10 p-5">
-            <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">Total Share</p>
+          <div className="border border-ink/10 p-5">
+            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">Total Share</p>
             <div className="flex items-center gap-2">
-              <Share2 size={16} className="text-primary-dark/40" />
-              <span className="font-libre text-2xl font-bold text-primary-dark">{totals.shares.toLocaleString('id-ID')}</span>
+              <Share2 size={16} className="text-warm-gray" />
+              <span className="font-display text-2xl font-bold text-ink">{totals.shares.toLocaleString('id-ID')}</span>
             </div>
           </div>
         </div>
 
         {/* Tabel per artikel */}
         <section>
-          <h2 className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-4">
+          <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-4">
             Per Artikel ({stats.length})
           </h2>
 
-          <div className="border border-primary-dark/10">
+          <div className="border border-ink/10">
             {/* Header tabel */}
-            <div className="hidden sm:grid grid-cols-[1fr_72px_72px_72px_72px_80px] px-5 py-3 border-b border-primary-dark/10 bg-primary-dark/[0.03]">
-              <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Judul</span>
-              <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest text-center">Views</span>
-              <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest text-center">Likes</span>
-              <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest text-center">Komentar</span>
-              <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest text-center">Share</span>
-              <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest text-center">Scroll Avg</span>
+            <div className="hidden sm:grid grid-cols-[1fr_72px_72px_72px_72px_80px] px-5 py-3 border-b border-ink/10 bg-ink/[0.03]">
+              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Judul</span>
+              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Views</span>
+              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Likes</span>
+              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Komentar</span>
+              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Share</span>
+              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Scroll Avg</span>
             </div>
 
             {stats.map((artikel) => (
               <div
                 key={artikel.id}
-                className="px-5 py-4 border-b border-primary-dark/10 last:border-b-0 hover:bg-primary-dark/[0.015] transition-colors"
+                className="px-5 py-4 border-b border-ink/10 last:border-b-0 hover:bg-ink/[0.015] transition-colors"
               >
                 {/* Desktop layout */}
                 <div className="hidden sm:grid grid-cols-[1fr_72px_72px_72px_72px_80px] items-center gap-2">
@@ -237,23 +237,23 @@ export default async function AnalyticsPage() {
                     <Link
                       href={`/artikel/${artikel.slug}`}
                       target="_blank"
-                      className="font-libre text-sm font-bold text-primary-dark hover:text-accent-blue transition-colors leading-snug line-clamp-2"
+                      className="font-display text-sm font-bold text-ink hover:text-text-link transition-colors leading-snug line-clamp-2"
                     >
                       {artikel.title}
                     </Link>
-                    <span className={`font-helvetica text-xs mt-0.5 inline-block ${artikel.is_published ? 'text-primary-dark/30' : 'text-primary-dark/20'}`}>
+                    <span className={`font-interface text-xs mt-0.5 inline-block ${artikel.is_published ? 'text-warm-gray' : 'text-warm-gray'}`}>
                       {artikel.is_published
                         ? artikel.published_at ? formatTanggal(artikel.published_at) : 'Diterbitkan'
                         : 'Draft'}
                     </span>
                   </div>
-                  <span className="font-helvetica text-sm text-primary-dark/70 text-center">{artikel.page_views}</span>
-                  <span className="font-helvetica text-sm text-primary-dark/70 text-center">{artikel.likes}</span>
-                  <span className="font-helvetica text-sm text-primary-dark/70 text-center">{artikel.comments}</span>
-                  <span className="font-helvetica text-sm text-primary-dark/70 text-center">{artikel.shares}</span>
+                  <span className="font-interface text-sm text-warm-gray text-center">{artikel.page_views}</span>
+                  <span className="font-interface text-sm text-warm-gray text-center">{artikel.likes}</span>
+                  <span className="font-interface text-sm text-warm-gray text-center">{artikel.comments}</span>
+                  <span className="font-interface text-sm text-warm-gray text-center">{artikel.shares}</span>
                   <div className="flex items-center justify-center gap-1">
-                    <TrendingUp size={12} className="text-primary-dark/30" />
-                    <span className="font-helvetica text-sm text-primary-dark/70">{artikel.avg_scroll}%</span>
+                    <TrendingUp size={12} className="text-warm-gray" />
+                    <span className="font-interface text-sm text-warm-gray">{artikel.avg_scroll}%</span>
                   </div>
                 </div>
 
@@ -262,7 +262,7 @@ export default async function AnalyticsPage() {
                   <Link
                     href={`/artikel/${artikel.slug}`}
                     target="_blank"
-                    className="font-libre text-sm font-bold text-primary-dark hover:text-accent-blue transition-colors leading-snug block mb-2"
+                    className="font-display text-sm font-bold text-ink hover:text-text-link transition-colors leading-snug block mb-2"
                   >
                     {artikel.title}
                   </Link>

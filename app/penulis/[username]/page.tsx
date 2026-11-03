@@ -76,11 +76,11 @@ export default async function PenulisPage(props: PageProps) {
   }))
 
   return (
-    <main className="min-h-screen bg-primary-light">
+    <main className="min-h-screen bg-paper">
       <div className="max-w-2xl mx-auto px-6 py-16">
 
         {/* Profil penulis */}
-        <div className="mb-12 pb-10 border-b border-primary-dark/10">
+        <div className="mb-12 pb-10 border-b border-ink/10">
           <div className="flex items-start gap-5">
 
             {/* Avatar */}
@@ -90,11 +90,11 @@ export default async function PenulisPage(props: PageProps) {
                 alt={profile.display_name}
                 width={72}
                 height={72}
-                className="rounded-full border border-primary-dark/10 object-cover flex-shrink-0"
+                className="rounded-full border border-ink/10 object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-18 h-18 w-[72px] h-[72px] rounded-full bg-primary-dark flex items-center justify-center flex-shrink-0">
-                <span className="font-libre text-2xl font-bold text-primary-light">
+              <div className="w-18 h-18 w-[72px] h-[72px] rounded-full bg-ink flex items-center justify-center flex-shrink-0">
+                <span className="font-display text-2xl font-bold text-paper">
                   {profile.display_name.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -102,14 +102,14 @@ export default async function PenulisPage(props: PageProps) {
 
             {/* Info */}
             <div>
-              <h1 className="font-libre text-2xl font-bold text-primary-dark leading-tight">
+              <h1 className="font-display text-2xl font-bold text-ink leading-tight">
                 {profile.display_name}
               </h1>
-              <p className="font-helvetica text-sm text-primary-dark/40 mt-0.5">
+              <p className="font-interface text-sm text-warm-gray mt-0.5">
                 @{profile.username}
               </p>
               {profile.bio && (
-                <p className="font-helvetica text-sm text-primary-dark/70 leading-relaxed mt-3 max-w-lg">
+                <p className="font-interface text-sm text-warm-gray leading-relaxed mt-3 max-w-lg">
                   {profile.bio}
                 </p>
               )}
@@ -119,13 +119,13 @@ export default async function PenulisPage(props: PageProps) {
 
         {/* Daftar artikel */}
         <div>
-          <h2 className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-6">
+          <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-6">
             Artikel dari {profile.display_name}
           </h2>
 
           {items.length === 0 ? (
-            <div className="py-16 text-center border border-primary-dark/10">
-              <p className="font-helvetica text-sm text-primary-dark/40">
+            <div className="py-16 text-center border border-ink/10">
+              <p className="font-interface text-sm text-warm-gray">
                 Belum ada artikel yang diterbitkan.
               </p>
             </div>

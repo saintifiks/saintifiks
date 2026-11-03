@@ -93,17 +93,17 @@ export default function ImageUpload({ currentImageUrl, onUpload }: ImageUploadPr
 
   return (
     <div>
-      <label className="block font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">
+      <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">
         Gambar Cover
-        <span className="ml-2 normal-case font-normal text-primary-dark/30">
+        <span className="ml-2 normal-case font-normal text-warm-gray">
           (opsional — JPG, PNG, WebP, maks 5MB)
         </span>
       </label>
 
       {previewUrl ? (
         // Kondisi: sudah ada gambar — tampilkan preview + tombol ganti/hapus
-        <div className="border border-primary-dark/15">
-          <div className="relative w-full h-48 bg-primary-dark/5 overflow-hidden">
+        <div className="border border-ink/15">
+          <div className="relative w-full h-48 bg-ink/5 overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={previewUrl}
@@ -111,29 +111,29 @@ export default function ImageUpload({ currentImageUrl, onUpload }: ImageUploadPr
               className="w-full h-full object-cover"
             />
             {isUploading && (
-              <div className="absolute inset-0 bg-primary-light/80 flex items-center justify-center">
-                <p className="font-helvetica text-xs text-primary-dark/60">
+              <div className="absolute inset-0 bg-paper/80 flex items-center justify-center">
+                <p className="font-interface text-xs text-warm-gray">
                   Mengupload...
                 </p>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-4 px-4 py-3 border-t border-primary-dark/10">
+          <div className="flex items-center gap-4 px-4 py-3 border-t border-ink/10">
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={isUploading}
-              className="font-helvetica text-xs text-primary-dark/60 hover:text-primary-dark transition-colors duration-150 disabled:opacity-40"
+              className="font-interface text-xs text-warm-gray hover:text-ink transition-colors duration-150 disabled:opacity-40"
             >
               Ganti gambar
             </button>
-            <span className="text-primary-dark/20 text-xs">|</span>
+            <span className="text-warm-gray text-xs">|</span>
             <button
               type="button"
               onClick={handleHapusGambar}
               disabled={isUploading}
-              className="font-helvetica text-xs text-accent-red/70 hover:text-accent-red transition-colors duration-150 disabled:opacity-40"
+              className="font-interface text-xs text-signal-danger/70 hover:text-signal-danger transition-colors duration-150 disabled:opacity-40"
             >
               Hapus gambar
             </button>
@@ -145,12 +145,12 @@ export default function ImageUpload({ currentImageUrl, onUpload }: ImageUploadPr
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={isUploading}
-          className="w-full border border-dashed border-primary-dark/20 py-10 px-6 text-center hover:border-primary-dark/40 hover:bg-primary-dark/[0.02] transition-all duration-150 disabled:opacity-40"
+          className="w-full border border-dashed border-ink/20 py-10 px-6 text-center hover:border-ink/40 hover:bg-ink/[0.02] transition-all duration-150 disabled:opacity-40"
         >
-          <p className="font-helvetica text-sm text-primary-dark/40">
+          <p className="font-interface text-sm text-warm-gray">
             {isUploading ? 'Mengupload...' : 'Klik untuk pilih gambar cover'}
           </p>
-          <p className="font-helvetica text-xs text-primary-dark/25 mt-1">
+          <p className="font-interface text-xs text-warm-gray mt-1">
             JPG, PNG, WebP — maks 5MB
           </p>
         </button>
@@ -166,7 +166,7 @@ export default function ImageUpload({ currentImageUrl, onUpload }: ImageUploadPr
       />
 
       {error && (
-        <p className="font-helvetica text-xs text-accent-red mt-2">{error}</p>
+        <p className="font-interface text-xs text-signal-danger mt-2">{error}</p>
       )}
     </div>
   )

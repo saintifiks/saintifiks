@@ -109,18 +109,18 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
 
       {/* Laporan masuk */}
       <section>
-        <h2 className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-5">
+        <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-5">
           Laporan Masuk ({reports.length})
         </h2>
 
         {reports.length === 0 ? (
-          <div className="border border-primary-dark/10 py-12 text-center">
-            <p className="font-helvetica text-sm text-primary-dark/40">
+          <div className="border border-ink/10 py-12 text-center">
+            <p className="font-interface text-sm text-warm-gray">
               Tidak ada laporan pending.
             </p>
           </div>
         ) : (
-          <div className="border border-primary-dark/10 divide-y divide-primary-dark/10">
+          <div className="border border-ink/10 divide-y divide-ink/10">
             {reports.map((report) => {
               const article = Array.isArray(report.opinion_articles)
                 ? report.opinion_articles[0]
@@ -132,17 +132,17 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <span className="font-helvetica text-xs text-primary-dark/40">
+                        <span className="font-interface text-xs text-warm-gray">
                           {formatTanggal(report.created_at)}
                         </span>
                         {author && (
-                          <span className="font-helvetica text-xs text-primary-dark/40">
-                            · Artikel: <span className="font-bold text-primary-dark">{article?.title}</span>
+                          <span className="font-interface text-xs text-warm-gray">
+                            · Artikel: <span className="font-bold text-ink">{article?.title}</span>
                             {' '}oleh @{author.username}
                           </span>
                         )}
                       </div>
-                      <p className="font-helvetica text-sm text-primary-dark/80 leading-relaxed mb-3">
+                      <p className="font-interface text-sm text-warm-gray leading-relaxed mb-3">
                         &ldquo;{report.reason}&rdquo;
                       </p>
 
@@ -151,7 +151,7 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                           <Link
                             href={`/opinions/${author?.username}/${article.slug}`}
                             target="_blank"
-                            className="font-helvetica text-xs text-accent-blue hover:opacity-70 transition-opacity duration-150"
+                            className="font-interface text-xs text-text-link hover:opacity-70 transition-opacity duration-150"
                           >
                             Buka artikel ↗
                           </Link>
@@ -160,7 +160,7 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                           <button
                             onClick={() => hideArticle(article.id)}
                             disabled={actionLoading === article.id || article.status === 'hidden'}
-                            className="font-helvetica text-xs text-accent-red hover:opacity-70 disabled:opacity-40 transition-opacity duration-150"
+                            className="font-interface text-xs text-signal-danger hover:opacity-70 disabled:opacity-40 transition-opacity duration-150"
                           >
                             {article.status === 'hidden' ? 'Sudah disembunyikan' : 'Sembunyikan artikel'}
                           </button>
@@ -168,7 +168,7 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                         <button
                           onClick={() => markReviewed(report.id)}
                           disabled={actionLoading === report.id}
-                          className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark disabled:opacity-40 transition-colors duration-150"
+                          className="font-interface text-xs text-warm-gray hover:text-ink disabled:opacity-40 transition-colors duration-150"
                         >
                           {actionLoading === report.id ? 'Memproses...' : 'Tandai reviewed'}
                         </button>
@@ -184,22 +184,22 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
 
       {/* Semua artikel opinions */}
       <section>
-        <h2 className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-5">
+        <h2 className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-5">
           Semua Artikel Opinions ({articles.length})
         </h2>
 
         {articles.length === 0 ? (
-          <div className="border border-primary-dark/10 py-12 text-center">
-            <p className="font-helvetica text-sm text-primary-dark/40">
+          <div className="border border-ink/10 py-12 text-center">
+            <p className="font-interface text-sm text-warm-gray">
               Belum ada artikel opinions yang diterbitkan.
             </p>
           </div>
         ) : (
-          <div className="border border-primary-dark/10">
-            <div className="grid grid-cols-[1fr_120px_130px_100px] px-5 py-3 border-b border-primary-dark/10 bg-primary-dark/[0.03]">
-              <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Judul</span>
-              <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Penulis</span>
-              <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest text-center">Status</span>
+          <div className="border border-ink/10">
+            <div className="grid grid-cols-[1fr_120px_130px_100px] px-5 py-3 border-b border-ink/10 bg-ink/[0.03]">
+              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Judul</span>
+              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Penulis</span>
+              <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Status</span>
               <span />
             </div>
 
@@ -210,20 +210,20 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
               return (
                 <div
                   key={article.id}
-                  className="grid grid-cols-[1fr_120px_130px_100px] px-5 py-4 border-b border-primary-dark/10 last:border-b-0 items-center hover:bg-primary-dark/[0.015] transition-colors duration-100"
+                  className="grid grid-cols-[1fr_120px_130px_100px] px-5 py-4 border-b border-ink/10 last:border-b-0 items-center hover:bg-ink/[0.015] transition-colors duration-100"
                 >
-                  <span className={`font-libre text-sm font-bold leading-snug pr-3 truncate ${isHidden ? 'text-primary-dark/40 line-through' : 'text-primary-dark'}`}>
+                  <span className={`font-display text-sm font-bold leading-snug pr-3 truncate ${isHidden ? 'text-warm-gray line-through' : 'text-ink'}`}>
                     {article.title}
                   </span>
 
-                  <span className="font-helvetica text-xs text-primary-dark/60 truncate">
+                  <span className="font-interface text-xs text-warm-gray truncate">
                     {author ? `@${author.username}` : '—'}
                   </span>
 
-                  <span className={`text-center font-helvetica text-xs px-2 py-1 ${
+                  <span className={`text-center font-interface text-xs px-2 py-1 ${
                     isHidden
-                      ? 'text-accent-red bg-accent-red/10'
-                      : 'text-accent-green bg-accent-green/10'
+                      ? 'text-signal-danger bg-signal-danger/10'
+                      : 'text-signal-success bg-signal-success/10'
                   }`}>
                     {isHidden ? 'Disembunyikan' : 'Diterbitkan'}
                   </span>
@@ -233,7 +233,7 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                       <Link
                         href={`/opinions/${author.username}/${article.slug}`}
                         target="_blank"
-                        className="font-helvetica text-xs text-primary-dark/40 hover:text-primary-dark transition-colors duration-150"
+                        className="font-interface text-xs text-warm-gray hover:text-ink transition-colors duration-150"
                       >
                         ↗
                       </Link>
@@ -241,8 +241,8 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                     <button
                       onClick={() => isHidden ? restoreArticle(article.id) : hideArticle(article.id)}
                       disabled={actionLoading === article.id}
-                      className={`font-helvetica text-xs disabled:opacity-40 transition-opacity duration-150 ${
-                        isHidden ? 'text-accent-green hover:opacity-70' : 'text-accent-red hover:opacity-70'
+                      className={`font-interface text-xs disabled:opacity-40 transition-opacity duration-150 ${
+                        isHidden ? 'text-signal-success hover:opacity-70' : 'text-signal-danger hover:opacity-70'
                       }`}
                     >
                       {actionLoading === article.id

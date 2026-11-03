@@ -104,41 +104,41 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
         class: [
           'min-h-[500px] px-6 py-6 focus:outline-none',
           // Tipografi konten — sesuai design system Saintifiks
-          'font-libre text-primary-dark leading-relaxed',
+          'font-display text-ink leading-relaxed',
           // Heading — H2 lebih besar dari H3, keduanya jelas berbeda dari teks biasa
-          '[&>h2]:font-libre [&>h2]:text-3xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-3',
-          '[&>h3]:font-libre [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-primary-dark/70 [&>h3]:mt-6 [&>h3]:mb-2',
+          '[&>h2]:font-display [&>h2]:text-3xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-3',
+          '[&>h3]:font-display [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-warm-gray [&>h3]:mt-6 [&>h3]:mb-2',
           // Paragraf
-          '[&>p]:font-libre [&>p]:text-base [&>p]:leading-relaxed [&>p]:mb-4',
+          '[&>p]:font-display [&>p]:text-base [&>p]:leading-relaxed [&>p]:mb-4',
           // Bold & italic
           '[&_strong]:font-bold',
           '[&_em]:italic',
           // Blockquote
-          '[&>blockquote]:border-l-4 [&>blockquote]:border-primary-dark/20 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-primary-dark/70 [&>blockquote]:my-4',
+          '[&>blockquote]:border-l-4 [&>blockquote]:border-ink/20 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-warm-gray [&>blockquote]:my-4',
           // List
           '[&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-4',
           '[&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:mb-4',
           '[&>ul>li]:mb-1 [&>ol>li]:mb-1',
           // HR
-          '[&>hr]:border-primary-dark/15 [&>hr]:my-8',
+          '[&>hr]:border-ink/15 [&>hr]:my-8',
           // Code inline
-          '[&_code]:font-mono [&_code]:text-sm [&_code]:bg-primary-dark/5 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded',
+          '[&_code]:font-mono [&_code]:text-sm [&_code]:bg-ink/5 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded',
           // Code block
-          '[&>pre]:bg-primary-dark/5 [&>pre]:rounded [&>pre]:p-4 [&>pre]:overflow-x-auto [&>pre]:mb-4',
+          '[&>pre]:bg-ink/5 [&>pre]:rounded [&>pre]:p-4 [&>pre]:overflow-x-auto [&>pre]:mb-4',
           '[&>pre>code]:bg-transparent [&>pre>code]:p-0',
           // Chart placeholder chip
           '[&_div[data-chart-placeholder]]:inline-flex [&_div[data-chart-placeholder]]:items-center',
-          '[&_div[data-chart-placeholder]]:gap-1.5 [&_div[data-chart-placeholder]]:bg-accent-blue/10',
-          '[&_div[data-chart-placeholder]]:border [&_div[data-chart-placeholder]]:border-accent-blue/30',
-          '[&_div[data-chart-placeholder]]:text-accent-blue [&_div[data-chart-placeholder]]:text-xs',
+          '[&_div[data-chart-placeholder]]:gap-1.5 [&_div[data-chart-placeholder]]:bg-interactive-primary/10',
+          '[&_div[data-chart-placeholder]]:border [&_div[data-chart-placeholder]]:border-border-accent/30',
+          '[&_div[data-chart-placeholder]]:text-text-link [&_div[data-chart-placeholder]]:text-xs',
           '[&_div[data-chart-placeholder]]:px-2.5 [&_div[data-chart-placeholder]]:py-1 [&_div[data-chart-placeholder]]:rounded',
           '[&_div[data-chart-placeholder]]:my-2 [&_div[data-chart-placeholder]]:cursor-default',
           '[&_div[data-chart-placeholder]]:select-none',
           // Tabel GFM — tampilan grid di editor
           '[&_table]:w-full [&_table]:border-collapse [&_table]:my-4 [&_table]:text-sm',
-          '[&_th]:border [&_th]:border-primary-dark/20 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:bg-primary-dark/5',
-          '[&_td]:border [&_td]:border-primary-dark/20 [&_td]:px-3 [&_td]:py-2',
-          '[&_tr:hover>td]:bg-primary-dark/[0.02]',
+          '[&_th]:border [&_th]:border-ink/20 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:bg-ink/5',
+          '[&_td]:border [&_td]:border-ink/20 [&_td]:px-3 [&_td]:py-2',
+          '[&_tr:hover>td]:bg-ink/[0.02]',
         ].join(' '),
       },
     },
@@ -204,16 +204,16 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
     editor.isActive(type, attrs)
 
   const btnClass = (active: boolean) =>
-    `flex items-center justify-center w-8 h-8 rounded transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue ${
+    `flex items-center justify-center w-8 h-8 rounded transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-primary ${
       active
-        ? 'bg-primary-dark text-primary-light'
-        : 'text-primary-dark/50 hover:text-primary-dark hover:bg-primary-dark/5'
+        ? 'bg-ink text-paper'
+        : 'text-warm-gray hover:text-ink hover:bg-ink/5'
     }`
 
   return (
     <div className="flex flex-col flex-1">
       {/* Toolbar — sticky tepat di bawah header editor (top-[56px] = tinggi OpinionEditor header sticky top-0). Jika tinggi header berubah, sesuaikan nilai ini manual. */}
-      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-primary-dark/10 bg-primary-light sticky top-[56px] z-20">
+      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-ink/10 bg-paper sticky top-[56px] z-20">
 
         <button type="button" title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={btnClass(isActive('bold'))}>
           <Bold size={15} />
@@ -223,7 +223,7 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
           <Italic size={15} />
         </button>
 
-        <div className="w-px h-5 bg-primary-dark/10 mx-0.5" />
+        <div className="w-px h-5 bg-ink/10 mx-0.5" />
 
         <button type="button" title="H2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={btnClass(isActive('heading', { level: 2 }))}>
           <Heading2 size={15} />
@@ -233,7 +233,7 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
           <Heading3 size={15} />
         </button>
 
-        <div className="w-px h-5 bg-primary-dark/10 mx-0.5" />
+        <div className="w-px h-5 bg-ink/10 mx-0.5" />
 
         <button type="button" title="Kutipan" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={btnClass(isActive('blockquote'))}>
           <Quote size={15} />
@@ -251,7 +251,7 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
           <Minus size={15} />
         </button>
 
-        <div className="w-px h-5 bg-primary-dark/10 mx-0.5" />
+        <div className="w-px h-5 bg-ink/10 mx-0.5" />
 
         <button type="button" title="Tabel" onClick={onOpenTableWizard} className={btnClass(false)}>
           <TableIcon size={15} />
@@ -273,7 +273,7 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
           const isEmpty = editor.state.doc.textContent === '' && editor.state.doc.childCount <= 1
           return isEmpty && !editor.isFocused
         })() && (
-          <p className="absolute top-0 left-0 pointer-events-none px-6 py-6 font-libre text-base text-primary-dark/25 select-none">
+          <p className="absolute top-0 left-0 pointer-events-none px-6 py-6 font-display text-base text-warm-gray select-none">
             {placeholder}
           </p>
         )}

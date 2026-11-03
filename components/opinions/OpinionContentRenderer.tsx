@@ -162,7 +162,7 @@ export default function OpinionContentRenderer({
     )
 
   return (
-    <div className="article-content prose prose-lg max-w-none font-libre text-primary-dark">
+    <div className="article-content prose prose-lg max-w-none font-display text-ink">
       <ReactMarkdown
         remarkPlugins={[
           remarkGfm,
@@ -180,25 +180,25 @@ export default function OpinionContentRenderer({
         ]}
         components={{
           h1: ({ children }) => (
-            <h1 className="font-libre text-3xl font-bold text-primary-dark mt-12 mb-6 leading-tight">
+            <h1 className="font-display text-3xl font-bold text-ink mt-12 mb-6 leading-tight">
               {children}
             </h1>
           ),
 
           h2: ({ children }) => (
-            <h2 className="font-libre text-2xl font-bold text-primary-dark mt-10 mb-4 leading-tight">
+            <h2 className="font-display text-2xl font-bold text-ink mt-10 mb-4 leading-tight">
               {children}
             </h2>
           ),
 
           h3: ({ children }) => (
-            <h3 className="font-libre text-xl font-bold text-primary-dark mt-8 mb-3 leading-tight">
+            <h3 className="font-display text-xl font-bold text-ink mt-8 mb-3 leading-tight">
               {children}
             </h3>
           ),
 
           p: ({ children }) => (
-            <p className="font-libre text-lg leading-relaxed mb-6">
+            <p className="font-display text-lg leading-relaxed mb-6">
               {children}
             </p>
           ),
@@ -218,13 +218,13 @@ export default function OpinionContentRenderer({
           ),
 
           ul: ({ children }) => (
-            <ul className="font-libre text-lg mb-6 ml-6 list-disc space-y-2">
+            <ul className="font-display text-lg mb-6 ml-6 list-disc space-y-2">
               {children}
             </ul>
           ),
 
           ol: ({ children }) => (
-            <ol className="font-libre text-lg mb-6 ml-6 list-decimal space-y-2">
+            <ol className="font-display text-lg mb-6 ml-6 list-decimal space-y-2">
               {children}
             </ol>
           ),
@@ -249,21 +249,21 @@ export default function OpinionContentRenderer({
           table: ({
             children,
           }) => (
-            <div className="my-8 overflow-x-auto border border-primary-dark/10 rounded">
-              <table className="min-w-full divide-y divide-primary-dark/10">
+            <div className="my-8 overflow-x-auto border border-ink/10 rounded">
+              <table className="min-w-full divide-y divide-ink/10">
                 {children}
               </table>
             </div>
           ),
 
           th: ({ children }) => (
-            <th className="px-4 py-3 bg-primary-dark/5 text-left font-medium border-b border-primary-dark/10">
+            <th className="px-4 py-3 bg-ink/5 text-left font-medium border-b border-ink/10">
               {children}
             </th>
           ),
 
           td: ({ children }) => (
-            <td className="px-4 py-3 border-b border-primary-dark/10">
+            <td className="px-4 py-3 border-b border-ink/10">
               {children}
             </td>
           ),
@@ -305,7 +305,7 @@ export default function OpinionContentRenderer({
                     {config.label}
                   </p>
 
-                  <div className="font-lora text-body-sm text-text-primary [&>p]:mb-0 [&>p]:leading-relaxed">
+                  <div className="font-display text-body-sm text-text-primary [&>p]:mb-0 [&>p]:leading-relaxed">
                     {children}
                   </div>
                 </div>
@@ -340,7 +340,7 @@ export default function OpinionContentRenderer({
               </code>
             ) : (
               <code
-                className="font-mono text-sm bg-primary-dark/5 px-1.5 py-0.5 rounded"
+                className="font-mono text-sm bg-ink/5 px-1.5 py-0.5 rounded"
                 {...props}
               >
                 {children}
@@ -387,7 +387,7 @@ export default function OpinionContentRenderer({
                     }
                     width={800}
                     height={500}
-                    className="w-full rounded border border-primary-dark/10"
+                    className="w-full rounded border border-ink/10"
                     style={{
                       height:
                         'auto',
@@ -400,12 +400,12 @@ export default function OpinionContentRenderer({
                     alt={
                       caption || ''
                     }
-                    className="w-full rounded border border-primary-dark/10"
+                    className="w-full rounded border border-ink/10"
                   />
                 )}
 
                 {caption && (
-                  <figcaption className="text-center mt-3 text-sm text-primary-dark/60 font-helvetica">
+                  <figcaption className="text-center mt-3 text-sm text-warm-gray font-interface">
                     {caption}
 
                     {source && (
@@ -449,7 +449,7 @@ export default function OpinionContentRenderer({
                     href
                   ),
                 className:
-                  'text-accent-blue underline underline-offset-2 hover:opacity-70 transition-opacity duration-150',
+                  'text-text-link underline underline-offset-2 hover:opacity-70 transition-opacity duration-150',
                 target:
                   isExternal
                     ? '_blank'
@@ -464,7 +464,7 @@ export default function OpinionContentRenderer({
           },
 
           hr: () => (
-            <hr className="border-primary-dark/10 my-12" />
+            <hr className="border-ink/10 my-12" />
           ),
 
           // Intercept div dengan class saintifiks-chart

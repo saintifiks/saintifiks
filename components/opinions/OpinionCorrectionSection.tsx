@@ -78,7 +78,7 @@ export default function OpinionCorrectionSection({
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
-        className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-accent-blue/40 text-accent-blue transition-colors duration-150 hover:border-accent-blue hover:bg-accent-blue/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
+        className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-border-accent/40 text-text-link transition-colors duration-150 hover:border-border-accent hover:bg-interactive-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
         aria-label={`Koreksi & Klarifikasi${correctionCount > 0 ? `, ${correctionCount} koreksi` : ''}`}
         title="Koreksi & Klarifikasi"
       >
@@ -86,7 +86,7 @@ export default function OpinionCorrectionSection({
         {correctionCount > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -top-1 -right-1 w-4 h-4 bg-accent-blue text-paper font-helvetica text-[10px] rounded-full flex items-center justify-center leading-none"
+            className="absolute -top-1 -right-1 w-4 h-4 bg-interactive-primary text-paper font-interface text-[10px] rounded-full flex items-center justify-center leading-none"
           >
             {correctionCount}
           </span>
@@ -120,15 +120,15 @@ export default function OpinionCorrectionSection({
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-ink/10">
               <div className="flex items-center gap-2">
-                <AlertCircle size={18} className="text-accent-blue" />
+                <AlertCircle size={18} className="text-text-link" />
                 <h3
                   id="opinion-correction-dialog-title"
-                  className="font-libre text-lg font-bold text-ink"
+                  className="font-display text-lg font-bold text-ink"
                 >
                   Koreksi & Klarifikasi
                 </h3>
                 {correctionCount > 0 && (
-                  <span className="font-helvetica text-xs text-accent-blue bg-accent-blue/10 px-2 py-0.5">
+                  <span className="font-interface text-xs text-text-link bg-interactive-primary/10 px-2 py-0.5">
                     {correctionCount}
                   </span>
                 )}
@@ -151,14 +151,14 @@ export default function OpinionCorrectionSection({
               {corrections.length > 0 ? (
                 <div className="space-y-6 mb-6">
                   {corrections.map((corr) => (
-                    <div key={corr.id} className="border-l-4 border-accent-blue pl-4 py-1">
-                      <p className="font-helvetica text-xs text-ink/40 mb-2 uppercase tracking-widest">Koreksi</p>
+                    <div key={corr.id} className="border-l-4 border-border-accent pl-4 py-1">
+                      <p className="font-interface text-xs text-ink/40 mb-2 uppercase tracking-widest">Koreksi</p>
                       <div className="mb-3">
                         <p className="text-ink/60 line-through text-sm">{corr.original_text}</p>
                         <p className="text-ink font-medium text-sm mt-1">{corr.corrected_text}</p>
                       </div>
                       {corr.explanation && (
-                        <p className="font-helvetica text-sm text-ink/70 italic border-l-2 border-ink/20 pl-3">
+                        <p className="font-interface text-sm text-ink/70 italic border-l-2 border-ink/20 pl-3">
                           {corr.explanation}
                         </p>
                       )}
@@ -166,21 +166,21 @@ export default function OpinionCorrectionSection({
                   ))}
                 </div>
               ) : (
-                <p className="font-helvetica text-sm text-ink/40 mb-6">
+                <p className="font-interface text-sm text-ink/40 mb-6">
                   Belum ada koreksi untuk artikel ini.
                 </p>
               )}
 
               {/* Form usulan koreksi */}
               <div className="border-t border-ink/10 pt-5">
-                <p className="font-helvetica text-xs text-ink/40 uppercase tracking-widest mb-4">
+                <p className="font-interface text-xs text-ink/40 uppercase tracking-widest mb-4">
                   Usulkan Koreksi
                 </p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label
                       htmlFor={`${fieldId}-original-text`}
-                      className="block font-helvetica text-xs text-ink/50 mb-1.5"
+                      className="block font-interface text-xs text-ink/50 mb-1.5"
                     >
                       Teks asli yang ingin dikoreksi
                     </label>
@@ -188,7 +188,7 @@ export default function OpinionCorrectionSection({
                       id={`${fieldId}-original-text`}
                       value={originalText}
                       onChange={(e) => setOriginalText(e.target.value)}
-                      className="bg-transparent w-full h-16 font-helvetica text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
+                      className="bg-transparent w-full h-16 font-interface text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
                       placeholder="Salin teks asli dari artikel..."
                       required
                     />
@@ -196,7 +196,7 @@ export default function OpinionCorrectionSection({
                   <div>
                     <label
                       htmlFor={`${fieldId}-corrected-text`}
-                      className="block font-helvetica text-xs text-ink/50 mb-1.5"
+                      className="block font-interface text-xs text-ink/50 mb-1.5"
                     >
                       Teks yang diusulkan
                     </label>
@@ -204,7 +204,7 @@ export default function OpinionCorrectionSection({
                       id={`${fieldId}-corrected-text`}
                       value={correctedText}
                       onChange={(e) => setCorrectedText(e.target.value)}
-                      className="bg-transparent w-full h-16 font-helvetica text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
+                      className="bg-transparent w-full h-16 font-interface text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
                       placeholder="Tulis versi yang benar..."
                       required
                     />
@@ -212,7 +212,7 @@ export default function OpinionCorrectionSection({
                   <div>
                     <label
                       htmlFor={`${fieldId}-explanation`}
-                      className="block font-helvetica text-xs text-ink/50 mb-1.5"
+                      className="block font-interface text-xs text-ink/50 mb-1.5"
                     >
                       Penjelasan (opsional)
                     </label>
@@ -220,7 +220,7 @@ export default function OpinionCorrectionSection({
                       id={`${fieldId}-explanation`}
                       value={explanation}
                       onChange={(e) => setExplanation(e.target.value)}
-                      className="bg-transparent w-full h-16 font-helvetica text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
+                      className="bg-transparent w-full h-16 font-interface text-sm p-3 border border-ink/15 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary resize-none transition-colors"
                       placeholder="Mengapa ini perlu dikoreksi?"
                     />
                   </div>
@@ -228,7 +228,7 @@ export default function OpinionCorrectionSection({
                   {message && (
                     <div
                       role={message.type === 'error' ? 'alert' : 'status'}
-                      className={`p-3 border text-sm font-helvetica ${message.type === 'success' ? 'border-ink/20 bg-ink/5 text-ink' : 'border-accent-red/30 bg-accent-red/5 text-accent-red'}`}
+                      className={`p-3 border text-sm font-interface ${message.type === 'success' ? 'border-ink/20 bg-ink/5 text-ink' : 'border-signal-danger/30 bg-signal-danger/5 text-signal-danger'}`}
                     >
                       {message.text}
                     </div>
@@ -238,7 +238,7 @@ export default function OpinionCorrectionSection({
                     type="submit"
                     disabled={isSubmitting}
                     aria-busy={isSubmitting}
-                    className="w-full min-h-[44px] bg-ink text-paper py-3 font-helvetica text-sm hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
+                    className="w-full min-h-[44px] bg-ink text-paper py-3 font-interface text-sm hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive-primary"
                   >
                     {isSubmitting ? (
                       <>

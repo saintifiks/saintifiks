@@ -121,15 +121,15 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/40 overflow-y-auto">
-      <div className="bg-primary-light border border-primary-dark/10 w-full max-w-lg p-6 my-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 overflow-y-auto">
+      <div className="bg-paper border border-ink/10 w-full max-w-lg p-6 my-4">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-helvetica text-sm font-bold text-primary-dark uppercase tracking-widest">
+          <h3 className="font-interface text-sm font-bold text-ink uppercase tracking-widest">
             Buat Chart
           </h3>
-          <button onClick={onClose} className="text-primary-dark/40 hover:text-primary-dark transition-colors duration-150">
+          <button onClick={onClose} className="text-warm-gray hover:text-ink transition-colors duration-150">
             <X size={18} />
           </button>
         </div>
@@ -138,13 +138,13 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
 
           {/* Tipe chart */}
           <div>
-            <label className="block font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-2">
+            <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">
               Tipe Chart
             </label>
             <select
               value={chartType}
               onChange={(e) => setChartType(e.target.value)}
-              className="w-full border border-primary-dark/15 bg-white px-3 py-2 font-helvetica text-sm text-primary-dark focus:outline-none focus:border-primary-dark/40"
+              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
             >
               {CHART_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -154,7 +154,7 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
 
           {/* Judul chart */}
           <div>
-            <label className="block font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-2">
+            <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">
               Judul Chart
             </label>
             <input
@@ -162,21 +162,21 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
               value={chartTitle}
               onChange={(e) => { setChartTitle(e.target.value); setError('') }}
               placeholder="Contoh: Pertumbuhan PDB 2020–2024"
-              className="w-full border border-primary-dark/15 bg-white px-3 py-2 font-helvetica text-sm text-primary-dark placeholder:text-primary-dark/30 focus:outline-none focus:border-primary-dark/40"
+              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
             />
           </div>
 
           {/* Labels */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest">
+              <label className="font-interface text-xs text-warm-gray uppercase tracking-widest">
                 Label Sumbu X
               </label>
               <button
                 type="button"
                 onClick={addLabel}
                 disabled={labels.length >= 20}
-                className="flex items-center gap-1 font-helvetica text-xs text-accent-blue hover:opacity-70 disabled:opacity-30 transition-opacity duration-150"
+                className="flex items-center gap-1 font-interface text-xs text-text-link hover:opacity-70 disabled:opacity-30 transition-opacity duration-150"
               >
                 <Plus size={12} />
                 Tambah
@@ -189,13 +189,13 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
                     type="text"
                     value={lbl}
                     onChange={(e) => updateLabel(idx, e.target.value)}
-                    className="flex-1 border border-primary-dark/15 bg-white px-3 py-1.5 font-helvetica text-sm text-primary-dark focus:outline-none focus:border-primary-dark/40"
+                    className="flex-1 border border-ink/15 bg-white px-3 py-1.5 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
                   />
                   <button
                     type="button"
                     onClick={() => removeLabel(idx)}
                     disabled={labels.length <= 2}
-                    className="text-primary-dark/30 hover:text-accent-red disabled:opacity-20 transition-colors duration-150"
+                    className="text-warm-gray hover:text-signal-danger disabled:opacity-20 transition-colors duration-150"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -207,14 +207,14 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
           {/* Datasets */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest">
+              <label className="font-interface text-xs text-warm-gray uppercase tracking-widest">
                 Dataset
               </label>
               <button
                 type="button"
                 onClick={addDataset}
                 disabled={datasets.length >= 5}
-                className="flex items-center gap-1 font-helvetica text-xs text-accent-blue hover:opacity-70 disabled:opacity-30 transition-opacity duration-150"
+                className="flex items-center gap-1 font-interface text-xs text-text-link hover:opacity-70 disabled:opacity-30 transition-opacity duration-150"
               >
                 <Plus size={12} />
                 Tambah
@@ -222,20 +222,20 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
             </div>
             <div className="space-y-3">
               {datasets.map((ds, idx) => (
-                <div key={idx} className="border border-primary-dark/10 p-3">
+                <div key={idx} className="border border-ink/10 p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <input
                       type="text"
                       value={ds.label}
                       onChange={(e) => updateDataset(idx, 'label', e.target.value)}
                       placeholder="Nama dataset"
-                      className="flex-1 border border-primary-dark/15 bg-white px-3 py-1.5 font-helvetica text-sm text-primary-dark focus:outline-none focus:border-primary-dark/40"
+                      className="flex-1 border border-ink/15 bg-white px-3 py-1.5 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
                     />
                     <button
                       type="button"
                       onClick={() => removeDataset(idx)}
                       disabled={datasets.length <= 1}
-                      className="text-primary-dark/30 hover:text-accent-red disabled:opacity-20 transition-colors duration-150"
+                      className="text-warm-gray hover:text-signal-danger disabled:opacity-20 transition-colors duration-150"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -245,7 +245,7 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
                     value={ds.value}
                     onChange={(e) => updateDataset(idx, 'value', e.target.value)}
                     placeholder={`Nilai (pisahkan koma, harus ${labels.length} nilai)`}
-                    className="w-full border border-primary-dark/15 bg-white px-3 py-1.5 font-helvetica text-sm text-primary-dark placeholder:text-primary-dark/30 focus:outline-none focus:border-primary-dark/40"
+                    className="w-full border border-ink/15 bg-white px-3 py-1.5 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
                   />
                 </div>
               ))}
@@ -255,21 +255,21 @@ export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
         </div>
 
         {error && (
-          <p className="font-helvetica text-xs text-accent-red mt-4">{error}</p>
+          <p className="font-interface text-xs text-signal-danger mt-4">{error}</p>
         )}
 
         <div className="flex gap-3 justify-end mt-6">
           <button
             type="button"
             onClick={onClose}
-            className="font-helvetica text-sm text-primary-dark/50 hover:text-primary-dark transition-colors duration-150"
+            className="font-interface text-sm text-warm-gray hover:text-ink transition-colors duration-150"
           >
             Batal
           </button>
           <button
             type="button"
             onClick={handleGenerate}
-            className="font-helvetica text-sm bg-primary-dark text-primary-light px-5 py-2 hover:opacity-80 transition-opacity duration-150"
+            className="font-interface text-sm bg-ink text-paper px-5 py-2 hover:opacity-80 transition-opacity duration-150"
           >
             Sisipkan Chart
           </button>

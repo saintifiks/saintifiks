@@ -52,6 +52,29 @@ export default defineConfig([
     },
   },
 
+  /*
+   * Sistem desain: ikon hanya lewat <Icon> (components/ui). Impor lucide-react langsung masih ada di
+   * kode lama; jumlahnya dikunci oleh scripts/design-system-contract.test.mjs (tidak boleh bertambah)
+   * dan akan dinaikkan menjadi error setelah migrasi Fase 2.
+   */
+  {
+    files: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
+    ignores: ['components/ui/Icon.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'warn',
+        {
+          paths: [
+            {
+              name: 'lucide-react',
+              message: 'Pakai <Icon name="..." /> dari @/components/ui agar ukuran dan goresan seragam.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   globalIgnores([
     '.next/**',
     '.studio-test-dist/**',

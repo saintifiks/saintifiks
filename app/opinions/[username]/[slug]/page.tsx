@@ -93,7 +93,7 @@ export default async function OpinionArticlePage(props: PageProps) {
     .order('created_at', { ascending: true })
 
   return (
-    <main className="min-h-screen bg-primary-light">
+    <main className="min-h-screen bg-paper">
 
       {/* Tracker analytics — Client Component */}
       <OpinionAnalyticsTracker articleId={article.id} />
@@ -107,13 +107,13 @@ export default async function OpinionArticlePage(props: PageProps) {
             <img
               src={article.cover_image_url}
               alt={article.title}
-              className="w-full max-h-96 object-cover border border-primary-dark/10"
+              className="w-full max-h-96 object-cover border border-ink/10"
             />
           </div>
         )}
 
         {/* Judul */}
-        <h1 className="font-libre text-3xl md:text-4xl font-bold text-primary-dark leading-tight mb-2">
+        <h1 className="font-display text-3xl md:text-4xl font-bold text-ink leading-tight mb-2">
           {article.title}
         </h1>
 
@@ -135,7 +135,7 @@ export default async function OpinionArticlePage(props: PageProps) {
         />
 
         {/* Footer artikel: koreksi rata kiri, like + share + laporan rata kanan */}
-        <div className="mt-16 pt-8 border-t border-primary-dark/10 flex items-center justify-between">
+        <div className="mt-16 pt-8 border-t border-ink/10 flex items-center justify-between">
           <OpinionCorrectionSection
             articleId={article.id}
             corrections={corrections ?? []}

@@ -32,6 +32,9 @@ jobs:
       - name: Static Security Contracts
         run: npm run test:security:static
 
+      - name: Design System Contract
+        run: npm run test:design
+
       - name: Studio Contract Tests
         run: npm run test:studio
 

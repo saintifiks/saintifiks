@@ -104,27 +104,27 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-dark/40">
-      <div className="bg-primary-light border border-primary-dark/10 w-full max-w-md p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40">
+      <div className="bg-paper border border-ink/10 w-full max-w-md p-6">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-helvetica text-sm font-bold text-primary-dark uppercase tracking-widest">
+          <h3 className="font-interface text-sm font-bold text-ink uppercase tracking-widest">
             Tambah Gambar
           </h3>
-          <button onClick={onClose} className="text-primary-dark/40 hover:text-primary-dark transition-colors duration-150">
+          <button onClick={onClose} className="text-warm-gray hover:text-ink transition-colors duration-150">
             <X size={18} />
           </button>
         </div>
 
         {/* Tab switch */}
-        <div className="flex border-b border-primary-dark/10 mb-5">
+        <div className="flex border-b border-ink/10 mb-5">
           <button
             onClick={() => { setMode('upload'); setError('') }}
-            className={`font-helvetica text-xs uppercase tracking-widest px-4 py-2 border-b-2 transition-colors duration-150 ${
+            className={`font-interface text-xs uppercase tracking-widest px-4 py-2 border-b-2 transition-colors duration-150 ${
               mode === 'upload'
-                ? 'border-primary-dark text-primary-dark'
-                : 'border-transparent text-primary-dark/40 hover:text-primary-dark'
+                ? 'border-ink text-ink'
+                : 'border-transparent text-warm-gray hover:text-ink'
             }`}
           >
             <Upload size={12} className="inline mr-1.5" />
@@ -132,10 +132,10 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
           </button>
           <button
             onClick={() => { setMode('url'); setError('') }}
-            className={`font-helvetica text-xs uppercase tracking-widest px-4 py-2 border-b-2 transition-colors duration-150 ${
+            className={`font-interface text-xs uppercase tracking-widest px-4 py-2 border-b-2 transition-colors duration-150 ${
               mode === 'url'
-                ? 'border-primary-dark text-primary-dark'
-                : 'border-transparent text-primary-dark/40 hover:text-primary-dark'
+                ? 'border-ink text-ink'
+                : 'border-transparent text-warm-gray hover:text-ink'
             }`}
           >
             <LinkIcon size={12} className="inline mr-1.5" />
@@ -146,7 +146,7 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
         {/* Form caption & sumber (shared) */}
         <div className="mb-4 grid grid-cols-2 gap-3">
           <div>
-            <label className="block font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-1.5">
+            <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-1.5">
               Keterangan gambar
             </label>
             <input
@@ -154,11 +154,11 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Opsional"
-              className="w-full border border-primary-dark/15 bg-white px-3 py-2 font-helvetica text-sm text-primary-dark placeholder:text-primary-dark/30 focus:outline-none focus:border-primary-dark/40"
+              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
             />
           </div>
           <div>
-            <label className="block font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-1.5">
+            <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-1.5">
               Sumber
             </label>
             <input
@@ -166,7 +166,7 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
               value={source}
               onChange={(e) => setSource(e.target.value)}
               placeholder="Opsional"
-              className="w-full border border-primary-dark/15 bg-white px-3 py-2 font-helvetica text-sm text-primary-dark placeholder:text-primary-dark/30 focus:outline-none focus:border-primary-dark/40"
+              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
             />
           </div>
         </div>
@@ -178,13 +178,13 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-primary-dark/15 rounded px-6 py-10 text-center cursor-pointer hover:border-primary-dark/30 transition-colors duration-150"
+              className="border-2 border-dashed border-ink/15 rounded px-6 py-10 text-center cursor-pointer hover:border-ink/30 transition-colors duration-150"
             >
-              <Upload size={24} className="mx-auto text-primary-dark/30 mb-3" />
-              <p className="font-helvetica text-sm text-primary-dark/50">
+              <Upload size={24} className="mx-auto text-warm-gray mb-3" />
+              <p className="font-interface text-sm text-warm-gray">
                 {isUploading ? 'Mengupload...' : 'Klik atau drag & drop gambar di sini'}
               </p>
-              <p className="font-helvetica text-xs text-primary-dark/30 mt-1">
+              <p className="font-interface text-xs text-warm-gray mt-1">
                 JPEG, PNG, WebP, GIF · Maks 5MB
               </p>
             </div>
@@ -201,7 +201,7 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
         {/* URL mode */}
         {mode === 'url' && (
           <form onSubmit={handleUrlSubmit}>
-            <label className="block font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-1.5">
+            <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-1.5">
               URL gambar
             </label>
             <input
@@ -209,19 +209,19 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
               value={urlInput}
               onChange={(e) => { setUrlInput(e.target.value); setError('') }}
               placeholder="https://..."
-              className="w-full border border-primary-dark/15 bg-white px-3 py-2 font-helvetica text-sm text-primary-dark placeholder:text-primary-dark/30 focus:outline-none focus:border-primary-dark/40 mb-4"
+              className="w-full border border-ink/15 bg-white px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40 mb-4"
             />
             <div className="flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={onClose}
-                className="font-helvetica text-sm text-primary-dark/50 hover:text-primary-dark transition-colors duration-150"
+                className="font-interface text-sm text-warm-gray hover:text-ink transition-colors duration-150"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="font-helvetica text-sm bg-primary-dark text-primary-light px-5 py-2 hover:opacity-80 transition-opacity duration-150"
+                className="font-interface text-sm bg-ink text-paper px-5 py-2 hover:opacity-80 transition-opacity duration-150"
               >
                 Sisipkan
               </button>
@@ -230,7 +230,7 @@ export default function ImageModal({ onInsert, onClose }: ImageModalProps) {
         )}
 
         {error && (
-          <p className="font-helvetica text-xs text-accent-red mt-3">{error}</p>
+          <p className="font-interface text-xs text-signal-danger mt-3">{error}</p>
         )}
 
       </div>

@@ -15,12 +15,6 @@
   --color-trend-up:   92 143 110;  /* #5C8F6E */
   --color-trend-down: 201 2 3;     /* #C90203 */
 
-  /* Legacy tokens */
-  --primary-dark: var(--color-ink);
-  --primary-light: var(--color-paper);
-  --accent-red: var(--color-trend-down);
-  --accent-blue: var(--color-sea-deep);
-  --accent-green: var(--color-trend-up);
 
   /* Skema warna native (form, scrollbar) mengikuti light secara default */
   color-scheme: light;
@@ -58,8 +52,6 @@
   --color-signal-info:             var(--color-sea-deep);
   --color-signal-info-surface:     233 248 253;
 
-  /* Legacy derived (computed — backward compat) */
-  --color-text-muted: rgb(var(--color-warm-gray) / 0.6);
 
   /* === TYPE SCALE (Modular, rasio 1.25) === */
   --text-xs:   0.75rem;    /* 12px */
@@ -228,9 +220,9 @@ button {
 }
 
 .article-content p {
-  font-family: var(--font-lora), 'Lora', Georgia, serif;
-  font-size: 17px;
-  line-height: 1.6;
+  font-family: var(--font-display), 'Libre Baskerville', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.75;
   margin-bottom: 24px;
   letter-spacing: 0.01em;
 }
@@ -314,7 +306,7 @@ button {
   border-collapse: collapse;
   margin: 40px 0;
   font-size: 15px;
-  font-family: 'IBM Plex Sans', Arial, sans-serif;
+  font-family: var(--font-interface), Arial, sans-serif;
 }
 
 .article-content table th {
@@ -360,7 +352,7 @@ button {
 
 /* Angka superscript di tengah artikel */
 .article-content sup a[data-footnote-ref] {
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-interface), Arial, sans-serif;
   font-size: 0.7em;
   font-weight: 600;
   color: var(--color-sea-deep);
@@ -394,7 +386,7 @@ button {
 }
 
 .article-content .footnotes li {
-  font-family: 'Libre Baskerville', serif;
+  font-family: var(--font-display), 'Libre Baskerville', Georgia, serif;
   font-size: 0.875rem;
   line-height: 1.6;
   color: var(--color-text-secondary);
@@ -408,7 +400,7 @@ button {
 
 /* Panah kembali ke teks */
 .article-content .footnotes .data-footnote-backref {
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-interface), Arial, sans-serif;
   font-size: 0.8em;
   color: var(--color-sea-deep);
   text-decoration: none;
@@ -548,9 +540,9 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
    V2 UTILITY CLASSES
    ============================================================ */
 .article-body {
-  font-family: var(--font-lora), 'Lora', Georgia, serif;
-  font-size: 17px;
-  line-height: 1.6;
+  font-family: var(--font-display), 'Libre Baskerville', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.75;
   letter-spacing: 0.01em;
   color: var(--color-ink);
   max-width: 680px;
@@ -578,9 +570,9 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
 }
 
 .article-body p {
-  font-family: var(--font-lora), 'Lora', Georgia, serif;
-  font-size: 17px;
-  line-height: 1.6;
+  font-family: var(--font-display), 'Libre Baskerville', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.75;
   letter-spacing: 0.01em;
   margin-bottom: 1.375em;
   color: var(--color-ink);
@@ -602,7 +594,7 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
 }
 
 .kicker {
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-family: var(--font-mono), 'Courier New', monospace;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -691,22 +683,20 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   margin-inline: auto;
 }
 
-/* Dasar (ponsel): teks 17px, leading 1.6, letter-spacing 0.01em sesuai brief */
+/* Libre Baskerville dirancang untuk teks layar: 18px/1.75 di ponsel, 19px/1.7 di desktop */
 .article-body p,
 .article-content p {
-  font-family: var(--font-lora), 'Lora', Georgia, serif;
-  font-size: 17px;
-  line-height: 1.6;
-  letter-spacing: 0.01em;
+  font-family: var(--font-display), 'Libre Baskerville', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.75;
+  letter-spacing: 0;
 }
 
-/* Desktop: maintain 17px, leading sedikit lebih rapat */
 @media (min-width: 1024px) {
   .article-body p,
   .article-content p {
-    font-size: 17px;
-    line-height: 1.6;
-    letter-spacing: 0.01em;
+    font-size: 19px;
+    line-height: 1.7;
   }
 }
 
@@ -802,4 +792,13 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   letter-spacing: 0.12em;
   color: rgb(var(--color-text-secondary));
   margin-top: var(--space-2);
+}
+
+/* Toast — masuk naik pelan dari bawah; gerak dimatikan global oleh prefers-reduced-motion */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.toast-card {
+  animation: toast-in var(--duration-deliberate) var(--ease-out) both;
 }

@@ -69,17 +69,17 @@ export default function UsernameSetup({ onComplete }: UsernameSetupProps) {
   }
 
   return (
-    <div className="min-h-screen bg-primary-light flex items-center justify-center px-6">
+    <div className="min-h-screen bg-paper flex items-center justify-center px-6">
       <div className="w-full max-w-md">
 
         <div className="mb-8">
-          <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest mb-2">
+          <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">
             Satu langkah lagi
           </p>
-          <h1 className="font-libre text-2xl font-bold text-primary-dark">
+          <h1 className="font-display text-2xl font-bold text-ink">
             Buat profil penulis kamu
           </h1>
-          <p className="font-helvetica text-sm text-primary-dark/50 mt-2 leading-relaxed">
+          <p className="font-interface text-sm text-warm-gray mt-2 leading-relaxed">
             Username bersifat permanen dan tidak dapat diubah setelah disimpan. Pilih dengan bijak.
           </p>
         </div>
@@ -88,11 +88,11 @@ export default function UsernameSetup({ onComplete }: UsernameSetupProps) {
 
           {/* Username */}
           <div>
-            <label className="block font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-2">
+            <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">
               Username
             </label>
-            <div className="flex items-center border border-primary-dark/15 bg-white focus-within:border-primary-dark/40 transition-colors duration-150">
-              <span className="font-helvetica text-sm text-primary-dark/30 pl-3 pr-1 select-none">
+            <div className="flex items-center border border-ink/15 bg-white focus-within:border-ink/40 transition-colors duration-150">
+              <span className="font-interface text-sm text-warm-gray pl-3 pr-1 select-none">
                 @
               </span>
               <input
@@ -104,19 +104,19 @@ export default function UsernameSetup({ onComplete }: UsernameSetupProps) {
                 }}
                 placeholder="contoh-username"
                 maxLength={30}
-                className="flex-1 py-2.5 pr-3 font-helvetica text-sm text-primary-dark bg-transparent focus:outline-none placeholder:text-primary-dark/25"
+                className="flex-1 py-2.5 pr-3 font-interface text-sm text-ink bg-transparent focus:outline-none placeholder:text-warm-gray"
                 autoComplete="off"
                 spellCheck={false}
               />
             </div>
-            <p className="font-helvetica text-xs text-primary-dark/30 mt-1">
+            <p className="font-interface text-xs text-warm-gray mt-1">
               Huruf kecil, angka, tanda hubung · 3–30 karakter · Tidak bisa diubah
             </p>
           </div>
 
           {/* Nama tampil */}
           <div>
-            <label className="block font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-2">
+            <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">
               Nama Tampil
             </label>
             <input
@@ -125,21 +125,21 @@ export default function UsernameSetup({ onComplete }: UsernameSetupProps) {
               onChange={(e) => { setDisplayName(e.target.value); setError('') }}
               placeholder="Nama yang terlihat di artikel"
               maxLength={100}
-              className="w-full border border-primary-dark/15 bg-white px-3 py-2.5 font-helvetica text-sm text-primary-dark placeholder:text-primary-dark/25 focus:outline-none focus:border-primary-dark/40 transition-colors duration-150"
+              className="w-full border border-ink/15 bg-white px-3 py-2.5 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40 transition-colors duration-150"
             />
-            <p className="font-helvetica text-xs text-primary-dark/30 mt-1">
+            <p className="font-interface text-xs text-warm-gray mt-1">
               Bisa diubah kapan saja
             </p>
           </div>
 
           {error && (
-            <p className="font-helvetica text-xs text-accent-red">{error}</p>
+            <p className="font-interface text-xs text-signal-danger">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full font-helvetica text-sm bg-primary-dark text-primary-light py-3 hover:opacity-80 transition-opacity duration-150 disabled:opacity-40"
+            className="w-full font-interface text-sm bg-ink text-paper py-3 hover:opacity-80 transition-opacity duration-150 disabled:opacity-40"
           >
             {isSubmitting ? 'Menyimpan...' : 'Simpan dan Mulai Menulis'}
           </button>

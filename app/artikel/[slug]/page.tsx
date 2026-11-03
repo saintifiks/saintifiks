@@ -224,7 +224,7 @@ export default async function ArtikelPage({ params }: Props) {
           {/* 3. CAPTION / RINGKASAN ARTIKEL ------------------------------ */}
           {/* Libre Baskerville 14px, muncul jika excerpt ada */}
           {artikel.excerpt && (
-            <p className="font-libre text-[14px] font-normal text-ink leading-normal mb-4">
+            <p className="font-display text-[14px] font-normal text-ink leading-normal mb-4">
               {artikel.excerpt}
             </p>
           )}

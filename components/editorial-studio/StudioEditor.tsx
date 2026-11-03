@@ -1109,21 +1109,21 @@ export default function StudioEditor({
               label="Ringkasan artikel"
               placeholder="Tambahkan ringkasan atau dek..."
               maxLength={600}
-              className="w-full resize-none overflow-hidden border-0 bg-transparent p-0 font-body text-xl leading-deck text-text-secondary outline-none placeholder:text-text-tertiary/60 focus:ring-0 sm:text-2xl"
+              className="w-full resize-none overflow-hidden border-0 bg-transparent p-0 font-display text-xl leading-deck text-text-secondary outline-none placeholder:text-text-tertiary/60 focus:ring-0 sm:text-2xl"
             />
           </div>
         </div>
 
         <div className="relative">
           {editorIsEmpty && (
-            <p aria-hidden="true" className="pointer-events-none absolute left-0 top-3 font-body text-body-base text-text-tertiary/70">
+            <p aria-hidden="true" className="pointer-events-none absolute left-0 top-3 font-display text-body-base text-text-tertiary/70">
               Mulai menulis, atau ketik / untuk memilih blok...
             </p>
           )}
           <EditorContent
             editor={editor}
             className={[
-              'font-body text-body-base leading-reading text-text-primary',
+              'font-display text-body-base leading-reading text-text-primary',
               '[&_.ProseMirror>p]:mb-5 [&_.ProseMirror>p]:max-w-content',
               '[&_.ProseMirror>h2]:mb-4 [&_.ProseMirror>h2]:mt-12 [&_.ProseMirror>h2]:max-w-content [&_.ProseMirror>h2]:font-display [&_.ProseMirror>h2]:text-display-sm [&_.ProseMirror>h2]:font-semibold [&_.ProseMirror>h2]:leading-heading',
               '[&_.ProseMirror>h3]:mb-3 [&_.ProseMirror>h3]:mt-9 [&_.ProseMirror>h3]:max-w-content [&_.ProseMirror>h3]:font-interface [&_.ProseMirror>h3]:text-xl [&_.ProseMirror>h3]:font-semibold',

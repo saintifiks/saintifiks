@@ -42,61 +42,61 @@ export default async function BookstoreAdminPage() {
   const daftarBuku = (books as unknown as BookData[]) ?? []
 
   return (
-    <main className="min-h-screen bg-primary-light">
+    <main className="min-h-screen bg-paper">
       <div className="max-w-5xl mx-auto px-6 py-12">
         
         <div className="flex items-start justify-between mb-10">
           <div>
-            <p className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Admin Panel</p>
-            <h1 className="font-libre text-3xl font-bold text-primary-dark mt-2">Manajemen Bookstore</h1>
-            <p className="font-helvetica text-sm text-primary-dark/50 mt-1">PIM (Product Information Management) & Inventaris</p>
+            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest">Admin Panel</p>
+            <h1 className="font-display text-3xl font-bold text-ink mt-2">Manajemen Bookstore</h1>
+            <p className="font-interface text-sm text-warm-gray mt-1">PIM (Product Information Management) & Inventaris</p>
           </div>
-          <Link href="/dashboard" className="font-helvetica text-sm text-primary-dark/40 hover:text-primary-dark transition-colors duration-150 mt-2">
+          <Link href="/dashboard" className="font-interface text-sm text-warm-gray hover:text-ink transition-colors duration-150 mt-2">
             ← Kembali ke Dashboard Utama
           </Link>
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-10">
-          <div className="border border-primary-dark/10 bg-white px-5 py-4">
-            <p className="font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Total Buku</p>
-            <p className="font-libre text-3xl font-bold text-primary-dark">{booksCount ?? 0}</p>
+          <div className="border border-ink/10 bg-white px-5 py-4">
+            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-1">Total Buku</p>
+            <p className="font-display text-3xl font-bold text-ink">{booksCount ?? 0}</p>
           </div>
-          <div className="border border-primary-dark/10 bg-white px-5 py-4">
-            <p className="font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Total Penulis</p>
-            <p className="font-libre text-3xl font-bold text-primary-dark">{authorsCount ?? 0}</p>
+          <div className="border border-ink/10 bg-white px-5 py-4">
+            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-1">Total Penulis</p>
+            <p className="font-display text-3xl font-bold text-ink">{authorsCount ?? 0}</p>
           </div>
-          <div className="border border-primary-dark/10 bg-white px-5 py-4">
-            <p className="font-helvetica text-xs text-primary-dark/50 uppercase tracking-widest mb-1">Total Penerbit</p>
-            <p className="font-libre text-3xl font-bold text-primary-dark">{publishersCount ?? 0}</p>
+          <div className="border border-ink/10 bg-white px-5 py-4">
+            <p className="font-interface text-xs text-warm-gray uppercase tracking-widest mb-1">Total Penerbit</p>
+            <p className="font-display text-3xl font-bold text-ink">{publishersCount ?? 0}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 mb-6">
-          <Link href="/dashboard/bookstore/buku/baru" className="font-helvetica text-sm bg-primary-dark text-primary-light px-5 py-2.5 hover:opacity-80 transition-opacity">
+          <Link href="/dashboard/bookstore/buku/baru" className="font-interface text-sm bg-ink text-paper px-5 py-2.5 hover:opacity-80 transition-opacity">
             + Tambah Buku
           </Link>
-          <Link href="/dashboard/bookstore/penulis" className="font-helvetica text-sm border border-primary-dark/40 px-5 py-2.5 hover:bg-primary-dark hover:text-primary-light transition-all">
+          <Link href="/dashboard/bookstore/penulis" className="font-interface text-sm border border-ink/40 px-5 py-2.5 hover:bg-ink hover:text-paper transition-all">
             Kelola Penulis
           </Link>
-          <Link href="/dashboard/bookstore/penerbit" className="font-helvetica text-sm border border-primary-dark/40 px-5 py-2.5 hover:bg-primary-dark hover:text-primary-light transition-all">
+          <Link href="/dashboard/bookstore/penerbit" className="font-interface text-sm border border-ink/40 px-5 py-2.5 hover:bg-ink hover:text-paper transition-all">
             Kelola Penerbit
           </Link>
         </div>
 
         <section>
           {daftarBuku.length === 0 ? (
-            <div className="border border-primary-dark/10 py-20 text-center bg-white">
-              <p className="font-helvetica text-sm text-primary-dark/40 mb-4">
+            <div className="border border-ink/10 py-20 text-center bg-white">
+              <p className="font-interface text-sm text-warm-gray mb-4">
                 Katalog kosong. Anda harus menambahkan Penulis dan Penerbit sebelum membuat Buku.
               </p>
             </div>
           ) : (
-            <div className="border border-primary-dark/10 bg-white">
-              <div className="grid grid-cols-[2fr_1fr_1fr_1.5fr_100px] px-5 py-3 border-b border-primary-dark/10 bg-primary-dark/[0.03]">
-                <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Buku & Penulis</span>
-                <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Status</span>
-                <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest text-center">Varian (SKU)</span>
-                <span className="font-helvetica text-xs text-primary-dark/40 uppercase tracking-widest">Stok Total</span>
+            <div className="border border-ink/10 bg-white">
+              <div className="grid grid-cols-[2fr_1fr_1fr_1.5fr_100px] px-5 py-3 border-b border-ink/10 bg-ink/[0.03]">
+                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Buku & Penulis</span>
+                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Status</span>
+                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest text-center">Varian (SKU)</span>
+                <span className="font-interface text-xs text-warm-gray uppercase tracking-widest">Stok Total</span>
                 <span></span>
               </div>
 
@@ -108,22 +108,22 @@ export default async function BookstoreAdminPage() {
                 const totalStock = variants.reduce((sum, v) => sum + v.stock_qty, 0)
 
                 return (
-                  <div key={book.id} className="grid grid-cols-[2fr_1fr_1fr_1.5fr_100px] px-5 py-4 border-b border-primary-dark/10 last:border-b-0 items-center hover:bg-primary-dark/[0.015] transition-colors">
+                  <div key={book.id} className="grid grid-cols-[2fr_1fr_1fr_1.5fr_100px] px-5 py-4 border-b border-ink/10 last:border-b-0 items-center hover:bg-ink/[0.015] transition-colors">
                     <div>
-                      <p className="font-libre text-base font-bold text-primary-dark leading-snug line-clamp-1">{book.title}</p>
-                      <p className="font-helvetica text-xs text-primary-dark/50 mt-1">{authorName}</p>
+                      <p className="font-display text-base font-bold text-ink leading-snug line-clamp-1">{book.title}</p>
+                      <p className="font-interface text-xs text-warm-gray mt-1">{authorName}</p>
                     </div>
                     <div>
-                      <span className={`inline-flex font-helvetica text-[10px] uppercase tracking-widest px-2 py-1 rounded-sm ${
-                        book.status === 'active' ? 'bg-signal-success/10 text-signal-success' : 'bg-primary-dark/10 text-primary-dark'
+                      <span className={`inline-flex font-interface text-[10px] uppercase tracking-widest px-2 py-1 rounded-sm ${
+                        book.status === 'active' ? 'bg-signal-success/10 text-signal-success' : 'bg-ink/10 text-ink'
                       }`}>
                         {book.status}
                       </span>
                     </div>
-                    <div className="text-center font-helvetica text-sm text-primary-dark/70">{variants.length}</div>
-                    <div className="font-helvetica text-sm text-primary-dark/70">{totalStock} unit</div>
+                    <div className="text-center font-interface text-sm text-warm-gray">{variants.length}</div>
+                    <div className="font-interface text-sm text-warm-gray">{totalStock} unit</div>
                     <div className="text-right">
-                      <Link href={`/dashboard/bookstore/buku/${book.id}`} className="font-helvetica text-xs text-accent-blue hover:opacity-60 transition-opacity">Kelola</Link>
+                      <Link href={`/dashboard/bookstore/buku/${book.id}`} className="font-interface text-xs text-text-link hover:opacity-60 transition-opacity">Kelola</Link>
                     </div>
                   </div>
                 )
