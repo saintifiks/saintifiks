@@ -5,6 +5,7 @@
 // Fokus dikunci di dalam panel, Escape menutup, fokus kembali ke tombol pemicu.
 
 import { useId, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useModalDialog } from '@/lib/use-modal-dialog'
 import IconButton from './IconButton'
 
@@ -23,9 +24,10 @@ export default function Sheet({ open, onClose, title, meta, children, footer }: 
   const titleId = useId()
   const { dialogRef, initialFocusRef } = useModalDialog({ isOpen: open, onClose })
 
-  if (!open) return null
+  // Hanya dibuka lewat interaksi pengguna, jadi `document` selalu tersedia di sini.
+  if (!open || typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-modal">
       <div className="sheet-backdrop absolute inset-0 bg-night/50" onClick={onClose} aria-hidden="true" />
       <div
@@ -48,6 +50,7 @@ export default function Sheet({ open, onClose, title, meta, children, footer }: 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
         {footer && <div className="border-t border-border-default/20 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

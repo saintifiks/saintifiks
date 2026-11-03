@@ -22,3 +22,4 @@ Situs dirancang ponsel dulu, lalu diperluas. Setiap halaman baru diperiksa pada 
 4. **Aksi utama di zona jempol** pada ponsel (bilah di dasar layar), bukan di pojok atas.
 5. **Elemen menempel** (header, bilah aksi) dihitung terhadap tinggi layar; pada layar pendek lanskap header dilepas.
 6. Pengujian cepat: `/dev/home-preview` dan `/dev/article-preview` (lihat parameter di berkas masing-masing) pada lebar di atas. Cari `document.documentElement.scrollWidth > innerWidth` untuk gulir horizontal.
+7. **Lapisan modal (menu, panel, dialog) selalu di tingkat akar** (portal ke `<body>` atau saudara dari `<header>`), tidak boleh di dalam elemen `sticky`/`fixed`/ber-`z-index`: elemen itu membuat konteks tumpukan sendiri sehingga `z-modal` di dalamnya tidak pernah menang atas elemen lain di luar. (Bug 2026-11-03: bilah aksi artikel tampil di atas menu layar penuh.)

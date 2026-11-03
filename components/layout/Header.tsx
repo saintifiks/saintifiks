@@ -26,35 +26,39 @@ export default function Header() {
   if (pathname.startsWith('/dashboard')) return null
 
   return (
-    <header className="site-header sticky top-0 z-sticky border-b border-border-default/15 bg-surface-page">
-      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-5 lg:h-[72px] lg:px-8">
-        <nav aria-label="Navigasi utama" className="hidden items-center gap-8 lg:flex">
-          {PRIMARY_NAV.map((item) => (
-            <Link key={item.href} href={item.href} variant="nav">
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <span className="lg:hidden" />
+    <>
+      <header className="site-header sticky top-0 z-sticky border-b border-border-default/15 bg-surface-page">
+        <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-5 lg:h-[72px] lg:px-8">
+          <nav aria-label="Navigasi utama" className="hidden items-center gap-8 lg:flex">
+            {PRIMARY_NAV.map((item) => (
+              <Link key={item.href} href={item.href} variant="nav">
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <span className="lg:hidden" />
 
-        <div className="justify-self-center">
-          <Wordmark />
+          <div className="justify-self-center">
+            <Wordmark />
+          </div>
+
+          <div className="flex items-center justify-end gap-1 lg:gap-3">
+            <AccountLink className="hidden lg:inline-block" />
+            <ThemeToggle />
+            <IconButton
+              icon="menu"
+              label="Buka menu"
+              aria-haspopup="dialog"
+              aria-expanded={drawerOpen}
+              onClick={() => setDrawerOpen(true)}
+            />
+          </div>
         </div>
 
-        <div className="flex items-center justify-end gap-1 lg:gap-3">
-          <AccountLink className="hidden lg:inline-block" />
-          <ThemeToggle />
-          <IconButton
-            icon="menu"
-            label="Buka menu"
-            aria-haspopup="dialog"
-            aria-expanded={drawerOpen}
-            onClick={() => setDrawerOpen(true)}
-          />
-        </div>
-      </div>
+      </header>
 
-      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-    </header>
+    {/* Di luar <header>: lapisan modal harus berada di tingkat akar, bukan di dalam konteks tumpukan header. */}
+    <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+    </>
   )
 }
