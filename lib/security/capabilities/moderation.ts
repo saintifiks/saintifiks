@@ -1,54 +1,21 @@
 /**
  * Moderation Capability Module
- * Confines privileged service-role access for Opinions moderation and report management.
+ * Confines privileged service-role access for Opinions moderation.
  */
 
 import { createAdminClient } from '@/lib/supabase/admin'
 
+// Menyembunyikan tulisan Argumen = status 'published' → 'hidden'; menayangkan kembali = 'hidden' → 'published'.
+// Perubahan hanya berlaku dari status asal yang benar, sehingga draf penulis tidak bisa ikut tertayang dan tulisan
+// yang sudah disembunyikan tidak menimpa keputusan lain. Trigger opinion_articles_guard hanya membatasi pengguna
+// biasa; service_role (jalur ini) lolos.
 export async function setOpinionHiddenStatus(opinionId: string, isHidden: boolean) {
   const admin = createAdminClient()
   return admin
     .from('opinion_articles')
-    .update({ is_hidden: isHidden })
+    .update({ status: isHidden ? 'hidden' : 'published' })
     .eq('id', opinionId)
-    .select('id, title, is_hidden')
-    .single()
-}
-
-export async function listAllOpinionsForAdmin(options: { rangeFrom?: number; rangeTo?: number } = {}) {
-  const admin = createAdminClient()
-  let query = admin
-    .from('opinion_articles')
-    .select('id, title, slug, status, is_hidden, created_at, published_at, author_id, view_count, like_count, comment_count', { count: 'exact' })
-    .order('created_at', { ascending: false })
-
-  if (options.rangeFrom !== undefined && options.rangeTo !== undefined) {
-    query = query.range(options.rangeFrom, options.rangeTo)
-  }
-
-  return query
-}
-
-export async function listModerationReports(statusFilter?: string) {
-  const admin = createAdminClient()
-  let query = admin
-    .from('article_reports')
-    .select('*, opinion_articles(id, title, slug, is_hidden)')
-    .order('created_at', { ascending: false })
-
-  if (statusFilter && statusFilter !== 'all') {
-    query = query.eq('status', statusFilter)
-  }
-
-  return query
-}
-
-export async function updateModerationReportStatus(reportId: string, status: 'reviewed' | 'dismissed') {
-  const admin = createAdminClient()
-  return admin
-    .from('article_reports')
-    .update({ status })
-    .eq('id', reportId)
-    .select('id, status')
+    .eq('status', isHidden ? 'published' : 'hidden')
+    .select('id, title, status')
     .single()
 }
