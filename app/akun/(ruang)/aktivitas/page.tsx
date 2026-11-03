@@ -4,6 +4,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getKoreksiSaya } from '@/lib/akun/koreksi'
 import UiLink from '@/components/ui/Link'
 import { formatTanggalPendek } from '@/lib/format-date'
 
@@ -80,13 +81,12 @@ export default async function AktivitasPage() {
   if (!user) redirect('/masuk?next=/akun/aktivitas')
 
   const op = 'title, slug, status, user_profiles!opinion_articles_author_profile_fkey(username)'
-  const [aComments, oComments, aLikes, oLikes, aCorr, oCorr] = await Promise.all([
+  const [aComments, oComments, aLikes, oLikes, [aCorr, oCorr]] = await Promise.all([
     supabase.from('comments').select('id, content, created_at, articles(title, slug)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(LIMIT),
     supabase.from('opinion_comments').select(`id, content, created_at, opinion_articles(${op})`).eq('user_id', user.id).order('created_at', { ascending: false }).limit(LIMIT),
     supabase.from('likes').select('id, created_at, articles(title, slug)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(LIMIT),
     supabase.from('opinion_likes').select(`id, created_at, opinion_articles(${op})`).eq('user_id', user.id).order('created_at', { ascending: false }).limit(LIMIT),
-    supabase.from('article_corrections').select('id, status, original_text, created_at, articles(title, slug)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(LIMIT),
-    supabase.from('opinion_corrections').select(`id, status, original_text, created_at, opinion_articles(${op})`).eq('user_id', user.id).order('created_at', { ascending: false }).limit(LIMIT),
+    getKoreksiSaya(user.id, LIMIT),
   ])
 
   const articleLink = (a: ArticleRef) => (a ? `/artikel/${a.slug}` : null)
