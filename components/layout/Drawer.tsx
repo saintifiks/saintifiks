@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useLocationSelection, GLOBAL } from '@/components/layout/LocationProvider'
 import { groupCountriesByLetter } from '@/lib/countries'
 import Wordmark from '@/components/layout/Wordmark'
+import { useAuth } from '@/components/auth/AuthProvider'
 
 type DrawerProps = {
   open: boolean
@@ -35,7 +36,6 @@ export default function Drawer({ open, onClose }: DrawerProps) {
   const [closing, setClosing] = useState(false)
   const [locationOpen, setLocationOpen] = useState(false)
   const [countryOpen, setCountryOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
@@ -49,13 +49,9 @@ export default function Drawer({ open, onClose }: DrawerProps) {
     onCloseRef.current = onClose
   }, [onClose])
 
-  // Pantau status login untuk menampilkan opsi "Keluar".
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setIsLoggedIn(!!session)
-    })
-    return () => subscription.unsubscribe()
-  }, [supabase])
+  // Status login dari AuthProvider (satu langganan untuk seluruh situs).
+  const { userId } = useAuth()
+  const isLoggedIn = !!userId
 
   // Kelola mount/unmount agar animasi keluar sempat diputar.
   useEffect(() => {

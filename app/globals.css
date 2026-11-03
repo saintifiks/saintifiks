@@ -765,9 +765,9 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
 /* External blockquote (kutipan sumber) */
 .article-body blockquote:not(.pull-quote):not(.callout-box),
 .article-content blockquote:not(.pull-quote):not(.callout-box) {
-  background: rgb(var(--color-surface-sunken) / 0.5);
-  border-left: 4px solid rgb(var(--color-border-strong) / 0.5);
-  padding: var(--space-4) var(--space-6);
+  /* Kutipan: garis tinta di kiri dan huruf miring — tanpa latar berwarna */
+  border-left: 2px solid rgb(var(--color-ink));
+  padding: var(--space-1) 0 var(--space-1) var(--space-6);
   margin: var(--space-8) 0;
   font-style: italic;
 }
@@ -836,4 +836,27 @@ html.theme-transition aside[aria-label="Indikator ekonomi dan tata kelola"] * {
   --color-interactive-primary-disabled: 58 62 70;
   background-color: rgb(var(--color-paper));
   color: rgb(var(--color-ink));
+}
+
+/* Sheet — panel naik dari bawah (ponsel) atau masuk dari kanan (desktop); latar memudar. Gerak dimatikan
+   oleh prefers-reduced-motion global. */
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheet-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+.sheet-backdrop { animation: sheet-fade var(--duration-moderate) var(--ease-out) both; }
+.sheet-panel { animation: sheet-up var(--duration-deliberate) var(--ease-rise) both; }
+@media (min-width: 1024px) {
+  .sheet-panel { animation-name: sheet-in; }
+}
+
+/* Ukuran teks baca — dipilih pembaca lewat pengaturan "Aa" (0,94 / 1 / 1,12), disimpan di perangkat. */
+.article-body p,
+.article-content p {
+  font-size: calc(18px * var(--reader-scale, 1));
+}
+@media (min-width: 1024px) {
+  .article-body p,
+  .article-content p {
+    font-size: calc(19px * var(--reader-scale, 1));
+  }
 }

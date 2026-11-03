@@ -1,36 +1,16 @@
 'use client'
 
-// Client Component wrapper untuk seluruh section interaksi
-// [PERUBAHAN SESI #28 v3] — Tambah error boundary untuk isolasi error per komponen
+// ArticleInteractions — bilah aksi artikel (suka · komentar · bagikan · koreksi · tampilan baca).
+// Satu elemen DOM yang berpindah tempat lewat CSS (agar status tidak terduplikasi):
+//  • ponsel/tablet (<1280px): bilah tetap di dasar layar;
+//  • desktop (≥1280px): rel lengket di sebelah kiri kolom artikel, ikon bertumpuk vertikal.
+// Wajib ditempatkan di dalam pembungkus `relative` selebar kolom artikel.
 
-import { useState, useEffect } from 'react'
 import LikeButton from './LikeButton'
 import ShareButton from './ShareButton'
 import CommentsSection from './CommentsSection'
 import CorrectionSection from './CorrectionSection'
-
-// Error Boundary sederhana untuk satu komponen
-function SafeComponent({ 
-  children, 
-  fallback 
-}: { 
-  children: React.ReactNode
-  fallback?: React.ReactNode 
-}) {
-  const [hasError, setHasError] = useState(false)
-  
-  useEffect(() => {
-    const handleError = () => setHasError(true)
-    window.addEventListener('error', handleError)
-    return () => window.removeEventListener('error', handleError)
-  }, [])
-  
-  if (hasError) {
-    return fallback || null
-  }
-  
-  return <>{children}</>
-}
+import ReaderSettings from './ReaderSettings'
 
 type ArticleInteractionsProps = {
   articleId: string
@@ -54,44 +34,23 @@ export default function ArticleInteractions({
   corrections,
 }: ArticleInteractionsProps) {
   return (
-    <>
-      {/* Toolbar interaksi utama */}
-      <div className="mt-12 pt-8 border-t border-ink/10">
-
-        {/* Satu baris: koreksi rata kiri, like+komentar+share rata kanan */}
-        <div className="flex items-center justify-between">
-
-          {/* Kiri: icon Koreksi & Klarifikasi */}
-          <SafeComponent fallback={null}>
-            <CorrectionSection
-              articleId={articleId}
-              corrections={corrections}
-            />
-          </SafeComponent>
-
-          {/* Kanan: Like + Komentar + Share */}
-          <div className="flex items-center gap-3">
-            <SafeComponent fallback={null}>
-              <LikeButton articleId={articleId} />
-            </SafeComponent>
-
-            <SafeComponent fallback={null}>
-              <CommentsSection articleId={articleId} />
-            </SafeComponent>
-
-            <SafeComponent fallback={null}>
-              <ShareButton
-                articleId={articleId}
-                articleTitle={articleTitle}
-                articleExcerpt={articleExcerpt}
-                articleSlug={articleSlug}
-              />
-            </SafeComponent>
-          </div>
-
-        </div>
-
+    <div
+      role="toolbar"
+      aria-label="Aksi artikel"
+      className="fixed inset-x-0 bottom-0 z-sticky border-t border-border-default/20 bg-surface-page pb-[env(safe-area-inset-bottom)] xl:absolute xl:inset-y-0 xl:-left-24 xl:right-auto xl:w-14 xl:border-0 xl:bg-transparent xl:pb-0"
+    >
+      <div className="mx-auto flex max-w-[720px] items-center justify-between px-3 sm:px-0 xl:sticky xl:top-32 xl:mx-0 xl:max-w-none xl:flex-col xl:justify-start xl:gap-1 xl:px-0">
+        <LikeButton articleId={articleId} />
+        <CommentsSection articleId={articleId} />
+        <ShareButton
+          articleId={articleId}
+          articleTitle={articleTitle}
+          articleExcerpt={articleExcerpt}
+          articleSlug={articleSlug}
+        />
+        <CorrectionSection articleId={articleId} corrections={corrections} />
+        <ReaderSettings />
       </div>
-    </>
+    </div>
   )
 }
