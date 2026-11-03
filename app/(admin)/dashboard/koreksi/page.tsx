@@ -33,7 +33,7 @@ export default async function KoreksiPage() {
     admin
       .from('opinion_corrections')
       .select(
-        'id, original_text, corrected_text, explanation, created_at, opinion_articles(title, slug, user_profiles!opinion_articles_author_id_fkey(username))'
+        'id, original_text, corrected_text, explanation, created_at, opinion_articles(title, slug, user_profiles!opinion_articles_author_profile_fkey(username))'
       )
       .eq('status', 'pending')
       .order('created_at', { ascending: true }),

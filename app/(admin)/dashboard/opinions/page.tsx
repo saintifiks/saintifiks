@@ -29,7 +29,7 @@ export default async function OpinionsModerationPage() {
         slug,
         status,
         author_id,
-        user_profiles!opinion_articles_author_id_fkey(username, display_name)
+        user_profiles!opinion_articles_author_profile_fkey(username, display_name)
       )
     `)
     .eq('status', 'pending')
@@ -46,7 +46,7 @@ export default async function OpinionsModerationPage() {
       published_at,
       created_at,
       author_id,
-      user_profiles!opinion_articles_author_id_fkey(username, display_name)
+      user_profiles!opinion_articles_author_profile_fkey(username, display_name)
     `)
     .in('status', ['published', 'hidden'])
     .order('published_at', { ascending: false })

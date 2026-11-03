@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
           slug,
           status,
           author_id,
-          user_profiles!opinion_articles_author_id_fkey(username, display_name)
+          user_profiles!opinion_articles_author_profile_fkey(username, display_name)
         )
       `)
       .order('created_at', { ascending: false })
