@@ -6,7 +6,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Badge, Button, useToast } from '@/components/ui'
+import { Badge, Button, ConfirmSheet, useToast } from '@/components/ui'
 import { EmptyState, adminLink, sectionTitle, table } from '@/components/admin/ui'
 import { formatTanggalPendek } from '@/lib/format-date'
 
@@ -57,9 +57,10 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
   const [reports, setReports] = useState(initialReports)
   const [articles, setArticles] = useState(initialArticles)
   const [busy, setBusy] = useState<string | null>(null)
+  // Tulisan yang menunggu konfirmasi disembunyikan (panel konfirmasi, bukan dialog bawaan peramban).
+  const [confirmHide, setConfirmHide] = useState<{ id: string; title: string } | null>(null)
 
   async function setHidden(articleId: string, title: string, hide: boolean) {
-    if (hide && !window.confirm(`Sembunyikan “${title}”? Tulisan langsung hilang dari Argumen.`)) return
     setBusy(articleId)
     try {
       const res = await fetch(`/api/admin/opinions/${articleId}/hide`, { method: hide ? 'POST' : 'DELETE' })
@@ -73,13 +74,14 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
         })
       )
       toast({
-        message: hide ? 'Tulisan disembunyikan dari Argumen.' : 'Tulisan tayang kembali di Argumen.',
+        message: hide ? `“${title}” disembunyikan dari Argumen.` : `“${title}” tayang kembali di Argumen.`,
         label: hide ? 'Disembunyikan' : 'Tayang',
       })
     } catch {
       toast({ message: 'Belum berhasil. Coba lagi sebentar lagi.', tone: 'danger' })
     } finally {
       setBusy(null)
+      setConfirmHide(null)
     }
   }
 
@@ -147,7 +149,7 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => setHidden(article.id, article.title, true)}
+                          onClick={() => setConfirmHide({ id: article.id, title: article.title })}
                           disabled={busy === article.id}
                         >
                           Sembunyikan tulisan
@@ -214,10 +216,10 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
                         <Button
                           variant={hidden ? 'text' : 'danger'}
                           size="sm"
-                          onClick={() => setHidden(article.id, article.title, !hidden)}
+                          onClick={() => (hidden ? setHidden(article.id, article.title, false) : setConfirmHide({ id: article.id, title: article.title }))}
                           disabled={busy === article.id}
                         >
-                          {hidden ? 'Tayangkan' : 'Sembunyikan'}
+                          {busy === article.id ? 'Memproses' : hidden ? 'Tayangkan' : 'Sembunyikan'}
                         </Button>
                       </td>
                     </tr>
@@ -228,6 +230,22 @@ export default function OpinionsModeratorClient({ initialReports, initialArticle
           </div>
         )}
       </section>
+
+      <ConfirmSheet
+        open={!!confirmHide}
+        title="Sembunyikan tulisan?"
+        confirmLabel="Sembunyikan"
+        busyLabel="Menyembunyikan"
+        busy={!!confirmHide && busy === confirmHide.id}
+        danger
+        onConfirm={() => confirmHide && setHidden(confirmHide.id, confirmHide.title, true)}
+        onClose={() => setConfirmHide(null)}
+      >
+        <p>
+          “{confirmHide?.title}” langsung hilang dari Argumen dan tidak bisa dibuka pembaca. Penulis tidak bisa
+          menerbitkannya kembali; hanya Anda yang bisa menayangkannya lagi dari halaman ini.
+        </p>
+      </ConfirmSheet>
     </div>
   )
 }
