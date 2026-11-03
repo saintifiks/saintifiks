@@ -13,6 +13,7 @@ import { X, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useLocationSelection, GLOBAL } from '@/components/layout/LocationProvider'
 import { groupCountriesByLetter } from '@/lib/countries'
+import Wordmark from '@/components/layout/Wordmark'
 
 type DrawerProps = {
   open: boolean
@@ -160,13 +161,7 @@ export default function Drawer({ open, onClose }: DrawerProps) {
       >
         {/* Baris atas: wordmark + tombol tutup */}
         <div className="drawer-row drawer-row-1 flex items-center justify-between">
-          <Link
-            href="/"
-            onClick={onClose}
-            className="flex min-h-[44px] min-w-[44px] items-center font-display text-[24px] font-bold leading-none text-ink"
-          >
-            Saintifiks
-          </Link>
+          <Wordmark onClick={onClose} className="min-h-[44px]" />
           <button
             ref={closeButtonRef}
             onClick={onClose}

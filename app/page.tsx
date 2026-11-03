@@ -5,6 +5,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import HomeFeed, { type FeedArticle } from '@/components/layout/HomeFeed'
+import { formatTanggalPanjang } from '@/lib/format-date'
 
 // ISR: Next.js meng-cache halaman ini dan memperbarui otomatis setiap 5 menit
 export const revalidate = 300
@@ -43,6 +44,7 @@ export default async function BerandaPage() {
     .select('id, title, slug, excerpt, cover_image_url, category, kicker, country, content, published_at')
     .eq('is_published', true)
     .order('published_at', { ascending: false })
+    .limit(40)
 
   if (error) console.error('[Beranda] Gagal mengambil artikel:', error.message)
 
@@ -59,5 +61,5 @@ export default async function BerandaPage() {
     publishedAt: a.published_at ?? null,
   }))
 
-  return <HomeFeed articles={daftarArtikel} />
+  return <HomeFeed articles={daftarArtikel} dateLabel={formatTanggalPanjang()} />
 }
