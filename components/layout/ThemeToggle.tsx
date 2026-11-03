@@ -5,7 +5,7 @@
 // pilihan manual disimpan ke localStorage dan menimpa preferensi OS.
 
 import { useEffect, useState } from 'react'
-import { Sun, Moon } from 'lucide-react'
+import { IconButton } from '@/components/ui'
 
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<'light' | 'dark' | null>(null)
@@ -33,15 +33,13 @@ export default function ThemeToggle() {
 
   // Hydration-safe: jangan render ikon sampai tema diketahui (hindari mismatch).
   // Placeholder berukuran sama untuk mencegah pergeseran layout (CLS).
-  if (theme === null) return <div className="h-9 w-9" aria-hidden="true" />
+  if (theme === null) return <div className="h-11 w-11" aria-hidden="true" />
 
   return (
-    <button
+    <IconButton
+      icon={theme === 'dark' ? 'sun' : 'moon'}
+      label={theme === 'dark' ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'}
       onClick={toggle}
-      aria-label={theme === 'dark' ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'}
-      className="flex h-9 w-9 items-center justify-center rounded-full text-ink/60 hover:text-ink hover:bg-warm-gray/10 transition-colors duration-150"
-    >
-      {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-    </button>
+    />
   )
 }
