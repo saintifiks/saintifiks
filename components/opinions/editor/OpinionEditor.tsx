@@ -1,11 +1,17 @@
 'use client'
 
-// Komponen utama editor artikel opinions
-// Split panel: textarea (kiri/atas) + live preview (kanan/bawah)
-// Mobile: tab switch antara Editor dan Preview
+// OpinionEditor — editor tulisan Argumen. Alurnya satu garis: tulis → simpan draf → terbitkan → (opsional) tarik ke draf.
+//  • Status selalu terlihat di bilah atas (Draf / Terbit / Disembunyikan) beserta keadaan simpan.
+//  • Terbit langsung tampil di Argumen tanpa penyuntingan redaksi, jadi tombol Terbitkan meminta konfirmasi
+//    yang menjelaskan akibatnya.
+//  • Tulisan yang disembunyikan moderator dijelaskan di atas kolom tulis, bukan hanya ditandai.
+//  • Perubahan yang belum disimpan dijaga: peringatan saat menutup tab atau kembali ke Akun.
 
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import NextLink from 'next/link'
+import { Badge, Button, Sheet, useToast } from '@/components/ui'
+import UiLink from '@/components/ui/Link'
 import TipTapEditor, { type TipTapEditorHandle } from './TipTapEditor'
 import TableWizard from './TableWizard'
 import ImageModal from './ImageModal'
@@ -17,21 +23,31 @@ type ChartConfig = {
   config: object
 }
 
+type Status = 'draft' | 'published' | 'hidden'
+
 type OpinionEditorProps = {
   mode: 'create' | 'edit'
   articleId?: string
+  authorUsername?: string
   initialTitle?: string
   initialContent?: string
   initialExcerpt?: string
   initialCoverImageUrl?: string
-  initialStatus?: 'draft' | 'published' | 'hidden'
+  initialStatus?: Status
   initialCharts?: ChartConfig[]
   slugLocked?: boolean
 }
 
+const statusBadge = { draft: 'default', published: 'success', hidden: 'danger' } as const
+const statusLabel = { draft: 'Draf', published: 'Terbit', hidden: 'Disembunyikan' } as const
+
+const MIN_CONTENT = 100
+const MAX_CONTENT = 50000
+
 export default function OpinionEditor({
   mode,
   articleId,
+  authorUsername,
   initialTitle = '',
   initialContent = '',
   initialExcerpt = '',
@@ -41,18 +57,27 @@ export default function OpinionEditor({
   slugLocked = false,
 }: OpinionEditorProps) {
   const router = useRouter()
+  const toast = useToast()
 
   const [title, setTitle] = useState(initialTitle)
   const [content, setContent] = useState(initialContent)
   const [excerpt, setExcerpt] = useState(initialExcerpt)
   const [coverImageUrl, setCoverImageUrl] = useState(initialCoverImageUrl)
   const [charts, setCharts] = useState<ChartConfig[]>(initialCharts)
-  const [status, setStatus] = useState(initialStatus)
+  const [status, setStatus] = useState<Status>(initialStatus)
+
+  // Isi terakhir yang sudah tersimpan di server; selisihnya = "belum disimpan".
+  const [saved, setSaved] = useState({
+    title: initialTitle,
+    content: initialContent,
+    excerpt: initialExcerpt,
+    cover: initialCoverImageUrl,
+    charts: initialCharts.length,
+  })
 
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
-  const [saveMessage, setSaveMessage] = useState('')
-  const [error, setError] = useState('')
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const [showTableWizard, setShowTableWizard] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
@@ -60,14 +85,29 @@ export default function OpinionEditor({
 
   const editorRef = useRef<TipTapEditorHandle>(null)
 
-  // Saat ChartWizard selesai — simpan config chart ke state lokal
-  // Insert placeholder ke TipTap dilakukan via window event 'tiptap:insert-chart' di ChartWizard
+  const dirty =
+    title !== saved.title ||
+    content !== saved.content ||
+    excerpt !== saved.excerpt ||
+    coverImageUrl !== saved.cover ||
+    charts.length !== saved.charts
+
+  useEffect(() => {
+    if (!dirty) return
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
+
+  // Saat ChartWizard selesai — simpan config chart ke state lokal.
+  // Insert placeholder ke TipTap dilakukan lewat window event 'tiptap:insert-chart' di ChartWizard.
   function handleChartInsert(chartId: string, config: object) {
     setCharts((prev) => [...prev, { chart_id: chartId, config }])
   }
 
-  // Saat TableWizard/ImageModal insert teks Markdown — kirim langsung ke TipTap via ref
-  // Ini lebih andal dari append ke state karena TipTap sudah aktif saat wizard dibuka
+  // Teks Markdown dari TableWizard/ImageModal dikirim langsung ke TipTap lewat ref.
   function handleToolbarInsert(text: string) {
     if (editorRef.current) {
       editorRef.current.insertMarkdown(text)
@@ -76,61 +116,45 @@ export default function OpinionEditor({
     }
   }
 
-  async function saveArticle(): Promise<string | null> {
-    setError('')
+  function fail(message: string) {
+    toast({ message, tone: 'danger' })
+  }
+
+  async function saveArticle(): Promise<{ id: string; slug: string | null } | null> {
     if (!title.trim()) {
-      setError('Judul artikel wajib diisi')
+      fail('Judul wajib diisi sebelum menyimpan.')
       return null
     }
 
     setIsSaving(true)
-    setSaveMessage('')
-
     try {
-      let id = articleId
-      let res: Response
-
-      if (mode === 'create' || !id) {
-        res = await fetch('/api/opinions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content, excerpt, cover_image_url: coverImageUrl }),
-        })
-      } else {
-        res = await fetch(`/api/opinions/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content, excerpt, cover_image_url: coverImageUrl }),
-        })
-      }
-
+      const creating = mode === 'create' || !articleId
+      const res = await fetch(creating ? '/api/opinions' : `/api/opinions/${articleId}`, {
+        method: creating ? 'POST' : 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, excerpt, cover_image_url: coverImageUrl }),
+      })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Gagal menyimpan')
+        fail(data.error || 'Gagal menyimpan. Coba lagi.')
         return null
       }
 
-      id = data.article.id
+      const id = data.article.id as string
 
-      // Sync chart configs ke DB — upsert satu per satu
+      // Sinkronkan konfigurasi grafik ke DB. Galat duplikat diabaikan: grafik itu sudah ada.
       for (const chart of charts) {
         await fetch('/api/opinion-charts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            opinion_article_id: id,
-            chart_id: chart.chart_id,
-            config: chart.config,
-          }),
+          body: JSON.stringify({ opinion_article_id: id, chart_id: chart.chart_id, config: chart.config }),
         })
-        // Error diabaikan jika duplicate — chart sudah ada di DB
       }
 
-      setSaveMessage('Tersimpan')
-      setTimeout(() => setSaveMessage(''), 2000)
-      return id!
+      setSaved({ title, content, excerpt, cover: coverImageUrl, charts: charts.length })
+      return { id, slug: (data.article.slug as string | undefined) ?? null }
     } catch {
-      setError('Terjadi kesalahan saat menyimpan')
+      fail('Terjadi gangguan saat menyimpan. Coba lagi.')
       return null
     } finally {
       setIsSaving(false)
@@ -138,31 +162,44 @@ export default function OpinionEditor({
   }
 
   async function handleSave() {
-    const id = await saveArticle()
-    if (id && mode === 'create') {
-      router.replace(`/akun/artikel/${id}/edit`)
+    const result = await saveArticle()
+    if (!result) return
+    if (mode === 'create') {
+      router.replace(`/akun/artikel/${result.id}/edit`)
+      return
     }
+    toast({
+      message: status === 'published' ? 'Perubahan sudah tampil di tulisan yang terbit.' : 'Draf tersimpan.',
+      tone: 'success',
+      label: 'Tersimpan',
+    })
   }
 
   async function handlePublish() {
-    // Simpan dulu, baru publish
-    const id = await saveArticle()
-    if (!id) return
+    setConfirmOpen(false)
+    const result = await saveArticle()
+    if (!result) return
 
     setIsPublishing(true)
-    setError('')
     try {
-      const res = await fetch(`/api/opinions/${id}/publish`, { method: 'POST' })
+      const res = await fetch(`/api/opinions/${result.id}/publish`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Gagal mempublish')
+        fail(data.error || 'Gagal menerbitkan. Coba lagi.')
         return
       }
       setStatus('published')
-      setSaveMessage('Diterbitkan!')
-      setTimeout(() => setSaveMessage(''), 3000)
+      const slug = (data.article?.slug as string | undefined) ?? result.slug
+      toast({
+        message: 'Tulisan Anda sudah tampil di Argumen.',
+        tone: 'success',
+        label: 'Terbit',
+        duration: 9000,
+        action: authorUsername && slug ? { label: 'Lihat', href: `/argumen/${authorUsername}/${slug}` } : undefined,
+      })
+      if (mode === 'create') router.replace(`/akun/artikel/${result.id}/edit`)
     } catch {
-      setError('Terjadi kesalahan saat mempublish')
+      fail('Terjadi gangguan saat menerbitkan. Coba lagi.')
     } finally {
       setIsPublishing(false)
     }
@@ -171,178 +208,155 @@ export default function OpinionEditor({
   async function handleUnpublish() {
     if (!articleId) return
     setIsPublishing(true)
-    setError('')
     try {
       const res = await fetch(`/api/opinions/${articleId}/publish`, { method: 'DELETE' })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Gagal mengubah status')
+        fail(data.error || 'Gagal mengubah status. Coba lagi.')
         return
       }
       setStatus('draft')
-      setSaveMessage('Dikembalikan ke draft')
-      setTimeout(() => setSaveMessage(''), 2500)
+      toast({ message: 'Tulisan tidak lagi tampil di Argumen. Anda bisa menerbitkannya lagi kapan saja.', label: 'Jadi draf' })
     } catch {
-      setError('Terjadi kesalahan')
+      fail('Terjadi gangguan. Coba lagi.')
     } finally {
       setIsPublishing(false)
     }
   }
 
+  function leave(e: React.MouseEvent) {
+    if (dirty && !window.confirm('Perubahan belum disimpan. Tetap keluar?')) e.preventDefault()
+  }
+
   const isBusy = isSaving || isPublishing
+  const tooShort = content.trim().length < MIN_CONTENT
+  const canPublish = !isBusy && !!title.trim() && !tooShort
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col">
-
-      {/* Header editor */}
-      <div className="sticky top-0 z-30 bg-paper border-b border-ink/10">
-        <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-
-          {/* Kiri: back + status */}
-          <div className="flex items-center gap-4 min-w-0">
-            <button
-              onClick={() => router.push('/akun')}
-              className="font-interface text-xs text-warm-gray hover:text-ink transition-colors duration-150 flex-shrink-0"
+    <div className="flex min-h-screen flex-col bg-paper">
+      {/* Bilah atas: tinggi tetap 56px karena toolbar TipTap menempel tepat di bawahnya (top-14). */}
+      <div className="sticky top-0 z-30 h-14 border-b border-border-default/20 bg-paper">
+        <div className="mx-auto flex h-full max-w-[760px] items-center justify-between gap-3 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-4">
+            <NextLink
+              href="/akun"
+              onClick={leave}
+              className="font-interface text-sm text-text-secondary underline decoration-border-default/40 decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-fast hover:text-text-primary hover:decoration-text-primary"
             >
-              ← Kembali
-            </button>
-            <span className={`font-interface text-xs px-2.5 py-1 flex-shrink-0 ${
-              status === 'published'
-                ? 'bg-signal-success/10 text-signal-success'
-                : status === 'hidden'
-                ? 'bg-signal-danger/10 text-signal-danger'
-                : 'bg-ink/5 text-warm-gray'
-            }`}>
-              {status === 'published' ? 'Diterbitkan' : status === 'hidden' ? 'Disembunyikan' : 'Draft'}
-            </span>
-            {slugLocked && (
-              <span className="font-interface text-xs text-warm-gray hidden sm:inline">
-                (slug terkunci)
-              </span>
-            )}
+              Akun
+            </NextLink>
+            <Badge variant={statusBadge[status]}>{statusLabel[status]}</Badge>
           </div>
 
-          {/* Kanan: tombol aksi */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            {saveMessage && (
-              <span className="font-interface text-xs text-signal-success hidden sm:inline">
-                {saveMessage}
-              </span>
-            )}
-            {error && (
-              <span className="font-interface text-xs text-signal-danger hidden sm:inline max-w-[200px] truncate">
-                {error}
-              </span>
-            )}
-
-            <button
-              onClick={handleSave}
-              disabled={isBusy}
-              className="font-interface text-sm border border-ink/20 px-4 py-1.5 hover:bg-ink hover:text-paper transition-all duration-150 disabled:opacity-40"
-            >
-              {isSaving ? 'Menyimpan...' : 'Simpan Draft'}
-            </button>
-
-            {status !== 'hidden' && (
-              status === 'published' ? (
-                <button
-                  onClick={handleUnpublish}
-                  disabled={isBusy}
-                  className="font-interface text-sm border border-signal-danger/30 text-signal-danger px-4 py-1.5 hover:bg-signal-danger hover:text-white transition-all duration-150 disabled:opacity-40"
-                >
-                  Tarik ke Draft
-                </button>
-              ) : (
-                <button
-                  onClick={handlePublish}
-                  disabled={isBusy || !title.trim() || content.trim().length < 100}
-                  className="font-interface text-sm bg-ink text-paper px-4 py-1.5 hover:opacity-80 transition-opacity duration-150 disabled:opacity-40"
-                  title={content.trim().length < 100 ? 'Konten minimal 100 karakter' : ''}
-                >
-                  {isPublishing ? 'Mempublish...' : 'Terbitkan'}
-                </button>
-              )
-            )}
+          <div className="flex shrink-0 items-center gap-4">
+            <span aria-live="polite" className="hidden font-mono text-caption text-text-tertiary sm:inline">
+              {isSaving ? 'Menyimpan' : dirty ? 'Belum disimpan' : mode === 'edit' ? 'Tersimpan' : ''}
+            </span>
+            <Button variant="text" size="sm" onClick={handleSave} disabled={isBusy || (!dirty && mode === 'edit')}>
+              {status === 'published' ? 'Simpan perubahan' : 'Simpan draf'}
+            </Button>
+            {status === 'published' ? (
+              <Button variant="danger" size="sm" onClick={handleUnpublish} disabled={isBusy}>
+                Tarik ke draf
+              </Button>
+            ) : status === 'draft' ? (
+              <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={!canPublish}>
+                Terbitkan
+              </Button>
+            ) : null}
           </div>
         </div>
-
       </div>
 
-      {/* Error mobile */}
-      {error && (
-        <div className="sm:hidden bg-signal-danger/5 border-b border-signal-danger/20 px-4 py-2">
-          <p className="font-interface text-xs text-signal-danger">{error}</p>
-        </div>
-      )}
+      <div className="mx-auto flex w-full max-w-[760px] flex-1 flex-col">
+        {status === 'hidden' && (
+          <div role="status" className="mx-4 mt-6 border-l border-signal-danger pl-4 sm:mx-6">
+            <p className="font-interface text-sm font-semibold text-text-primary">Tulisan ini disembunyikan moderator.</p>
+            <p className="mt-1 font-display text-body-sm leading-relaxed text-text-secondary">
+              Tulisan tidak tampil di Argumen setelah ditinjau karena laporan. Anda masih bisa menyimpan perubahan, tetapi
+              hanya moderator yang dapat menayangkannya kembali.{' '}
+              <UiLink href="/kontak" variant="default">
+                Hubungi kami
+              </UiLink>{' '}
+              bila Anda ingin mengajukan peninjauan ulang.
+            </p>
+          </div>
+        )}
 
-      {/* Body editor */}
-      <div className="flex-1 flex flex-col max-w-screen-xl mx-auto w-full">
+        {/* Metadata tulisan */}
+        <div className="space-y-5 border-b border-border-default/20 px-4 pb-6 pt-8 sm:px-6">
+          <CoverImageUpload currentUrl={coverImageUrl} onChange={setCoverImageUrl} />
 
-        {/* Area editor: metadata + TipTap */}
-        <div className="flex-1 flex flex-col">
-
-          {/* Metadata artikel */}
-          <div className="px-6 pt-6 pb-4 border-b border-ink/10 space-y-4">
-            {/* Cover Image Upload */}
-            <CoverImageUpload
-              currentUrl={coverImageUrl}
-              onChange={setCoverImageUrl}
-            />
-
-            {/* Judul */}
+          <label className="block">
+            <span className="sr-only">Judul</span>
             <textarea
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Judul artikel..."
-              rows={2}
+              placeholder="Judul tulisan"
+              rows={1}
               maxLength={200}
-              className="w-full font-display text-2xl font-bold text-ink bg-transparent focus:outline-none resize-none leading-snug placeholder:text-warm-gray"
+              className="w-full resize-none bg-transparent [field-sizing:content] pb-1.5 font-display text-display-sm leading-[1.15] text-text-primary placeholder:text-text-tertiary focus:outline-none"
             />
+          </label>
 
-            {/* Subjudul / Excerpt */}
+          <label className="block">
+            <span className="sr-only">Ringkasan</span>
             <textarea
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
-              placeholder="Subjudul atau ringkasan singkat..."
-              rows={2}
+              placeholder="Ringkasan satu-dua kalimat (tampil di daftar Argumen)"
+              rows={1}
               maxLength={300}
-              className="w-full font-display text-lg text-text-secondary bg-transparent focus:outline-none resize-none leading-relaxed placeholder:text-text-secondary/30"
+              className="w-full resize-none bg-transparent [field-sizing:content] font-display text-body-base italic leading-relaxed text-text-secondary placeholder:text-text-tertiary focus:outline-none"
             />
-          </div>
+          </label>
 
-          {/* TipTap WYSIWYG Editor — toolbar + area tulis terintegrasi */}
-          <TipTapEditor
-            ref={editorRef}
-            initialContent={content}
-            onChange={setContent}
-            onOpenTableWizard={() => setShowTableWizard(true)}
-            onOpenImageModal={() => setShowImageModal(true)}
-            onOpenChartWizard={() => setShowChartWizard(true)}
-          />
-
-          {/* Karakter counter */}
-          <div className="px-6 py-2 border-t border-ink/10">
-            <span className={`font-interface text-xs ${content.length > 49000 ? 'text-signal-danger' : 'text-warm-gray'}`}>
-              {content.length.toLocaleString('id-ID')} / 50.000 karakter
-            </span>
-          </div>
+          {slugLocked && (
+            <p className="font-mono text-caption text-text-tertiary">
+              Alamat tulisan sudah terkunci; mengubah judul tidak mengubah alamat.
+            </p>
+          )}
         </div>
 
+        <TipTapEditor
+          ref={editorRef}
+          initialContent={content}
+          onChange={setContent}
+          onOpenTableWizard={() => setShowTableWizard(true)}
+          onOpenImageModal={() => setShowImageModal(true)}
+          onOpenChartWizard={() => setShowChartWizard(true)}
+        />
+
+        <div className="flex items-center justify-between gap-4 border-t border-border-default/20 px-4 py-3 font-mono text-caption sm:px-6">
+          <span className={content.length > MAX_CONTENT - 1000 ? 'text-signal-danger' : 'text-text-tertiary'}>
+            {content.length.toLocaleString('id-ID')} / {MAX_CONTENT.toLocaleString('id-ID')} karakter
+          </span>
+          {status === 'draft' && tooShort && (
+            <span className="text-text-tertiary">Minimal {MIN_CONTENT} karakter untuk terbit</span>
+          )}
+        </div>
       </div>
 
+      <Sheet open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Terbitkan tulisan?">
+        <ul className="space-y-4 font-display text-body-sm leading-relaxed text-text-secondary">
+          <li>Tulisan langsung tampil di Argumen dan bisa dibaca siapa saja.</li>
+          <li>Tulisan terbit tanpa penyuntingan redaksi dan ditandai sebagai pendapat pribadi Anda.</li>
+          <li>Pembaca dapat menyukai, berkomentar, mengusulkan koreksi, dan melaporkannya. Moderator dapat menyembunyikannya bila melanggar.</li>
+          <li>Alamat tulisan terkunci setelah terbit. Anda tetap bisa mengubah isi dan menariknya kembali menjadi draf.</li>
+        </ul>
+        <div className="mt-8 flex items-center gap-6">
+          <Button onClick={handlePublish} disabled={!canPublish}>
+            Terbitkan sekarang
+          </Button>
+          <Button variant="text" onClick={() => setConfirmOpen(false)}>
+            Batal
+          </Button>
+        </div>
+      </Sheet>
+
       {/* Modals & wizards */}
-      {showTableWizard && (
-        <TableWizard
-          onInsert={handleToolbarInsert}
-          onClose={() => setShowTableWizard(false)}
-        />
-      )}
-      {showImageModal && (
-        <ImageModal
-          onInsert={handleToolbarInsert}
-          onClose={() => setShowImageModal(false)}
-        />
-      )}
+      {showTableWizard && <TableWizard onInsert={handleToolbarInsert} onClose={() => setShowTableWizard(false)} />}
+      {showImageModal && <ImageModal onInsert={handleToolbarInsert} onClose={() => setShowImageModal(false)} />}
       {showChartWizard && (
         <ChartWizard
           articleId={articleId ?? ''}
@@ -350,7 +364,6 @@ export default function OpinionEditor({
           onClose={() => setShowChartWizard(false)}
         />
       )}
-
     </div>
   )
 }

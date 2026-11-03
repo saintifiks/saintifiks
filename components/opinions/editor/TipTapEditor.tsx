@@ -12,11 +12,6 @@ import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
 import { TableHeader } from '@tiptap/extension-table-header'
 import { TableCell } from '@tiptap/extension-table-cell'
-import {
-  Bold, Italic, Heading2, Heading3, Quote,
-  List, ListOrdered, Minus, Table as TableIcon,
-  Image as ImageIcon, BarChart2
-} from 'lucide-react'
 
 // Custom Node: ChartPlaceholder — merender {{chart:id}} sebagai chip di editor
 // Saat ekspor ke Markdown, dikembalikan ke string {{chart:id}} yang asli
@@ -36,7 +31,7 @@ const ChartPlaceholder = Node.create({
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { 'data-chart-placeholder': '' }), `📊 ${node.attrs.chartId}`]
+    return ['div', mergeAttributes(HTMLAttributes, { 'data-chart-placeholder': '' }), `Grafik · ${node.attrs.chartId}`]
   },
 
   renderText({ node }) {
@@ -102,19 +97,19 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
     editorProps: {
       attributes: {
         class: [
-          'min-h-[500px] px-6 py-6 focus:outline-none',
+          'min-h-[500px] px-4 py-6 focus:outline-none sm:px-6',
           // Tipografi konten — sesuai design system Saintifiks
           'font-display text-ink leading-relaxed',
           // Heading — H2 lebih besar dari H3, keduanya jelas berbeda dari teks biasa
           '[&>h2]:font-display [&>h2]:text-3xl [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:mb-3',
-          '[&>h3]:font-display [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-warm-gray [&>h3]:mt-6 [&>h3]:mb-2',
+          '[&>h3]:font-display [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-text-secondary [&>h3]:mt-6 [&>h3]:mb-2',
           // Paragraf
           '[&>p]:font-display [&>p]:text-base [&>p]:leading-relaxed [&>p]:mb-4',
           // Bold & italic
           '[&_strong]:font-bold',
           '[&_em]:italic',
           // Blockquote
-          '[&>blockquote]:border-l-4 [&>blockquote]:border-ink/20 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-warm-gray [&>blockquote]:my-4',
+          '[&>blockquote]:border-l [&>blockquote]:border-border-default [&>blockquote]:pl-5 [&>blockquote]:italic [&>blockquote]:text-text-secondary [&>blockquote]:my-4',
           // List
           '[&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-4',
           '[&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:mb-4',
@@ -122,16 +117,16 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
           // HR
           '[&>hr]:border-ink/15 [&>hr]:my-8',
           // Code inline
-          '[&_code]:font-mono [&_code]:text-sm [&_code]:bg-ink/5 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded',
+          '[&_code]:font-mono [&_code]:text-sm [&_code]:bg-ink/5 [&_code]:px-1.5 [&_code]:py-0.5',
           // Code block
-          '[&>pre]:bg-ink/5 [&>pre]:rounded [&>pre]:p-4 [&>pre]:overflow-x-auto [&>pre]:mb-4',
+          '[&>pre]:bg-ink/5 [&>pre]:p-4 [&>pre]:overflow-x-auto [&>pre]:mb-4',
           '[&>pre>code]:bg-transparent [&>pre>code]:p-0',
           // Chart placeholder chip
           '[&_div[data-chart-placeholder]]:inline-flex [&_div[data-chart-placeholder]]:items-center',
-          '[&_div[data-chart-placeholder]]:gap-1.5 [&_div[data-chart-placeholder]]:bg-interactive-primary/10',
-          '[&_div[data-chart-placeholder]]:border [&_div[data-chart-placeholder]]:border-border-accent/30',
-          '[&_div[data-chart-placeholder]]:text-text-link [&_div[data-chart-placeholder]]:text-xs',
-          '[&_div[data-chart-placeholder]]:px-2.5 [&_div[data-chart-placeholder]]:py-1 [&_div[data-chart-placeholder]]:rounded',
+          '[&_div[data-chart-placeholder]]:gap-1.5',
+          '[&_div[data-chart-placeholder]]:border [&_div[data-chart-placeholder]]:border-border-default',
+          '[&_div[data-chart-placeholder]]:font-mono [&_div[data-chart-placeholder]]:text-caption [&_div[data-chart-placeholder]]:text-text-secondary',
+          '[&_div[data-chart-placeholder]]:px-2.5 [&_div[data-chart-placeholder]]:py-1',
           '[&_div[data-chart-placeholder]]:my-2 [&_div[data-chart-placeholder]]:cursor-default',
           '[&_div[data-chart-placeholder]]:select-none',
           // Tabel GFM — tampilan grid di editor
@@ -203,77 +198,65 @@ const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function 
   const isActive = (type: string, attrs?: Record<string, unknown>) =>
     editor.isActive(type, attrs)
 
+  // Toolbar berhuruf, bukan ikon: perintah menulis paling cepat dikenali lewat hurufnya sendiri (B, I, H2).
   const btnClass = (active: boolean) =>
-    `flex items-center justify-center w-8 h-8 rounded transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-primary ${
-      active
-        ? 'bg-ink text-paper'
-        : 'text-warm-gray hover:text-ink hover:bg-ink/5'
+    `inline-flex min-h-[36px] min-w-[36px] items-center justify-center px-2 font-interface text-caption font-semibold transition-colors duration-fast focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-text-primary ${
+      active ? 'bg-ink text-paper' : 'text-text-secondary hover:text-text-primary'
     }`
 
+  const tools: { label: string; title: string; active?: boolean; run: () => void; className?: string }[][] = [
+    [
+      { label: 'B', title: 'Tebal', active: isActive('bold'), run: () => editor.chain().focus().toggleBold().run(), className: 'font-bold' },
+      { label: 'I', title: 'Miring', active: isActive('italic'), run: () => editor.chain().focus().toggleItalic().run(), className: 'italic' },
+    ],
+    [
+      { label: 'H2', title: 'Subjudul', active: isActive('heading', { level: 2 }), run: () => editor.chain().focus().toggleHeading({ level: 2 }).run() },
+      { label: 'H3', title: 'Anak subjudul', active: isActive('heading', { level: 3 }), run: () => editor.chain().focus().toggleHeading({ level: 3 }).run() },
+    ],
+    [
+      { label: 'Kutip', title: 'Kutipan', active: isActive('blockquote'), run: () => editor.chain().focus().toggleBlockquote().run() },
+      { label: 'Daftar', title: 'Daftar butir', active: isActive('bulletList'), run: () => editor.chain().focus().toggleBulletList().run() },
+      { label: 'Nomor', title: 'Daftar bernomor', active: isActive('orderedList'), run: () => editor.chain().focus().toggleOrderedList().run() },
+      { label: 'Garis', title: 'Garis pemisah', run: () => editor.chain().focus().setHorizontalRule().run() },
+    ],
+    [
+      { label: 'Tabel', title: 'Sisipkan tabel', run: onOpenTableWizard },
+      { label: 'Gambar', title: 'Sisipkan gambar', run: onOpenImageModal },
+      { label: 'Grafik', title: 'Sisipkan grafik', run: onOpenChartWizard },
+    ],
+  ]
+
   return (
-    <div className="flex flex-col flex-1">
-      {/* Toolbar — sticky tepat di bawah header editor (top-[56px] = tinggi OpinionEditor header sticky top-0). Jika tinggi header berubah, sesuaikan nilai ini manual. */}
-      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-ink/10 bg-paper sticky top-[56px] z-20">
-
-        <button type="button" title="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={btnClass(isActive('bold'))}>
-          <Bold size={15} />
-        </button>
-
-        <button type="button" title="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={btnClass(isActive('italic'))}>
-          <Italic size={15} />
-        </button>
-
-        <div className="w-px h-5 bg-ink/10 mx-0.5" />
-
-        <button type="button" title="H2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={btnClass(isActive('heading', { level: 2 }))}>
-          <Heading2 size={15} />
-        </button>
-
-        <button type="button" title="H3" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={btnClass(isActive('heading', { level: 3 }))}>
-          <Heading3 size={15} />
-        </button>
-
-        <div className="w-px h-5 bg-ink/10 mx-0.5" />
-
-        <button type="button" title="Kutipan" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={btnClass(isActive('blockquote'))}>
-          <Quote size={15} />
-        </button>
-
-        <button type="button" title="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()} className={btnClass(isActive('bulletList'))}>
-          <List size={15} />
-        </button>
-
-        <button type="button" title="Numbered list" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={btnClass(isActive('orderedList'))}>
-          <ListOrdered size={15} />
-        </button>
-
-        <button type="button" title="Garis horizontal" onClick={() => editor.chain().focus().setHorizontalRule().run()} className={btnClass(false)}>
-          <Minus size={15} />
-        </button>
-
-        <div className="w-px h-5 bg-ink/10 mx-0.5" />
-
-        <button type="button" title="Tabel" onClick={onOpenTableWizard} className={btnClass(false)}>
-          <TableIcon size={15} />
-        </button>
-
-        <button type="button" title="Gambar" onClick={onOpenImageModal} className={btnClass(false)}>
-          <ImageIcon size={15} />
-        </button>
-
-        <button type="button" title="Chart" onClick={onOpenChartWizard} className={btnClass(false)}>
-          <BarChart2 size={15} />
-        </button>
-
+    <div className="flex flex-1 flex-col">
+      {/* Toolbar menempel tepat di bawah bilah atas editor (tinggi tetap 56px = top-14). */}
+      <div className="sticky top-14 z-20 flex flex-wrap items-center border-b border-border-default/20 bg-paper px-2 py-1 sm:px-4">
+        {tools.map((group, gi) => (
+          <div key={gi} className="flex items-center">
+            {gi > 0 && <span aria-hidden="true" className="mx-1.5 h-4 w-px bg-border-default/30" />}
+            {group.map((tool) => (
+              <button
+                key={tool.label}
+                type="button"
+                title={tool.title}
+                aria-label={tool.title}
+                aria-pressed={tool.active === undefined ? undefined : tool.active}
+                onClick={tool.run}
+                className={[btnClass(!!tool.active), tool.className].filter(Boolean).join(' ')}
+              >
+                {tool.label}
+              </button>
+            ))}
+          </div>
+        ))}
       </div>
 
       {/* Area tulis WYSIWYG — wrapper relative agar placeholder tidak keluar dari area editor */}
-      <div className="relative flex-1 bg-white">
+      <div className="relative flex-1">
         {(() => {
           const isEmpty = editor.state.doc.textContent === '' && editor.state.doc.childCount <= 1
           return isEmpty && !editor.isFocused
         })() && (
-          <p className="absolute top-0 left-0 pointer-events-none px-6 py-6 font-display text-base text-warm-gray select-none">
+          <p className="pointer-events-none absolute left-0 top-0 select-none px-4 py-6 font-display text-base text-text-tertiary sm:px-6">
             {placeholder}
           </p>
         )}

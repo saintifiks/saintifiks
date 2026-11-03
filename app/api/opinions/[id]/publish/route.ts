@@ -88,7 +88,7 @@ export async function POST(_request: NextRequest, props: { params: Promise<{ id:
     }
 
     // Bust ISR cache agar artikel langsung muncul di halaman /opinions
-    revalidatePath('/opinions')
+    revalidatePath('/argumen')
 
     return NextResponse.json({ article: updated })
   } catch (err) {

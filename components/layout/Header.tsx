@@ -23,7 +23,14 @@ export default function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const pathname = usePathname()
 
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/masuk')) return null
+  // Halaman fokus (admin, masuk, editor tulisan) punya bilah sendiri.
+  const focused =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/masuk') ||
+    pathname === '/akun/tulis' ||
+    /^\/akun\/artikel\/[^/]+\/edit$/.test(pathname) ||
+    pathname === '/dev/editor-preview'
+  if (focused) return null
 
   return (
     <>
