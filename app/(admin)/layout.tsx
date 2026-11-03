@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import AdminShell from '@/components/admin/AdminShell'
 import { requireAdmin } from '@/lib/admin-check'
 import { createClient } from '@/lib/supabase/server'
+import { getPendingCounts } from '@/lib/admin-pending'
 
 export default async function AdminLayout({
   children,
@@ -15,6 +16,7 @@ export default async function AdminLayout({
 }) {
   // Fail closed: dashboard tidak pernah terbuka bila ADMIN_EMAIL belum dikonfigurasi.
   const user = await requireAdmin()
+  const pending = await getPendingCounts()
 
   async function handleSignOut() {
     'use server'
@@ -25,7 +27,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <AdminShell email={user.email} signOutAction={handleSignOut}>
+    <AdminShell email={user.email} signOutAction={handleSignOut} pending={pending}>
       {children}
     </AdminShell>
   )

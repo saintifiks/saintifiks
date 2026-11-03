@@ -1,6 +1,10 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { isAdmin } from '@/lib/admin-check'
+import { revalidatePublicContent } from '@/lib/revalidate-content'
 import {
   requiredString,
   optionalString,
@@ -44,5 +48,43 @@ export async function submitCorrection(data: {
   } catch (error) {
     if (error instanceof ValidationError) return { error: error.message }
     return { error: 'Terjadi kesalahan saat memproses koreksi.' }
+  }
+}
+
+// Tinjau usulan koreksi pembaca (admin). Disetujui = tampil di artikel; ditolak = tidak tampil.
+// Memakai klien admin karena RLS hanya mengizinkan pembaca menambah, bukan mengubah status.
+export async function reviewCorrection(input: {
+  kind: 'article' | 'opinion'
+  id: string
+  decision: 'approved' | 'rejected'
+}) {
+  try {
+    if (!(await isAdmin())) return { error: 'Tidak diizinkan.' }
+    const id = validateUUID(input.id, 'Koreksi')
+    if (input.decision !== 'approved' && input.decision !== 'rejected') return { error: 'Keputusan tidak valid.' }
+
+    const admin = createAdminClient()
+    const table = input.kind === 'opinion' ? 'opinion_corrections' : 'article_corrections'
+    const { data, error } = await admin
+      .from(table)
+      .update({
+        status: input.decision,
+        approved_at: input.decision === 'approved' ? new Date().toISOString() : null,
+      })
+      .eq('id', id)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle()
+
+    if (error) return { error: 'Gagal menyimpan keputusan.' }
+    if (!data) return { error: 'Usulan ini sudah ditinjau.' }
+
+    if (input.kind === 'article') revalidatePublicContent()
+    revalidatePath('/dashboard/koreksi')
+    revalidatePath('/dashboard')
+    return { sukses: true }
+  } catch (error) {
+    if (error instanceof ValidationError) return { error: error.message }
+    return { error: 'Terjadi kesalahan saat meninjau koreksi.' }
   }
 }

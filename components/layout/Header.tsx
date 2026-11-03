@@ -29,7 +29,8 @@ export default function Header() {
     pathname.startsWith('/masuk') ||
     pathname === '/akun/tulis' ||
     /^\/akun\/artikel\/[^/]+\/edit$/.test(pathname) ||
-    pathname === '/dev/editor-preview'
+    pathname === '/dev/editor-preview' ||
+    pathname === '/dev/admin-preview'
   if (focused) return null
 
   return (
