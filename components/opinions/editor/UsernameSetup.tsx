@@ -8,7 +8,7 @@ import { useId, useState } from 'react'
 import { Button, Field, Input } from '@/components/ui'
 
 type UsernameSetupProps = {
-  onComplete: () => void
+  onComplete: (username: string) => void
 }
 
 const RESERVED_USERNAMES = [
@@ -70,7 +70,7 @@ export default function UsernameSetup({ onComplete }: UsernameSetupProps) {
         setError(data.error || 'Gagal membuat profil')
         return
       }
-      onComplete()
+      onComplete(username.trim().toLowerCase())
     } catch {
       setError('Terjadi kesalahan. Coba lagi.')
     } finally {

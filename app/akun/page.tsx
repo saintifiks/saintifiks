@@ -27,6 +27,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 const statusVariant = { published: 'success', hidden: 'danger', draft: 'default' } as const
 const statusLabel = { published: 'Diterbitkan', hidden: 'Disembunyikan', draft: 'Draf' } as const
+const statusHint = {
+  published: 'tampil di Argumen',
+  hidden: 'disembunyikan moderator',
+  draft: 'hanya Anda yang melihat',
+} as const
 
 type ArticleRow = { id: string; title: string; slug: string; status: string; updated_at: string }
 
@@ -127,7 +132,7 @@ export default async function AkunPage() {
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-display text-lg text-text-primary">{a.title}</p>
                             <p className="mt-1 font-mono text-caption text-text-tertiary">
-                              Diubah {formatTanggalPendek(a.updated_at)}
+                              Diubah {formatTanggalPendek(a.updated_at)} · {statusHint[status]}
                             </p>
                           </div>
                           <Badge variant={statusVariant[status]}>{statusLabel[status]}</Badge>

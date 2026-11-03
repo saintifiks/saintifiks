@@ -1,7 +1,10 @@
 'use client'
 
+// CoverImageUpload — gambar sampul tulisan Argumen (opsional). Tanpa gambar: satu baris bergaris dengan tombol
+// "Pilih gambar" (berkas juga bisa diseret ke baris ini). Dengan gambar: pratinjau 3:1 dengan "Ganti" dan "Hapus".
+
 import { useState, useRef } from 'react'
-import { X, Upload } from 'lucide-react'
+import { Button } from '@/components/ui'
 import { createClient } from '@/lib/supabase/client'
 
 type CoverImageUploadProps = {
@@ -19,11 +22,11 @@ export default function CoverImageUpload({ currentUrl, onChange }: CoverImageUpl
 
   async function handleFileUpload(file: File) {
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      setError('Format file harus JPEG, PNG, WebP, atau GIF')
+      setError('Format file harus JPEG, PNG, WebP, atau GIF.')
       return
     }
     if (file.size > MAX_SIZE_BYTES) {
-      setError('Ukuran file maksimal 5MB')
+      setError('Ukuran file maksimal 5 MB.')
       return
     }
 
@@ -35,34 +38,26 @@ export default function CoverImageUpload({ currentUrl, onChange }: CoverImageUpl
       const { data: { session } } = await supabase.auth.getSession()
 
       if (!session) {
-        setError('Harus login untuk mengupload gambar')
-        setIsUploading(false)
+        setError('Masuk dulu untuk mengunggah gambar.')
         return
       }
 
-      // Generate nama file unik
       const ext = file.name.split('.').pop() ?? 'jpg'
       const fileName = `${session.user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
 
       const { error: uploadError } = await supabase.storage
         .from('opinions-gambar')
-        .upload(fileName, file, {
-          contentType: file.type,
-          upsert: false,
-        })
+        .upload(fileName, file, { contentType: file.type, upsert: false })
 
       if (uploadError) {
-        setError('Gagal mengupload gambar: ' + uploadError.message)
+        setError('Gagal mengunggah gambar: ' + uploadError.message)
         return
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('opinions-gambar')
-        .getPublicUrl(fileName)
-
+      const { data: { publicUrl } } = supabase.storage.from('opinions-gambar').getPublicUrl(fileName)
       onChange(publicUrl)
     } catch {
-      setError('Terjadi kesalahan saat upload. Coba lagi.')
+      setError('Terjadi gangguan saat mengunggah. Coba lagi.')
     } finally {
       setIsUploading(false)
     }
@@ -71,83 +66,67 @@ export default function CoverImageUpload({ currentUrl, onChange }: CoverImageUpl
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
     const file = e.dataTransfer.files[0]
-    if (file) handleFileUpload(file)
+    if (file) void handleFileUpload(file)
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (file) handleFileUpload(file)
+    if (file) void handleFileUpload(file)
+    e.target.value = ''
   }
 
-  function handleRemove(e: React.MouseEvent) {
-    e.stopPropagation() // Mencegah terpicunya klik pada dropzone
+  function pick() {
+    if (!isUploading) fileInputRef.current?.click()
+  }
+
+  function handleRemove() {
     onChange('')
     setError('')
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
   }
 
   return (
     <div className="w-full">
-      <label className="block font-interface text-xs text-text-secondary uppercase tracking-widest mb-1.5">
-        Gambar Cover
-      </label>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPTED_TYPES.join(',')}
+        onChange={handleFileChange}
+        className="hidden"
+        aria-label="Berkas gambar sampul"
+      />
+
       {currentUrl ? (
-        <div className="relative group w-full aspect-[21/9] sm:aspect-[3/1] bg-surface-sunken overflow-hidden border border-border-default/10 rounded-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={currentUrl}
-            alt="Cover Preview"
-            className="w-full h-full object-cover"
-          />
-          {/* Overlay on hover / always visible on mobile */}
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="flex items-center gap-2 px-4 py-2 bg-signal-danger text-white font-interface text-xs uppercase tracking-widest hover:opacity-80 transition-colors duration-150 min-h-[44px] min-w-[44px] rounded-sm"
-              aria-label="Hapus gambar cover"
-            >
-              <X size={16} />
-              <span>Hapus Cover</span>
-            </button>
+        <div>
+          <div className="aspect-[21/9] w-full overflow-hidden bg-surface-sunken sm:aspect-[3/1]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={currentUrl} alt="Pratinjau sampul" className="h-full w-full object-cover" />
           </div>
-          {/* Mobile delete button: always visible or easy to tap */}
-          <button
-            type="button"
-            onClick={handleRemove}
-            className="absolute top-2 right-2 flex items-center justify-center bg-black/60 text-white hover:bg-black/80 transition-colors duration-150 md:hidden w-11 h-11 rounded-full"
-            aria-label="Hapus gambar cover"
-          >
-            <X size={20} />
-          </button>
+          <div className="mt-3 flex items-center gap-6">
+            <Button variant="text" size="sm" onClick={pick} disabled={isUploading}>
+              {isUploading ? 'Mengunggah' : 'Ganti sampul'}
+            </Button>
+            <Button variant="danger" size="sm" onClick={handleRemove} disabled={isUploading}>
+              Hapus sampul
+            </Button>
+          </div>
         </div>
       ) : (
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          onClick={() => !isUploading && fileInputRef.current?.click()}
-          className="w-full aspect-[21/9] sm:aspect-[3/1] border-2 border-dashed border-border-default/15 hover:border-border-accent/40 bg-surface-sunken/30 rounded-sm flex flex-col items-center justify-center text-center cursor-pointer p-4 transition-colors duration-150 min-h-[120px]"
+          className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-y border-border-default/20 py-2"
         >
-          <Upload size={24} className="text-text-secondary/40 mb-2" />
-          <p className="font-interface text-sm text-text-secondary">
-            {isUploading ? 'Mengupload...' : 'Klik atau drag & drop untuk upload cover image'}
-          </p>
-          <p className="font-interface text-xs text-text-tertiary mt-1">
-            JPEG, PNG, WebP, GIF · Maks 5MB
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ACCEPTED_TYPES.join(',')}
-            onChange={handleFileChange}
-            className="hidden"
-          />
+          <Button variant="text" size="sm" onClick={pick} disabled={isUploading}>
+            {isUploading ? 'Mengunggah' : 'Pilih gambar sampul'}
+          </Button>
+          <span className="font-mono text-caption text-text-tertiary">Opsional · JPEG, PNG, WebP, GIF · maks 5 MB</span>
         </div>
       )}
+
       {error && (
-        <p className="font-interface text-xs text-signal-danger mt-2">{error}</p>
+        <p role="alert" className="mt-3 border-l border-signal-danger pl-4 font-interface text-sm text-signal-danger">
+          {error}
+        </p>
       )}
     </div>
   )

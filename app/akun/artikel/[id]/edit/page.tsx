@@ -45,6 +45,7 @@ export default async function EditArtikelPage(props: PageProps) {
   return (
     <OpinionEditorPage
       hasProfile={!!profile}
+      authorUsername={profile?.username}
       mode="edit"
       articleId={article.id}
       initialTitle={article.title}

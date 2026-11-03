@@ -9,6 +9,7 @@ import OpinionEditor from './OpinionEditor'
 
 type OpinionEditorPageProps = {
   hasProfile: boolean
+  authorUsername?: string
   mode: 'create' | 'edit'
   articleId?: string
   initialTitle?: string
@@ -22,13 +23,22 @@ type OpinionEditorPageProps = {
 
 export default function OpinionEditorPage({
   hasProfile: initialHasProfile,
+  authorUsername: initialUsername,
   ...editorProps
 }: OpinionEditorPageProps) {
   const [hasProfile, setHasProfile] = useState(initialHasProfile)
+  const [username, setUsername] = useState(initialUsername)
 
   if (!hasProfile) {
-    return <UsernameSetup onComplete={() => setHasProfile(true)} />
+    return (
+      <UsernameSetup
+        onComplete={(name) => {
+          setUsername(name)
+          setHasProfile(true)
+        }}
+      />
+    )
   }
 
-  return <OpinionEditor {...editorProps} />
+  return <OpinionEditor authorUsername={username} {...editorProps} />
 }

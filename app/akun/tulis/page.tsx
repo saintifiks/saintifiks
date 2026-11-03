@@ -21,5 +21,5 @@ export default async function TulisPage() {
     .eq('user_id', user.id)
     .maybeSingle()
 
-  return <OpinionEditorPage hasProfile={!!profile} mode="create" />
+  return <OpinionEditorPage hasProfile={!!profile} authorUsername={profile?.username} mode="create" />
 }
