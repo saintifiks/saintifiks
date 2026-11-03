@@ -15,6 +15,7 @@ import AccountMenu from '@/components/layout/AccountMenu'
 
 const PRIMARY_NAV: { label: string; href: string }[] = [
   { label: 'Argumen', href: '/argumen' },
+  { label: 'Angka', href: '/angka' },
   { label: 'Koreksi', href: '/koreksi' },
   { label: 'Tentang', href: '/tentang-kami' },
 ]

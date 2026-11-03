@@ -5,10 +5,7 @@ import Header from "@/components/layout/Header";
 import LocationProvider from "@/components/layout/LocationProvider";
 import Footer from "@/components/footer";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
-import IndexStrip from "@/components/widgets/IndexStrip";
-import ConditionalIndexStrip from "@/components/layout/ConditionalIndexStrip";
 import ScrollToTop from "@/components/layout/ScrollToTop";
-import { CartProvider } from "@/components/bookstore/CartProvider";
 import { ToastProvider } from "@/components/ui";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 
@@ -95,20 +92,13 @@ export default function RootLayout({
         <AnalyticsTracker />
         <ScrollToTop />
 
-        {/* IndexStrip dipasang di atas Header, tapi hanya tampil di halaman beranda (/).
-            IndexStrip (Server Component) dilempar sebagai prop ke ConditionalIndexStrip
-            (Client Component) — pola resmi Next.js App Router untuk kasus ini. */}
         <LocationProvider>
           <ToastProvider>
           <AuthProvider>
-          <CartProvider>
-            <ConditionalIndexStrip strip={<IndexStrip />} />
-
-            <Header />
-            <div id="main-content" tabIndex={-1}>
-              {children}
-            </div>
-          </CartProvider>
+          <Header />
+          <div id="main-content" tabIndex={-1}>
+            {children}
+          </div>
           </AuthProvider>
           </ToastProvider>
         </LocationProvider>

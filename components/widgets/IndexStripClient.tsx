@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import NextLink from 'next/link'
 import type { IndexItem } from '@/lib/indices/types'
 import { INDICES_DEFAULT_POLL_MS, INDICES_MIN_POLL_MS } from '@/lib/indices/types'
 import { trendWindowLabel } from '@/lib/indices/trend'
@@ -20,17 +21,12 @@ function TickerItem({ item }: { item: IndexItem }) {
     .join(' · ')
 
   return (
-    <div
-      className="flex shrink-0 items-center gap-1.5 px-4 hover:bg-paper/[0.08] transition-colors duration-[120ms] cursor-default"
-      title={tooltip}
-    >
-      <dt className="font-interface text-[11px] uppercase tracking-[0.1em] text-paper/50 whitespace-nowrap">
+    <div className="flex shrink-0 items-center gap-2 px-4" title={tooltip}>
+      <dt className="whitespace-nowrap font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary">
         {item.label}
       </dt>
       <TrendIcon trend={item.trend} trendWindow={item.trendWindow} />
-      <dd className="font-interface text-sm font-semibold tabular-nums text-paper whitespace-nowrap m-0">
-        {value}
-      </dd>
+      <dd className="m-0 whitespace-nowrap font-mono text-sm tabular-nums text-text-primary">{value}</dd>
     </div>
   )
 }
@@ -74,21 +70,28 @@ export default function IndexStripClient({
   }, [pollMs, refresh])
 
   return (
-    <aside
-      className="w-full bg-ink border-b border-paper/10"
-      aria-label="Indikator ekonomi dan tata kelola"
-    >
-      <div className="index-ticker-scroll overflow-x-auto overscroll-x-contain">
-        <dl className="flex h-9 min-w-max items-center px-2 sm:px-4">
-          {items.map((item, i) => (
-            <span key={item.id} className="flex items-center">
-              {i > 0 && (
-                <span className="text-paper/30 text-xs select-none" aria-hidden>&middot;</span>
-              )}
-              <TickerItem item={item} />
-            </span>
-          ))}
-        </dl>
+    <aside className="surface-night bg-paper text-ink" aria-label="Angka: indikator ekonomi dan tata kelola">
+      <div className="mx-auto flex max-w-6xl items-stretch">
+        <NextLink
+          href="/angka"
+          className="flex shrink-0 items-center border-r border-border-default/30 px-4 font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-primary underline decoration-transparent decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-fast hover:decoration-text-primary lg:pl-8"
+        >
+          Angka
+        </NextLink>
+        <div className="index-ticker-scroll min-w-0 flex-1 overflow-x-auto overscroll-x-contain">
+          <dl className="m-0 flex h-10 min-w-max items-center">
+            {items.map((item, i) => (
+              <span key={item.id} className="flex items-center">
+                {i > 0 && (
+                  <span className="select-none text-text-tertiary" aria-hidden>
+                    &middot;
+                  </span>
+                )}
+                <TickerItem item={item} />
+              </span>
+            ))}
+          </dl>
+        </div>
       </div>
     </aside>
   )

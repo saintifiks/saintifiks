@@ -11,6 +11,7 @@ const STATIC_ALLOWED_DESTINATIONS = new Set([
   '/akun/bacaan',
   '/koreksi',
   '/argumen',
+  '/angka',
   '/opinions',
   '/bookstore',
 ])
