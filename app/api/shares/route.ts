@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
@@ -18,7 +17,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
+    // Admin client (server-only): tabel shares tidak lagi bisa dibaca publik lewat REST.
+    const supabase = createAdminClient()
 
     const { data, error } = await supabase
       .from('shares')
