@@ -1,6 +1,6 @@
 // Pratinjau kerangka admin dan antrean koreksi dengan data contoh — tanpa login dan tanpa database.
 // Hanya lokal dan preview Vercel (404 di produksi). Tombol keputusan akan gagal (tidak ada admin).
-// ?tampil=koreksi (bawaan) · moderasi · buku · tabel
+// ?tampil=koreksi (bawaan) · moderasi · buku · tabel · halaman
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -11,6 +11,8 @@ import OpinionsModeratorClient from '@/components/opinions/OpinionsModeratorClie
 import AddBookForm from '@/components/bookstore/admin/AddBookForm'
 import { StatRow, table, adminLink } from '@/components/admin/ui'
 import Badge from '@/components/ui/Badge'
+import SitePageEditor from '@/components/admin/site-pages/SitePageEditor'
+import type { SitePageContent } from '@/lib/site-pages/types'
 
 export const metadata: Metadata = { title: 'Pratinjau Admin', robots: { index: false, follow: false } }
 
@@ -38,6 +40,27 @@ const ITEMS = [
     createdAt: '2026-11-02T08:00:00Z',
   },
 ]
+
+const PAGE: SitePageContent = {
+  schemaVersion: 1,
+  kicker: 'Institusi',
+  title: 'Tentang Saintifiks',
+  introduction: 'Saintifiks menerbitkan analisis berbasis data dan memeriksa dirinya sendiri di depan umum.',
+  sections: [
+    {
+      id: 'misi',
+      navLabel: 'Misi',
+      eyebrow: 'Bagian',
+      title: 'Misi kami',
+      blocks: [
+        { type: 'paragraph', text: 'Mereka punya narasi, kami punya angka.' },
+        { type: 'list', items: ['Sumber terbuka', 'Koreksi terbuka'] },
+        { type: 'callout', title: 'Catatan', body: 'Argumen adalah pendapat pembaca.', tone: 'info' },
+      ],
+    },
+  ],
+  footer: { label: 'Kontak', body: 'redaksi@saintifiks.id' },
+}
 
 const PROFILE = { username: 'rina', display_name: 'Rina Anggraeni' }
 const REPORTS = [
@@ -109,6 +132,24 @@ export default async function AdminPreviewPage(props: { searchParams: Promise<{ 
               </tbody>
             </table>
           </div>
+        </>
+      )}
+      {tampil === 'halaman' && (
+        <>
+          <PageHeader eyebrow="Konten" title="Tentang Saintifiks" breadcrumbs={[{ label: 'Beranda', href: '/dashboard' }, { label: 'Halaman Situs' }]} />
+          <SitePageEditor
+            pageId="p1"
+            slug="tentang-kami"
+            publicPath="/tentang-kami"
+            initialContent={PAGE}
+            initialMetaTitle="Tentang Saintifiks"
+            initialMetaDescription="Siapa kami dan bagaimana kami bekerja."
+            initialRobotsIndex
+            initialDraftId={null}
+            publishedRevisionId="r1"
+            requiredSectionIds={['misi']}
+            history={[{ id: 'r1', page_id: 'p1', version: 1, content: PAGE, meta_title: 'Tentang', meta_description: '', robots_index: true, change_summary: 'Versi awal', created_by: null, created_at: '2026-10-01T08:00:00Z', published_at: '2026-10-01T09:00:00Z' }]}
+          />
         </>
       )}
       {tampil === 'koreksi' && (

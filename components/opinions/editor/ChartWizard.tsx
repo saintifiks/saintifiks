@@ -1,10 +1,11 @@
 'use client'
 
-// Wizard pembuatan chart untuk editor opinions
-// Generate JSON5 config dan placeholder {{chart:id}} di konten Markdown
+// ChartWizard — panel pembuat grafik untuk tulisan Argumen. Hasilnya konfigurasi Chart.js yang disimpan bersama
+// tulisan dan ditandai {{chart:id}} di isi. Warna grafik monokrom (tinta dengan tingkat keterangan berbeda)
+// sesuai bahasa visual Saintifiks; pada grafik lingkaran setiap irisan mendapat tingkatnya sendiri.
 
 import { useState } from 'react'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { Button, Field, Input, Select, Sheet } from '@/components/ui'
 
 type ChartWizardProps = {
   articleId: string
@@ -15,267 +16,215 @@ type ChartWizardProps = {
 type DatasetRow = { label: string; value: string }
 
 const CHART_TYPES = [
-  { value: 'bar', label: 'Bar Chart' },
-  { value: 'line', label: 'Line Chart' },
-  { value: 'pie', label: 'Pie Chart' },
-  { value: 'doughnut', label: 'Doughnut Chart' },
+  { value: 'bar', label: 'Batang' },
+  { value: 'line', label: 'Garis' },
+  { value: 'pie', label: 'Lingkaran' },
+  { value: 'doughnut', label: 'Cincin' },
 ]
+
+// Tinta pada tingkat keterangan menurun: cukup terbedakan di atas kartu putih dan tetap monokrom.
+const TONES = [0.9, 0.62, 0.4, 0.24, 0.12, 0.76, 0.5, 0.32]
+const tone = (i: number, a = TONES[i % TONES.length]) => `rgba(26, 25, 23, ${a})`
+
+const sectionTitle = 'font-interface text-kicker-lg font-semibold uppercase tracking-widest text-text-secondary'
 
 export default function ChartWizard({ onInsert, onClose }: ChartWizardProps) {
   const [chartType, setChartType] = useState('bar')
   const [chartTitle, setChartTitle] = useState('')
   const [labels, setLabels] = useState<string[]>(['Label 1', 'Label 2', 'Label 3'])
-  const [datasets, setDatasets] = useState<DatasetRow[]>([
-    { label: 'Dataset 1', value: '10, 20, 30' },
-  ])
+  const [datasets, setDatasets] = useState<DatasetRow[]>([{ label: 'Dataset 1', value: '10, 20, 30' }])
   const [error, setError] = useState('')
 
-  function addLabel() {
-    setLabels([...labels, `Label ${labels.length + 1}`])
-  }
-
-  function removeLabel(idx: number) {
-    if (labels.length <= 2) return
-    setLabels(labels.filter((_, i) => i !== idx))
-  }
+  const circular = chartType === 'pie' || chartType === 'doughnut'
 
   function updateLabel(idx: number, val: string) {
-    const next = [...labels]
-    next[idx] = val
-    setLabels(next)
-  }
-
-  function addDataset() {
-    setDatasets([...datasets, { label: `Dataset ${datasets.length + 1}`, value: '' }])
-  }
-
-  function removeDataset(idx: number) {
-    if (datasets.length <= 1) return
-    setDatasets(datasets.filter((_, i) => i !== idx))
+    setLabels(labels.map((l, i) => (i === idx ? val : l)))
   }
 
   function updateDataset(idx: number, field: 'label' | 'value', val: string) {
-    const next = [...datasets]
-    next[idx] = { ...next[idx], [field]: val }
-    setDatasets(next)
+    setDatasets(datasets.map((d, i) => (i === idx ? { ...d, [field]: val } : d)))
   }
 
-  // Warna default per dataset
-  const COLORS = [
-    'rgba(59, 91, 179, 0.8)',
-    'rgba(179, 59, 59, 0.8)',
-    'rgba(92, 143, 110, 0.8)',
-    'rgba(179, 140, 59, 0.8)',
-    'rgba(120, 59, 179, 0.8)',
-  ]
-
-  function handleGenerate() {
+  function handleGenerate(e?: React.FormEvent) {
+    e?.preventDefault()
     setError('')
 
     if (!chartTitle.trim()) {
-      setError('Judul chart wajib diisi')
+      setError('Judul grafik wajib diisi.')
       return
     }
 
-    const parsedDatasets = datasets.map((ds, i) => {
+    const parsed: { label: string; data: number[] }[] = []
+    for (const ds of datasets) {
       const values = ds.value.split(',').map((v) => parseFloat(v.trim()))
       if (values.some(isNaN)) {
-        setError(`Dataset "${ds.label}" mengandung nilai yang bukan angka`)
-        return null
+        setError(`Dataset “${ds.label}” memuat nilai yang bukan angka.`)
+        return
       }
-      return {
-        label: ds.label,
-        data: values,
-        backgroundColor: COLORS[i % COLORS.length],
-        borderColor: COLORS[i % COLORS.length].replace('0.8', '1'),
-        borderWidth: 1,
+      if (values.length !== labels.length) {
+        setError(`Dataset “${ds.label}” punya ${values.length} nilai, sedangkan label ada ${labels.length}.`)
+        return
       }
-    })
-
-    if (parsedDatasets.some((d) => d === null)) return
+      parsed.push({ label: ds.label, data: values })
+    }
 
     const chartId = `chart-${Date.now()}`
-
     const config = {
       type: chartType,
       data: {
         labels,
-        datasets: parsedDatasets,
+        datasets: parsed.map((d, i) => ({
+          ...d,
+          backgroundColor: circular ? labels.map((_, j) => tone(j)) : tone(i),
+          borderColor: circular ? 'rgba(255, 255, 255, 1)' : tone(i, 1),
+          borderWidth: circular ? 2 : 1,
+        })),
       },
       options: {
         responsive: true,
         plugins: {
           legend: { position: 'top' },
-          title: {
-            display: true,
-            text: chartTitle.trim(),
-          },
+          title: { display: true, text: chartTitle.trim() },
         },
       },
     }
 
-    // Dispatch event ke TipTapEditor agar chart diinsert sebagai custom node
+    // Beri tahu TipTap agar grafik disisipkan sebagai simpul khusus
     window.dispatchEvent(new CustomEvent('tiptap:insert-chart', { detail: chartId }))
     onInsert(chartId, config)
     onClose()
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 overflow-y-auto">
-      <div className="bg-paper border border-ink/10 w-full max-w-lg p-6 my-4">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-interface text-sm font-bold text-ink uppercase tracking-widest">
-            Buat Chart
-          </h3>
-          <button onClick={onClose} className="text-warm-gray hover:text-ink transition-colors duration-150">
-            <X size={18} />
-          </button>
+    <Sheet
+      open
+      onClose={onClose}
+      title="Sisipkan grafik"
+      footer={
+        <div className="flex items-center gap-6">
+          <Button onClick={() => handleGenerate()}>Sisipkan</Button>
+          <Button variant="text" onClick={onClose}>
+            Batal
+          </Button>
         </div>
+      }
+    >
+      <form onSubmit={handleGenerate} className="grid gap-9">
+        <Field label="Jenis grafik">
+          <Select value={chartType} onChange={(e) => setChartType(e.target.value)}>
+            {CHART_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
-        <div className="space-y-5">
+        <Field label="Judul grafik" required>
+          <Input
+            value={chartTitle}
+            onChange={(e) => {
+              setChartTitle(e.target.value)
+              setError('')
+            }}
+            placeholder="Mis. Pertumbuhan PDB 2020–2024"
+            maxLength={150}
+          />
+        </Field>
 
-          {/* Tipe chart */}
-          <div>
-            <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">
-              Tipe Chart
-            </label>
-            <select
-              value={chartType}
-              onChange={(e) => setChartType(e.target.value)}
-              className="w-full border border-ink/15 bg-transparent px-3 py-2 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
+        <section aria-label="Label">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className={sectionTitle}>{circular ? 'Label irisan' : 'Label sumbu X'}</h3>
+            <Button
+              variant="text"
+              size="sm"
+              onClick={() => setLabels([...labels, `Label ${labels.length + 1}`])}
+              disabled={labels.length >= 20}
             >
-              {CHART_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+              Tambah
+            </Button>
           </div>
+          <ul className="divide-y divide-border-default/15 border-y border-border-default/15">
+            {labels.map((lbl, idx) => (
+              <li key={idx} className="flex items-center gap-4">
+                <label className="sr-only" htmlFor={`label-${idx}`}>
+                  Label {idx + 1}
+                </label>
+                <Input id={`label-${idx}`} value={lbl} onChange={(e) => updateLabel(idx, e.target.value)} className="min-h-[44px] flex-1 border-b-0" />
+                <Button
+                  variant="text"
+                  size="sm"
+                  onClick={() => setLabels(labels.filter((_, i) => i !== idx))}
+                  disabled={labels.length <= 2}
+                  aria-label={`Hapus label ${idx + 1}`}
+                >
+                  Hapus
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-          {/* Judul chart */}
-          <div>
-            <label className="block font-interface text-xs text-warm-gray uppercase tracking-widest mb-2">
-              Judul Chart
-            </label>
-            <input
-              type="text"
-              value={chartTitle}
-              onChange={(e) => { setChartTitle(e.target.value); setError('') }}
-              placeholder="Contoh: Pertumbuhan PDB 2020–2024"
-              className="w-full border border-ink/15 bg-transparent px-3 py-2 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
-            />
+        <section aria-label="Dataset">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className={sectionTitle}>Dataset</h3>
+            <Button
+              variant="text"
+              size="sm"
+              onClick={() => setDatasets([...datasets, { label: `Dataset ${datasets.length + 1}`, value: '' }])}
+              disabled={datasets.length >= 5 || circular}
+            >
+              Tambah
+            </Button>
           </div>
-
-          {/* Labels */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="font-interface text-xs text-warm-gray uppercase tracking-widest">
-                Label Sumbu X
-              </label>
-              <button
-                type="button"
-                onClick={addLabel}
-                disabled={labels.length >= 20}
-                className="flex items-center gap-1 font-interface text-xs text-text-link hover:opacity-70 disabled:opacity-30 transition-opacity duration-150"
-              >
-                <Plus size={12} />
-                Tambah
-              </button>
-            </div>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {labels.map((lbl, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={lbl}
-                    onChange={(e) => updateLabel(idx, e.target.value)}
-                    className="flex-1 border border-ink/15 bg-transparent px-3 py-1.5 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
+          <ul className="space-y-7">
+            {datasets.map((ds, idx) => (
+              <li key={idx} className="border-l border-border-default/30 pl-4">
+                <div className="flex items-center gap-4">
+                  <label className="sr-only" htmlFor={`ds-label-${idx}`}>
+                    Nama dataset {idx + 1}
+                  </label>
+                  <Input
+                    id={`ds-label-${idx}`}
+                    value={ds.label}
+                    onChange={(e) => updateDataset(idx, 'label', e.target.value)}
+                    placeholder="Nama dataset"
+                    className="flex-1"
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeLabel(idx)}
-                    disabled={labels.length <= 2}
-                    className="text-warm-gray hover:text-signal-danger disabled:opacity-20 transition-colors duration-150"
+                  <Button
+                    variant="text"
+                    size="sm"
+                    onClick={() => setDatasets(datasets.filter((_, i) => i !== idx))}
+                    disabled={datasets.length <= 1}
+                    aria-label={`Hapus dataset ${idx + 1}`}
                   >
-                    <Trash2 size={14} />
-                  </button>
+                    Hapus
+                  </Button>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Datasets */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="font-interface text-xs text-warm-gray uppercase tracking-widest">
-                Dataset
-              </label>
-              <button
-                type="button"
-                onClick={addDataset}
-                disabled={datasets.length >= 5}
-                className="flex items-center gap-1 font-interface text-xs text-text-link hover:opacity-70 disabled:opacity-30 transition-opacity duration-150"
-              >
-                <Plus size={12} />
-                Tambah
-              </button>
-            </div>
-            <div className="space-y-3">
-              {datasets.map((ds, idx) => (
-                <div key={idx} className="border border-ink/10 p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={ds.label}
-                      onChange={(e) => updateDataset(idx, 'label', e.target.value)}
-                      placeholder="Nama dataset"
-                      className="flex-1 border border-ink/15 bg-transparent px-3 py-1.5 font-interface text-sm text-ink focus:outline-none focus:border-ink/40"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeDataset(idx)}
-                      disabled={datasets.length <= 1}
-                      className="text-warm-gray hover:text-signal-danger disabled:opacity-20 transition-colors duration-150"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={ds.value}
-                    onChange={(e) => updateDataset(idx, 'value', e.target.value)}
-                    placeholder={`Nilai (pisahkan koma, harus ${labels.length} nilai)`}
-                    className="w-full border border-ink/15 bg-transparent px-3 py-1.5 font-interface text-sm text-ink placeholder:text-warm-gray focus:outline-none focus:border-ink/40"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
+                <label className="sr-only" htmlFor={`ds-value-${idx}`}>
+                  Nilai dataset {idx + 1}
+                </label>
+                <Input
+                  id={`ds-value-${idx}`}
+                  value={ds.value}
+                  onChange={(e) => updateDataset(idx, 'value', e.target.value)}
+                  placeholder={`${labels.length} nilai, pisahkan dengan koma`}
+                  inputMode="decimal"
+                />
+              </li>
+            ))}
+          </ul>
+          {circular && (
+            <p className="mt-3 font-mono text-caption text-text-tertiary">Grafik lingkaran dan cincin memakai satu dataset.</p>
+          )}
+        </section>
 
         {error && (
-          <p className="font-interface text-xs text-signal-danger mt-4">{error}</p>
+          <p role="alert" className="border-l border-signal-danger pl-4 font-interface text-sm text-signal-danger">
+            {error}
+          </p>
         )}
-
-        <div className="flex gap-3 justify-end mt-6">
-          <button
-            type="button"
-            onClick={onClose}
-            className="font-interface text-sm text-warm-gray hover:text-ink transition-colors duration-150"
-          >
-            Batal
-          </button>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            className="font-interface text-sm bg-ink text-paper px-5 py-2 hover:opacity-80 transition-opacity duration-150"
-          >
-            Sisipkan Chart
-          </button>
-        </div>
-
-      </div>
-    </div>
+      </form>
+    </Sheet>
   )
 }
